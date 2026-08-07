@@ -1394,9 +1394,14 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '1.4.1';
+const APP_VERSION = '1.4.2';
 const APP_BUILD = '2026.08.07';
 const CHANGELOG = [
+  { ver: '1.4.2', date: '2026-08-07', items: [
+    '修复触摸滑动导致整个页面移动的问题',
+    '锁定页面框架，仅内容区域可滚动',
+    '优化 iOS 橡皮筋滚动效果'
+  ]},
   { ver: '1.4.1', date: '2026-08-07', items: [
     '订阅圆环进度条三色显示：绿色(充足)、金色(临近)、红色(快到期)',
     '详情页进度条同步三色显示'

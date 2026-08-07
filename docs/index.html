@@ -31,8 +31,8 @@
   --green: rgba(82,204,130,0.9);
 }
 * { margin:0; padding:0; box-sizing:border-box; -webkit-font-smoothing:antialiased; -webkit-tap-highlight-color:transparent; }
-html, body { background:#000; color:var(--t1); font-family:var(--font-sans); overscroll-behavior:none; height:100%; }
-body { max-width:430px; margin:0 auto; position:relative; min-height:100vh; overflow-x:hidden; }
+html, body { background:#000; color:var(--t1); font-family:var(--font-sans); overscroll-behavior:none; height:100%; overflow:hidden; }
+body { max-width:430px; margin:0 auto; position:fixed; top:0; left:0; right:0; width:100%; height:100dvh; overflow:hidden; touch-action:none; }
 button { font-family:inherit; cursor:pointer; }
 input { font-family:inherit; }
 
@@ -47,11 +47,11 @@ input { font-family:inherit; }
 .bat i{display:block;width:80%;height:100%;background:#fff;border-radius:1px;}
 
 /* Views */
-.view { display:none; flex-direction:column; min-height:calc(100vh - 44px); padding-bottom:90px; }
+.view { display:none; flex-direction:column; height:calc(100dvh - 44px); padding-bottom:90px; overflow:hidden; }
 .view.active { display:flex; }
 
 /* Scroll content */
-.content { flex:1; padding:0 20px; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+.content { flex:1; padding:0 20px; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; touch-action:pan-y; }
 .content::-webkit-scrollbar{display:none;}
 
 /* Header */
@@ -287,7 +287,7 @@ input { font-family:inherit; }
 .ai-title { font-size:16px; font-weight:600; line-height:1.2; }
 .ai-subtitle { font-size:11px; color:var(--t3); margin-top:2px; }
 .ai-close { width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,0.06); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; color:var(--t2); margin-left:auto; font-size:18px; flex-shrink:0; }
-.ai-messages { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:16px; display:flex; flex-direction:column; gap:14px; min-height:0; }
+.ai-messages { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; touch-action:pan-y; padding:16px; display:flex; flex-direction:column; gap:14px; min-height:0; }
 .ai-msg { display:flex; gap:10px; max-width:88%; }
 .ai-msg.bot { align-self:flex-start; }
 .ai-msg.user { align-self:flex-end; flex-direction:row-reverse; }
@@ -341,7 +341,7 @@ input { font-family:inherit; }
 /* Modal / Sheet */
 .sheet-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(8px); z-index:200; display:none; align-items:flex-end; justify-content:center; }
 .sheet-overlay.on{display:flex;}
-.sheet { width:100%; max-width:430px; background:var(--card); border-radius:24px 24px 0 0; padding:12px 20px 36px; max-height:88vh; overflow-y:auto; animation:slideUp .3s cubic-bezier(.34,1.56,.64,1); }
+.sheet { width:100%; max-width:430px; background:var(--card); border-radius:24px 24px 0 0; padding:12px 20px 36px; max-height:88vh; overflow-y:auto; overscroll-behavior:contain; touch-action:pan-y; animation:slideUp .3s cubic-bezier(.34,1.56,.64,1); }
 @keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
 .sheet-handle { width:36px; height:4px; background:var(--border2); border-radius:999px; margin:0 auto 20px; }
 .sheet-title { font-size:20px; font-weight:700; letter-spacing:-0.5px; margin-bottom:20px; }
@@ -533,14 +533,14 @@ textarea.form-i{resize:none;min-height:80px;}
       <div class="info-r" onclick="if(confirm('确定清除所有数据？此操作不可撤销。')){clearAll();toast('数据已清除');}"><span class="info-l">清除所有数据</span><span class="info-v" style="color:var(--red);">›</span></div>
     </div>
     <div class="info-g">
-      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v1.4.1 ›</span></div>
+      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v1.4.2 ›</span></div>
       <div class="info-r" onclick="showChangelog()"><span class="info-l">更新日志</span><span class="info-v" style="color:var(--gold);">查看 ›</span></div>
       <div class="info-r" onclick="checkUpdate()"><span class="info-l">检查更新</span><span class="info-v" style="color:var(--gold);" id="update-status">›</span></div>
       <div class="info-r"><span class="info-l">数据存储</span><span class="info-v" style="color:var(--t3);">仅本地浏览器</span></div>
     </div>
     <div style="text-align:center;padding:40px 20px;color:var(--t3);font-size:12px;">
       <div style="margin-bottom:8px;font-size:20px;letter-spacing:1px;">SubPilot</div>
-      <div style="margin-bottom:4px;">订阅管家 · v1.4.1 (Build 2026.08.07)</div>
+      <div style="margin-bottom:4px;">订阅管家 · v1.4.2 (Build 2026.08.07)</div>
       <div>所有数据仅保存在本地，隐私安全</div>
     </div>
     <input type="file" id="import-file" accept=".json" style="display:none;">
