@@ -1023,10 +1023,21 @@ function renderSubCard(sub) {
   const cycleDays = cycleToDays(sub.cycle);
   const pct = Math.min(100, Math.max(0, Math.round(((cycleDays - days) / cycleDays) * 100)));
   const isSoon = days <= 7;
+  const isWarning = days > 7 && days <= 14;
+  // 三色进度条：红色=快到期(7天内)，金色=临近(8-14天)，绿色=充足(15天以上)
+  let ringColor, ringTextColor;
+  if (isSoon) {
+    ringColor = 'var(--red)';
+    ringTextColor = 'var(--red)';
+  } else if (isWarning) {
+    ringColor = 'var(--gold)';
+    ringTextColor = 'var(--gold)';
+  } else {
+    ringColor = 'var(--green)';
+    ringTextColor = 'rgba(82,204,130,0.8)';
+  }
   const circumference = 2 * Math.PI * 16;
   const offset = circumference * (1 - pct/100);
-  const ringColor = isSoon ? 'var(--gold)' : 'rgba(255,255,255,0.25)';
-  const ringTextColor = isSoon ? 'var(--gold)' : 'rgba(255,255,255,0.35)';
   const daysText = days <= 0 ? '已到期' : `${days}天后`;
   const daysStyle = isSoon ? 'color:var(--red);font-weight:600;' : '';
   const iconHtml = sub.brand ? brandIconSvg(sub.brand) : letterIcon((sub.name[0]||'?').toUpperCase(), 'rgba(255,255,255,0.4)');
@@ -1079,6 +1090,18 @@ function renderSubDetail() {
   const cycleDays = cycleToDays(sub.cycle);
   const pct = Math.min(100, Math.max(0, Math.round(((cycleDays - days) / cycleDays) * 100)));
   const isSoon = days <= 7;
+  const isWarning = days > 7 && days <= 14;
+  let progColor, progTextColor;
+  if (isSoon) {
+    progColor = 'var(--red)';
+    progTextColor = 'var(--red)';
+  } else if (isWarning) {
+    progColor = 'var(--gold)';
+    progTextColor = 'var(--gold)';
+  } else {
+    progColor = 'var(--green)';
+    progTextColor = 'rgba(82,204,130,0.8)';
+  }
   const acct = state.accounts.find(a => a.id === sub.accountId);
   const daysText = days <= 0 ? '已到期' : `${days}天后`;
   const monthly = { week: sub.price * 4.3, month: sub.price, quarter: sub.price/3, year: sub.price/12 }[sub.cycle] || sub.price;
@@ -1113,9 +1136,9 @@ function renderSubDetail() {
       <div class="info-r" style="flex-direction:column;align-items:stretch;">
         <div style="display:flex;justify-content:space-between;margin-bottom:0;">
           <span class="info-l">本期进度</span>
-          <span class="info-v" style="color:${isSoon?'var(--gold)':'var(--t2)'};">${pct}%</span>
+          <span class="info-v" style="color:${progTextColor};">${pct}%</span>
         </div>
-        <div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:${isSoon?'var(--gold)':'rgba(255,255,255,0.3)'};"></div></div>
+        <div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:${progColor};"></div></div>
       </div>
       <div class="info-r"><span class="info-l">扣款账户</span><span class="info-v">${acct?.name || '未绑定'}</span></div>
       ${sub.note ? `<div class="info-r"><span class="info-l">备注</span><span class="info-v">${sub.note}</span></div>` : ''}
@@ -1371,9 +1394,13 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '1.4.0';
+const APP_VERSION = '1.4.1';
 const APP_BUILD = '2026.08.07';
 const CHANGELOG = [
+  { ver: '1.4.1', date: '2026-08-07', items: [
+    '订阅圆环进度条三色显示：绿色(充足)、金色(临近)、红色(快到期)',
+    '详情页进度条同步三色显示'
+  ]},
   { ver: '1.4.0', date: '2026-08-07', items: [
     '修复订阅编辑功能，表单标题动态切换',
     '编辑时显示当前图标预览（内置/字母/远程）',
