@@ -1360,7 +1360,10 @@ function renderAccounts() {
 
   // Cards stack
   const cs = $('#cards-stack');
+  const hintEl = $('#swipe-hint');
+  if (hintEl) hintEl.style.display = state.accounts.length > 1 ? 'block' : 'none';
   if (state.accounts.length === 0) {
+    if (hintEl) hintEl.style.display = 'none';
     cs.innerHTML = `<div class="empty-state" style="padding:40px 20px;"><div class="es-icon">💳</div><div class="es-text">暂无账户</div><div class="es-sub">点击 + 添加你的第一张卡</div></div>`;
   } else {
     cs.innerHTML = state.accounts.map((a, i) => {
@@ -1422,10 +1425,55 @@ function renderAccounts() {
         </div>
       </div>`;
     }).join('');
-    cs.querySelectorAll('.bc').forEach(c => c.onclick = (e) => {
-      if (e.target.closest('.bcl')) return; // Don't toggle card when clicking icon
-      state.activeCardIdx = parseInt(c.dataset.idx);
-      render();
+    cs.querySelectorAll('.bc').forEach(c => {
+      // Click: only for icon, don't cycle cards
+      c.onclick = (e) => {
+        if (e.target.closest('.bcl')) return; // icon handled separately
+      };
+      // Swipe right to cycle card to back
+      let startX = 0, startY = 0, currentX = 0, isDragging = false, isSwipe = false;
+      c.addEventListener('touchstart', (e) => {
+        if (e.target.closest('.bcl')) return;
+        if (!c.classList.contains('on')) return;
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        currentX = 0;
+        isDragging = true;
+        isSwipe = false;
+      }, { passive: true });
+      c.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+        currentX = e.touches[0].clientX - startX;
+        const deltaY = Math.abs(e.touches[0].clientY - startY);
+        // Only treat as horizontal swipe if X movement dominates
+        if (Math.abs(currentX) > deltaY && Math.abs(currentX) > 10) {
+          isSwipe = true;
+          if (currentX > 0) {
+            c.style.transform = `translateX(${currentX}px) rotate(${currentX * 0.05}deg)`;
+            c.style.opacity = String(1 - Math.min(currentX / 300, 0.5));
+            c.style.transition = 'none';
+          }
+        }
+      }, { passive: true });
+      c.addEventListener('touchend', () => {
+        if (!isDragging) return;
+        isDragging = false;
+        c.style.transition = '';
+        if (isSwipe && currentX > 80) {
+          // Swipe right confirmed - cycle card to back
+          c.style.transform = `translateX(${window.innerWidth}px) rotate(15deg)`;
+          c.style.opacity = '0';
+          setTimeout(() => {
+            state.activeCardIdx = (state.activeCardIdx + 1) % state.accounts.length;
+            render();
+          }, 300);
+        } else {
+          // Snap back
+          c.style.transform = '';
+          c.style.opacity = '';
+          setTimeout(() => { c.style.transition = ''; }, 500);
+        }
+      });
     });
   }
 
@@ -1524,9 +1572,14 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '1.5.2';
+const APP_VERSION = '1.5.3';
 const APP_BUILD = '2026.08.07';
 const CHANGELOG = [
+  { ver: '1.5.3', date: '2026-08-07', items: [
+    '卡面支持右滑切换，划走的卡自动到后面',
+    '滑动时卡片跟随手指移动并渐隐，带旋转动效',
+    '多卡时显示滑动提示，单卡时自动隐藏'
+  ]},
   { ver: '1.5.2', date: '2026-08-07', items: [
     '增大卡面高度，修复底部文字（可用余额/品牌名）被遮挡的问题',
     '优化卡面内部间距，确保所有信息完整显示'
