@@ -7,7 +7,9 @@ const KEYS = {
   onboarded: 'subpilot_onboarded',
   settings: 'subpilot_settings',
   qrcodes: 'subpilot_qrcodes',
-  invoices: 'subpilot_invoices'
+  invoices: 'subpilot_invoices',
+  cloudConfig: 'subpilot_cloud_config',
+  cloudSession: 'subpilot_cloud_session'
 };
 
 // ===== Embedded Brand Icons (SVG path data, viewBox 0 0 24 24) =====
@@ -222,7 +224,15 @@ let state = {
   invoiceEditingId: null,
   invoicePreviewData: null,
   invoiceViewingId: null,
-  invSelectedCat: 'all'
+  invSelectedCat: 'all',
+  invoicePreviewType: 'image',
+  cloudEnabled: false,
+  cloudUrl: '',
+  cloudKey: '',
+  supabaseClient: null,
+  cloudUser: null,
+  cloudLastSync: null,
+  authEmail: ''
 };
 
 // Card color themes
@@ -335,6 +345,7 @@ function save() {
   localStorage.setItem(KEYS.qrcodes, JSON.stringify(state.qrcodes));
   localStorage.setItem(KEYS.invoices, JSON.stringify(state.invoices));
   updateBadge();
+  markLocalChange();
 }
 
 // ===== Utils =====
@@ -1666,6 +1677,7 @@ function render() {
   updateLockStatus();
   updateNotifStatus();
   updateExrateStatus();
+  updateCloudStatus();
   if (state.currentView === 'subdetail') renderSubDetail();
 }
 
@@ -1721,9 +1733,15 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '1.6.1';
+const APP_VERSION = '1.7.0';
 const APP_BUILD = '2026.08.07';
 const CHANGELOG = [
+  { ver: '1.7.0', date: '2026-08-07', items: [
+    '新增云同步功能：基于Supabase，支持邮箱验证码登录/注册',
+    '多设备数据同步：Last-Write-Wins策略，自动/手动同步',
+    '设置页增加云同步状态和配置入口',
+    '密码PIN哈希不上传云端，保护本地隐私'
+  ]},
   { ver: '1.6.1', date: '2026-08-07', items: [
     '重构卡面切换动画：绝对定位堆叠，划走的卡立刻消失，下一张平滑升到第一位',
     '新增发票夹功能：支持图片/PDF上传、分类管理、查看、保存到本地',
@@ -1882,6 +1900,16 @@ function init() {
 
   // Handle URL shortcut actions
   handleUrlAction();
+
+  // Init cloud sync (if configured)
+  initSupabase();
+  checkCloudSession().then(() => {
+    updateCloudStatus();
+    // Auto-sync on startup if logged in
+    if (state.cloudUser) {
+      setTimeout(() => syncToCloud(), 1500);
+    }
+  });
 }
 
 // Keyboard: amount input only numbers
@@ -3203,6 +3231,348 @@ function downloadInvoice() {
 
 // Initialize category pickers for invoice sheet
 // (handled by delegated click on .pick elements)
+
+// ===== Cloud Sync (Supabase) =====
+const CLOUD_DATA_TYPES = ['accounts', 'subscriptions', 'transactions', 'qrcodes', 'invoices', 'settings'];
+
+function getSupabaseConfig() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(KEYS.cloudConfig) || '{}');
+    return {
+      url: saved.url || '',
+      key: saved.key || ''
+    };
+  } catch(e) { return { url: '', key: '' }; }
+}
+
+function initSupabase() {
+  const cfg = getSupabaseConfig();
+  if (!cfg.url || !cfg.key) {
+    state.supabaseClient = null;
+    state.cloudEnabled = false;
+    return false;
+  }
+  if (typeof supabase === 'undefined') {
+    console.warn('Supabase SDK not loaded');
+    return false;
+  }
+  try {
+    state.supabaseClient = supabase.createClient(cfg.url, cfg.key, {
+      auth: {
+        storage: {
+          getItem: (k) => localStorage.getItem(k),
+          setItem: (k, v) => localStorage.setItem(k, v),
+          removeItem: (k) => localStorage.removeItem(k)
+        },
+        persistSession: true,
+        autoRefreshToken: true
+      }
+    });
+    state.cloudEnabled = true;
+    return true;
+  } catch(e) {
+    console.error('Supabase init error:', e);
+    state.supabaseClient = null;
+    state.cloudEnabled = false;
+    return false;
+  }
+}
+
+async function checkCloudSession() {
+  if (!state.supabaseClient) return;
+  try {
+    const { data: { session } } = await state.supabaseClient.auth.getSession();
+    if (session?.user) {
+      state.cloudUser = session.user;
+    } else {
+      state.cloudUser = null;
+    }
+  } catch(e) { console.error('Session check error:', e); }
+}
+
+function updateCloudStatus() {
+  const el = $('#cloud-status');
+  const cfgEl = $('#cloud-config-status');
+  if (!el) return;
+  const cfg = getSupabaseConfig();
+
+  if (cfg.url && cfg.key) {
+    if (cfgEl) cfgEl.textContent = '自定义 ›';
+  } else {
+    if (cfgEl) cfgEl.textContent = '未配置 ›';
+  }
+
+  if (state.cloudUser) {
+    const email = state.cloudUser.email || '';
+    const shortEmail = email.length > 18 ? email.slice(0, 15) + '...' : email;
+    el.textContent = `${shortEmail} ${state.cloudLastSync ? '· 已同步' : ''} ›`;
+    el.style.color = 'var(--green)';
+  } else if (cfg.url && cfg.key) {
+    el.textContent = '点此登录 ›';
+    el.style.color = 'var(--gold)';
+  } else {
+    el.textContent = '未配置 ›';
+    el.style.color = 'var(--t3)';
+  }
+}
+
+function openCloudAuth() {
+  const cfg = getSupabaseConfig();
+  if (!cfg.url || !cfg.key) {
+    if (confirm('云同步需要先配置 Supabase 项目。是否打开配置页面？\n\n（配置一次后即可使用邮箱验证码登录和数据同步）')) {
+      openCloudConfig();
+    }
+    return;
+  }
+  if (state.cloudUser) {
+    // Already logged in - show options
+    const action = confirm(`已登录: ${state.cloudUser.email}\n\n确定=立即同步\n取消=退出登录`);
+    if (action) {
+      syncToCloud();
+    } else {
+      if (confirm('确定退出登录？本地数据不会删除。')) {
+        cloudSignOut();
+      }
+    }
+    return;
+  }
+  // Show login sheet
+  $('#auth-email').value = state.authEmail || '';
+  $('#auth-email-step').style.display = 'block';
+  $('#auth-code-step').style.display = 'none';
+  $('#auth-title').textContent = '登录 / 注册';
+  openSheet('sheet-auth');
+  haptic('light');
+}
+
+function openCloudConfig() {
+  const cfg = getSupabaseConfig();
+  $('#cloud-url').value = cfg.url || '';
+  $('#cloud-key').value = cfg.key || '';
+  openSheet('sheet-cloud-config');
+  haptic('light');
+}
+
+function saveCloudConfig() {
+  const url = $('#cloud-url').value.trim();
+  const key = $('#cloud-key').value.trim();
+  if (url && key) {
+    localStorage.setItem(KEYS.cloudConfig, JSON.stringify({ url, key }));
+    toast('配置已保存');
+    haptic('success');
+    closeSheet('sheet-cloud-config');
+    initSupabase();
+    checkCloudSession().then(() => {
+      updateCloudStatus();
+      render();
+    });
+  } else {
+    toast('请填写完整的URL和Key');
+  }
+}
+
+function resetCloudConfig() {
+  localStorage.removeItem(KEYS.cloudConfig);
+  $('#cloud-url').value = '';
+  $('#cloud-key').value = '';
+  state.supabaseClient = null;
+  state.cloudEnabled = false;
+  state.cloudUser = null;
+  toast('已恢复未配置状态');
+  haptic('medium');
+  updateCloudStatus();
+}
+
+async function sendAuthCode() {
+  const email = $('#auth-email').value.trim();
+  if (!email || !email.includes('@')) {
+    toast('请输入有效邮箱');
+    return;
+  }
+  if (!state.supabaseClient) {
+    toast('云服务未初始化，请先配置');
+    return;
+  }
+  state.authEmail = email;
+  try {
+    const { error } = await state.supabaseClient.auth.signInWithOtp({
+      email,
+      options: { shouldCreateUser: true }
+    });
+    if (error) {
+      toast(error.message || '发送失败');
+      haptic('error');
+      return;
+    }
+    toast('验证码已发送，请查收邮箱');
+    haptic('success');
+    $('#auth-email-display').textContent = email;
+    $('#auth-email-step').style.display = 'none';
+    $('#auth-code-step').style.display = 'block';
+    $('#auth-code').value = '';
+    $('#auth-code').focus();
+  } catch(e) {
+    toast('发送失败：' + (e.message || '网络错误'));
+    haptic('error');
+  }
+}
+
+function authBackToEmail() {
+  $('#auth-email-step').style.display = 'block';
+  $('#auth-code-step').style.display = 'none';
+  haptic('light');
+}
+
+async function verifyAuthCode() {
+  const email = state.authEmail;
+  const token = $('#auth-code').value.trim();
+  if (!token || token.length < 6) {
+    toast('请输入6位验证码');
+    return;
+  }
+  if (!state.supabaseClient) {
+    toast('云服务未初始化');
+    return;
+  }
+  try {
+    const { data, error } = await state.supabaseClient.auth.verifyOtp({
+      email,
+      token,
+      type: 'email'
+    });
+    if (error) {
+      toast(error.message || '验证失败');
+      haptic('error');
+      return;
+    }
+    if (data.user) {
+      state.cloudUser = data.user;
+      toast('登录成功');
+      haptic('success');
+      closeSheet('sheet-auth');
+      updateCloudStatus();
+      // Sync after login
+      setTimeout(() => syncToCloud(), 500);
+    }
+  } catch(e) {
+    toast('验证失败：' + (e.message || '网络错误'));
+    haptic('error');
+  }
+}
+
+async function cloudSignOut() {
+  if (!state.supabaseClient) return;
+  await state.supabaseClient.auth.signOut();
+  state.cloudUser = null;
+  state.cloudLastSync = null;
+  toast('已退出登录');
+  haptic('medium');
+  updateCloudStatus();
+}
+
+// Cloud data sync using last-write-wins per collection
+async function syncToCloud() {
+  if (!state.supabaseClient || !state.cloudUser) {
+    toast('请先登录');
+    return;
+  }
+  const uid = state.cloudUser.id;
+  toast('正在同步...');
+
+  try {
+    // First pull all cloud data
+    const { data: cloudData, error: pullErr } = await state.supabaseClient
+      .from('user_data')
+      .select('data_type, data, updated_at')
+      .eq('user_id', uid);
+
+    if (pullErr) throw pullErr;
+
+    const cloudMap = {};
+    (cloudData || []).forEach(row => {
+      cloudMap[row.data_type] = row;
+    });
+
+    const localTimestamps = JSON.parse(localStorage.getItem('subpilot_local_ts') || '{}');
+    const now = new Date().toISOString();
+    let pushCount = 0;
+    let pullCount = 0;
+
+    for (const type of CLOUD_DATA_TYPES) {
+      let localData;
+      if (type === 'settings') {
+        // Don't sync lock PIN hash for security
+        const safe = { ...state.settings };
+        delete safe.pinHash;
+        localData = safe;
+      } else {
+        localData = state[type];
+      }
+
+      const cloud = cloudMap[type];
+      const localTs = localTimestamps[type] || '1970-01-01T00:00:00.000Z';
+      const cloudTs = cloud?.updated_at || '1970-01-01T00:00:00.000Z';
+
+      if (!cloud || localTs > cloudTs) {
+        // Local is newer - push
+        const { error: upsertErr } = await state.supabaseClient
+          .from('user_data')
+          .upsert({
+            user_id: uid,
+            data_type: type,
+            data: localData,
+            updated_at: now
+          }, { onConflict: 'user_id,data_type' });
+        if (upsertErr) console.error('Push error for', type, upsertErr);
+        else pushCount++;
+      } else if (cloudTs > localTs) {
+        // Cloud is newer - pull
+        if (type === 'settings') {
+          const pulled = cloud.data || {};
+          state.settings = { ...state.settings, ...pulled };
+        } else {
+          state[type] = cloud.data || [];
+        }
+        pullCount++;
+      }
+    }
+
+    localTimestamps._lastSync = now;
+    for (const type of CLOUD_DATA_TYPES) {
+      localTimestamps[type] = now;
+    }
+    localStorage.setItem('subpilot_local_ts', JSON.stringify(localTimestamps));
+    state.cloudLastSync = now;
+    save();
+    render();
+    updateCloudStatus();
+
+    if (pushCount > 0 && pullCount > 0) {
+      toast(`同步完成：推送${pushCount}项，拉取${pullCount}项`);
+    } else if (pushCount > 0) {
+      toast(`已上传${pushCount}项数据到云端`);
+    } else if (pullCount > 0) {
+      toast(`已从云端拉取${pullCount}项数据`);
+    } else {
+      toast('数据已是最新');
+    }
+    haptic('success');
+  } catch(e) {
+    console.error('Sync error:', e);
+    toast('同步失败：' + (e.message || '请检查网络和配置'));
+    haptic('error');
+  }
+}
+
+// Update local timestamps when data changes locally
+function markLocalChange() {
+  const ts = JSON.parse(localStorage.getItem('subpilot_local_ts') || '{}');
+  const now = new Date().toISOString();
+  for (const type of CLOUD_DATA_TYPES) {
+    ts[type] = now;
+  }
+  localStorage.setItem('subpilot_local_ts', JSON.stringify(ts));
+}
 
 // ===== Update render() to include new views =====
 
