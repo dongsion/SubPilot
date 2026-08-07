@@ -1722,9 +1722,12 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '1.7.7';
+const APP_VERSION = '1.7.8';
 const APP_BUILD = '2026.08.07';
 const CHANGELOG = [
+  { ver: '1.7.8', date: '2026-08-07', items: [
+    '修复底部导航栏按钮未底对齐问题：减少内边距，按钮紧贴底部安全区'
+  ]},
   { ver: '1.7.7', date: '2026-08-07', items: [
     '添加按钮仅在卡包(账户)页面显示，其他页面用各自标题栏按钮添加'
   ]},
