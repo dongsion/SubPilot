@@ -6,7 +6,8 @@ const KEYS = {
   transactions: 'subpilot_tx',
   onboarded: 'subpilot_onboarded',
   settings: 'subpilot_settings',
-  qrcodes: 'subpilot_qrcodes'
+  qrcodes: 'subpilot_qrcodes',
+  invoices: 'subpilot_invoices'
 };
 
 // ===== Embedded Brand Icons (SVG path data, viewBox 0 0 24 24) =====
@@ -208,6 +209,7 @@ let state = {
     defaultCurrency: 'CNY'
   },
   qrcodes: [],
+  invoices: [],
   reportPeriod: 'month',
   qrSelectedCat: 'all',
   qrEditingId: null,
@@ -216,7 +218,11 @@ let state = {
   pinInputBuffer: '',
   pinSetupBuffer: '',
   pinSetupStep: 0,
-  pinSetupFirst: ''
+  pinSetupFirst: '',
+  invoiceEditingId: null,
+  invoicePreviewData: null,
+  invoiceViewingId: null,
+  invSelectedCat: 'all'
 };
 
 // Card color themes
@@ -313,6 +319,7 @@ function load() {
     state.subscriptions = JSON.parse(localStorage.getItem(KEYS.subscriptions) || '[]');
     state.transactions = JSON.parse(localStorage.getItem(KEYS.transactions) || '[]');
     state.qrcodes = JSON.parse(localStorage.getItem(KEYS.qrcodes) || '[]');
+    state.invoices = JSON.parse(localStorage.getItem(KEYS.invoices) || '[]');
     // Merge loaded settings with defaults to ensure all keys exist
     const loaded = JSON.parse(localStorage.getItem(KEYS.settings) || '{}');
     const defaults = { lockType: 'none', pinHash: null, notifications: false, exRates: { USD: 7.25, EUR: 7.85, GBP: 9.20, JPY: 0.048, HKD: 0.93, TWD: 0.22 }, defaultCurrency: 'CNY' };
@@ -326,6 +333,8 @@ function save() {
   localStorage.setItem(KEYS.transactions, JSON.stringify(state.transactions));
   localStorage.setItem(KEYS.settings, JSON.stringify(state.settings));
   localStorage.setItem(KEYS.qrcodes, JSON.stringify(state.qrcodes));
+  localStorage.setItem(KEYS.invoices, JSON.stringify(state.invoices));
+  updateBadge();
 }
 
 // ===== Utils =====
@@ -395,6 +404,40 @@ document.addEventListener('click', (e) => {
   const target = e.target.closest('button, .pick, .cat-i, .tbi, .qai, .info-r, .pl, .sc2, .bc, .ai-quick-btn, .ai-action-btn, .color-pick, .type-opt');
   if (target) haptic('light');
 }, true);
+
+// ===== PWA Badge (app icon badge for expiring subscriptions) =====
+function updateBadge() {
+  if (!('setAppBadge' in navigator)) return;
+  try {
+    const todayStr = today();
+    const expiring = state.subscriptions.filter(s => {
+      const d = daysBetween(todayStr, s.nextDate);
+      return d >= 0 && d <= 3;
+    }).length;
+    if (expiring > 0) {
+      navigator.setAppBadge(expiring);
+    } else {
+      navigator.clearAppBadge?.();
+    }
+  } catch(e) {}
+}
+
+// Handle URL shortcuts (from manifest shortcuts)
+function handleUrlAction() {
+  const params = new URLSearchParams(window.location.search);
+  const action = params.get('action');
+  if (action === 'add-tx') {
+    setTimeout(() => openAddTx(), 500);
+  } else if (action === 'add-sub') {
+    setTimeout(() => { showView('subs'); openAddSub(); }, 500);
+  } else if (action === 'ai-chat') {
+    setTimeout(() => openAIChat(), 500);
+  }
+  // Clean up URL
+  if (action) {
+    window.history.replaceState({}, '', './');
+  }
+}
 
 // ===== Brand Icon =====
 function brandIconSvg(brand) {
@@ -486,6 +529,7 @@ function fabAction() {
   else if (v === 'subs') openAddSub();
   else if (v === 'accounts') openAddAccount();
   else if (v === 'qrcodes') openAddQRCode();
+  else if (v === 'invoices') openAddInvoice();
   else openAddTx();
 }
 
@@ -1434,8 +1478,16 @@ function renderAccounts() {
     if (hintEl) hintEl.style.display = 'none';
     cs.innerHTML = `<div class="empty-state" style="padding:40px 20px;"><div class="es-icon">💳</div><div class="es-text">暂无账户</div><div class="es-sub">点击 + 添加你的第一张卡</div></div>`;
   } else {
-    cs.innerHTML = state.accounts.map((a, i) => {
-      const isOn = i === state.activeCardIdx;
+    // Reorder accounts so active card is first, rest follow in order
+    const ordered = [];
+    for (let i = 0; i < state.accounts.length; i++) {
+      ordered.push(state.accounts[(state.activeCardIdx + i) % state.accounts.length]);
+    }
+
+    cs.innerHTML = ordered.map((a, stackPos) => {
+      const isOn = stackPos === 0;
+      const stackClass = isOn ? 'on' : (stackPos === 1 ? 'off stack-1' : stackPos === 2 ? 'off stack-2' : 'off stack-3');
+      const origIdx = state.accounts.indexOf(a);
       // Compatibility with old data - map old types
       let acctTypeKey = a.type;
       if (!ACCOUNT_TYPES[acctTypeKey]) acctTypeKey = 'other';
@@ -1478,7 +1530,7 @@ function renderAccounts() {
       // Custom inline styles for card
       const cardStyle = `background:${theme.gradient};border:1px solid ${theme.border};`;
       
-      return `<div class="bc bc-custom ${isOn?'on':'off'}" data-idx="${i}" style="${cardStyle}">
+      return `<div class="bc bc-custom ${stackClass}" data-idx="${origIdx}" data-stack="${stackPos}" style="${cardStyle}">
         ${holoSvg}
         <div class="bct">
           <div class="bcti"><div class="bcn" style="color:${theme.accent};">${a.name}</div><div class="bcty" style="color:${theme.subtext};">${acctType.name}${a.cardNumber ? ' · 尾号'+a.cardNumber : ''}</div></div>
@@ -1494,102 +1546,68 @@ function renderAccounts() {
       </div>`;
     }).join('');
     cs.querySelectorAll('.bc').forEach(c => {
-      // Click to toggle detail section (only for active card)
+      const stackPos = parseInt(c.dataset.stack) || 0;
+      if (stackPos !== 0) return; // Only top card is interactive
+
+      // Click to toggle detail section
       c.onclick = (e) => {
-        if (e.target.closest('.bcl')) return; // icon handled separately
+        if (e.target.closest('.bcl')) return;
         if (cs.dataset.animating === '1') return;
         const detailEl = $('#acct-detail-section');
-        if (c.classList.contains('on')) {
-          // Toggle detail visibility
-          const isVisible = detailEl.style.display !== 'none';
-          detailEl.style.display = isVisible ? 'none' : 'block';
-          haptic('light');
-        }
+        const isVisible = detailEl.style.display !== 'none';
+        detailEl.style.display = isVisible ? 'none' : 'block';
+        haptic('light');
       };
+
       // Swipe right to cycle card to back
-      let startX = 0, startY = 0, currentX = 0, isDragging = false, isSwipe = false;
+      let startX = 0, startY = 0, currentX = 0, currentY = 0, isDragging = false, isSwipe = false;
       c.addEventListener('touchstart', (e) => {
         if (e.target.closest('.bcl')) return;
-        if (!c.classList.contains('on')) return;
         if (cs.dataset.animating === '1') return;
         startX = e.touches[0].clientX;
         startY = e.touches[0].clientY;
-        currentX = 0;
-        isDragging = true;
-        isSwipe = false;
+        currentX = 0; currentY = 0;
+        isDragging = true; isSwipe = false;
+        c.style.transition = 'none';
       }, { passive: true });
+
       c.addEventListener('touchmove', (e) => {
         if (!isDragging) return;
         currentX = e.touches[0].clientX - startX;
-        const deltaY = Math.abs(e.touches[0].clientY - startY);
-        // Only treat as horizontal swipe if X movement dominates
-        if (Math.abs(currentX) > deltaY && Math.abs(currentX) > 10) {
+        currentY = e.touches[0].clientY - startY;
+        if (currentX > 0 && currentX > Math.abs(currentY) && currentX > 10) {
           isSwipe = true;
-          if (currentX > 0) {
-            c.style.transform = `translateX(${currentX}px) rotate(${currentX * 0.05}deg)`;
-            c.style.opacity = String(1 - Math.min(currentX / 300, 0.5));
-            c.style.transition = 'none';
-          }
+          c.style.transform = `translateX(${currentX}px) rotate(${currentX * 0.04}deg)`;
+          c.style.opacity = String(Math.max(1 - currentX / 350, 0.2));
         }
       }, { passive: true });
+
       c.addEventListener('touchend', () => {
         if (!isDragging) return;
         isDragging = false;
+        c.style.transition = '';
+
         if (isSwipe && currentX > 80 && state.accounts.length > 1) {
-          // Swipe right confirmed - cycle card to back
           haptic('medium');
           cs.dataset.animating = '1';
-          const allCards = Array.from(cs.querySelectorAll('.bc'));
-          const nextCard = allCards[1]; // card right below current
 
-          // Phase 1: Fly current card off to the right
-          c.style.transition = 'transform .28s ease-in, opacity .28s ease-in';
-          c.style.transform = `translateX(${window.innerWidth + 100}px) rotate(20deg)`;
-          c.style.opacity = '0';
-          c.style.zIndex = '20';
+          // Fly off: use flying class for quick exit
+          c.classList.add('flying');
           c.classList.remove('on');
+          c.style.transform = `translateX(${window.innerWidth + 100}px) rotate(25deg)`;
+          c.style.opacity = '0';
 
-          // Phase 2: Promote next card to active position immediately (CSS transition animates)
-          if (nextCard) {
-            nextCard.classList.remove('off');
-            nextCard.classList.add('on');
-          }
+          // Immediately advance active index and re-render
+          // This causes next card to animate up to front position via CSS transition
+          state.activeCardIdx = (state.activeCardIdx + 1) % state.accounts.length;
+          $('#acct-detail-section').style.display = 'none';
+          save();
+          render();
 
-          // Phase 3: After fly-off, move card to back and reset
-          setTimeout(() => {
-            // Move DOM element to end of stack
-            cs.appendChild(c);
-            // Reset styles instantly (no transition)
-            c.style.transition = 'none';
-            c.style.transform = '';
-            c.style.opacity = '';
-            c.style.zIndex = '';
-            c.classList.add('off');
-            // Force reflow to commit the reset
-            void c.offsetHeight;
-            // Restore transition for future interactions
-            c.style.transition = '';
-
-            // Reorder data array to match DOM
-            const movedAccount = state.accounts.splice(state.activeCardIdx, 1)[0];
-            state.accounts.push(movedAccount);
-            state.activeCardIdx = 0;
-            save();
-
-            // Update data-idx attributes
-            cs.querySelectorAll('.bc').forEach((card, i) => {
-              card.dataset.idx = i;
-            });
-
-            $('#acct-detail-section').style.display = 'none';
-            delete cs.dataset.animating;
-          }, 280);
+          setTimeout(() => { delete cs.dataset.animating; }, 400);
         } else {
-          // Snap back
-          c.style.transition = 'transform .3s ease, opacity .3s ease';
           c.style.transform = '';
           c.style.opacity = '';
-          setTimeout(() => { c.style.transition = ''; }, 500);
         }
       });
     });
@@ -1644,6 +1662,7 @@ function render() {
   renderAccounts();
   renderReports();
   renderQRCodes();
+  renderInvoices();
   updateLockStatus();
   updateNotifStatus();
   updateExrateStatus();
@@ -1664,14 +1683,15 @@ $$('#tx-fp .pl').forEach(p => p.onclick = () => {
 
 // ===== Data Management =====
 function clearAll() {
-  state.accounts = []; state.subscriptions = []; state.transactions = []; state.qrcodes = [];
+  state.accounts = []; state.subscriptions = []; state.transactions = []; state.qrcodes = []; state.invoices = [];
   state.settings = { lockType: 'none', pinHash: null, notifications: false, exRates: { USD: 7.25, EUR: 7.85, GBP: 9.20, JPY: 0.048, HKD: 0.93, TWD: 0.22 }, defaultCurrency: 'CNY' };
   localStorage.removeItem(KEYS.accounts); localStorage.removeItem(KEYS.subscriptions); localStorage.removeItem(KEYS.transactions);
   localStorage.removeItem(KEYS.onboarded); localStorage.removeItem(KEYS.settings); localStorage.removeItem(KEYS.qrcodes);
+  localStorage.removeItem(KEYS.invoices);
   render();
 }
 function exportData() {
-  const data = { accounts: state.accounts, subscriptions: state.subscriptions, transactions: state.transactions, qrcodes: state.qrcodes, settings: state.settings, exportedAt: new Date().toISOString() };
+  const data = { accounts: state.accounts, subscriptions: state.subscriptions, transactions: state.transactions, qrcodes: state.qrcodes, invoices: state.invoices, settings: state.settings, exportedAt: new Date().toISOString() };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -1691,6 +1711,7 @@ $('#import-file').addEventListener('change', e => {
       if (data.subscriptions) state.subscriptions = data.subscriptions;
       if (data.transactions) state.transactions = data.transactions;
       if (data.qrcodes) state.qrcodes = data.qrcodes;
+      if (data.invoices) state.invoices = data.invoices;
       if (data.settings) state.settings = { ...state.settings, ...data.settings };
       save(); render(); toast('数据已导入');
       haptic('success');
@@ -1700,9 +1721,15 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '1.6.0';
+const APP_VERSION = '1.6.1';
 const APP_BUILD = '2026.08.07';
 const CHANGELOG = [
+  { ver: '1.6.1', date: '2026-08-07', items: [
+    '重构卡面切换动画：绝对定位堆叠，划走的卡立刻消失，下一张平滑升到第一位',
+    '新增发票夹功能：支持图片/PDF上传、分类管理、查看、保存到本地',
+    'PWA增强：应用角标显示即将到期订阅数量，桌面快捷方式支持快速记账/添加订阅/AI记账',
+    '所有交互按钮触觉反馈优化'
+  ]},
   { ver: '1.6.0', date: '2026-08-07', items: [
     '修复卡面切换动画：划走的卡立刻消失并排到后面，下一张卡平滑升到第一位',
     '所有按钮添加震动反馈（haptic feedback），关键操作有成功/错误震动',
@@ -1849,6 +1876,12 @@ function init() {
 
   // Check subscription expiry reminders
   checkSubscriptionReminders();
+
+  // Update PWA badge
+  updateBadge();
+
+  // Handle URL shortcut actions
+  handleUrlAction();
 }
 
 // Keyboard: amount input only numbers
@@ -1859,6 +1892,9 @@ $('#sub-price')?.addEventListener('input', function(e) {
   this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
 });
 $('#acct-balance')?.addEventListener('input', function(e) {
+  this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+});
+$('#inv-amount')?.addEventListener('input', function(e) {
   this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
 });
 
@@ -2992,6 +3028,181 @@ function downloadQR() {
   haptic('success');
   toast('已保存到本地');
 }
+
+// ===== Invoice Management =====
+const INVOICE_CATEGORIES = {
+  food: { name: '餐饮', icon: '🍜' },
+  shopping: { name: '购物', icon: '🛍️' },
+  transport: { name: '交通', icon: '🚗' },
+  entertainment: { name: '娱乐', icon: '🎮' },
+  other: { name: '其他', icon: '📋' }
+};
+
+function renderInvoices() {
+  if (state.currentView !== 'invoices') return;
+  const cats = $('#inv-cats');
+  const grid = $('#inv-grid');
+  if (!cats || !grid) return;
+
+  // Category tabs
+  let catHtml = `<button class="qr-cat ${state.invSelectedCat === 'all' ? 'on' : 'off'}" onclick="selectInvCat('all')">全部</button>`;
+  Object.entries(INVOICE_CATEGORIES).forEach(([k, v]) => {
+    catHtml += `<button class="qr-cat ${state.invSelectedCat === k ? 'on' : 'off'}" onclick="selectInvCat('${k}')">${v.icon} ${v.name}</button>`;
+  });
+  cats.innerHTML = catHtml;
+
+  // Filter
+  let filtered = state.invoices;
+  if (state.invSelectedCat !== 'all') {
+    filtered = state.invoices.filter(inv => inv.category === state.invSelectedCat);
+  }
+  // Sort by date desc
+  filtered.sort((a, b) => b.date.localeCompare(a.date));
+
+  const totalAmt = filtered.reduce((s, inv) => s + (inv.amount || 0), 0);
+  $('#inv-sub').textContent = `${state.invoices.length}张发票 · ¥${fmt(Math.round(totalAmt))}`;
+
+  let gridHtml = '';
+  filtered.forEach(inv => {
+    const catInfo = INVOICE_CATEGORIES[inv.category] || INVOICE_CATEGORIES.other;
+    const isPdf = inv.fileType === 'pdf';
+    const thumbHtml = isPdf
+      ? `<div class="inv-pdf-icon">📄</div>`
+      : `<img src="${inv.image}" alt="${inv.name}">`;
+    gridHtml += `<div class="inv-card" onclick="viewInvoice('${inv.id}')">
+      <div class="inv-card-thumb">${thumbHtml}</div>
+      <div class="inv-card-name">${inv.name}</div>
+      <div class="inv-card-meta">
+        <span class="inv-cat-badge">${catInfo.name}</span>
+        <span class="inv-card-amt">¥${fmt(Math.round(inv.amount || 0))}</span>
+      </div>
+      <div style="font-size:10px;color:var(--t3);">${inv.date || ''}</div>
+    </div>`;
+  });
+
+  gridHtml += `<div class="inv-add-card" onclick="openAddInvoice()">
+    <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    <span>添加发票</span>
+  </div>`;
+  grid.innerHTML = gridHtml;
+}
+
+function selectInvCat(cat) {
+  state.invSelectedCat = cat;
+  renderInvoices();
+  haptic('light');
+}
+
+function openAddInvoice() {
+  state.invoiceEditingId = null;
+  state.invoicePreviewData = null;
+  $('#inv-sheet-title').textContent = '添加发票';
+  $('#inv-name').value = '';
+  $('#inv-amount').value = '';
+  $('#inv-note').value = '';
+  $('#inv-date').value = today();
+  $('#inv-preview').innerHTML = '';
+  $$('#inv-cat-pick .pick').forEach((b, i) => {
+    b.classList.toggle('on', i === 0);
+  });
+  state.invSelectedCat = 'all';
+  openSheet('sheet-inv');
+  haptic('light');
+}
+
+$$('#inv-cat-pick .pick')?.forEach(b => {
+  b.onclick = () => {
+    $$('#inv-cat-pick .pick').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    haptic('light');
+  };
+});
+
+function previewInvFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) {
+    toast('文件不能超过5MB');
+    return;
+  }
+  const isPdf = file.type === 'application/pdf';
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    state.invoicePreviewData = e.target.result;
+    state.invoicePreviewType = isPdf ? 'pdf' : 'image';
+    if (isPdf) {
+      $('#inv-preview').innerHTML = `<div style="padding:20px;background:var(--card2);border-radius:12px;text-align:center;"><div style="font-size:36px;margin-bottom:8px;">📄</div><div style="font-size:12px;color:var(--t2);">PDF文件已选择</div></div>`;
+    } else {
+      $('#inv-preview').innerHTML = `<img src="${e.target.result}" style="max-width:120px;max-height:160px;border-radius:12px;object-fit:cover;">`;
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function saveInvoice() {
+  const name = $('#inv-name').value.trim();
+  const amount = parseFloat($('#inv-amount').value) || 0;
+  const date = $('#inv-date').value || today();
+  const note = $('#inv-note').value.trim();
+  if (!name) { toast('请输入发票名称/商家'); return; }
+  if (!state.invoicePreviewData) { toast('请选择发票文件'); return; }
+  const catBtn = document.querySelector('#inv-cat-pick .pick.on');
+  const category = catBtn ? catBtn.dataset.c : 'other';
+
+  if (state.invoiceEditingId) {
+    const inv = state.invoices.find(i => i.id === state.invoiceEditingId);
+    if (inv) {
+      inv.name = name; inv.amount = amount; inv.date = date;
+      inv.category = category; inv.note = note;
+      inv.image = state.invoicePreviewData;
+      inv.fileType = state.invoicePreviewType || 'image';
+    }
+    state.invoiceEditingId = null;
+  } else {
+    state.invoices.push({
+      id: genId(), name, amount, date, category, note,
+      image: state.invoicePreviewData,
+      fileType: state.invoicePreviewType || 'image',
+      createdAt: new Date().toISOString()
+    });
+  }
+  save();
+  closeSheet('sheet-inv');
+  toast('发票已保存');
+  haptic('success');
+  renderInvoices();
+}
+
+function viewInvoice(id) {
+  const inv = state.invoices.find(i => i.id === id);
+  if (!inv) return;
+  state.invoiceViewingId = id;
+  const catInfo = INVOICE_CATEGORIES[inv.category] || INVOICE_CATEGORIES.other;
+  $('#inv-view-title').textContent = inv.name;
+  $('#inv-view-meta').innerHTML = `${catInfo.icon} ${catInfo.name} · ¥${fmt(Math.round(inv.amount || 0))} · ${inv.date || ''}${inv.note ? ' · ' + inv.note : ''}`;
+  if (inv.fileType === 'pdf') {
+    $('#inv-view-img').innerHTML = `<div style="padding:40px;background:#fff;text-align:center;width:100%;"><div style="font-size:48px;margin-bottom:8px;">📄</div><div style="font-size:12px;color:#666;">PDF发票</div></div>`;
+  } else {
+    $('#inv-view-img').innerHTML = `<img src="${inv.image}" style="width:100%;display:block;">`;
+  }
+  openSheet('sheet-inv-view');
+  haptic('light');
+}
+
+function downloadInvoice() {
+  const inv = state.invoices.find(i => i.id === state.invoiceViewingId);
+  if (!inv) return;
+  const ext = inv.fileType === 'pdf' ? 'pdf' : 'png';
+  const link = document.createElement('a');
+  link.download = `${inv.name}-${inv.date || ''}.${ext}`;
+  link.href = inv.image;
+  link.click();
+  haptic('success');
+  toast('已保存到本地');
+}
+
+// Initialize category pickers for invoice sheet
+// (handled by delegated click on .pick elements)
 
 // ===== Update render() to include new views =====
 

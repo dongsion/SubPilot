@@ -97,12 +97,15 @@ input { font-family:inherit; }
 .rt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;font-family:var(--font-mono);}
 
 /* Bank cards - 差异化卡面设计 */
-.cards { position:relative; margin-bottom:24px; }
-.bc { border-radius:20px; padding:22px 24px 20px; height:200px; position:relative; overflow:hidden; margin-bottom:-120px; transition:all .5s cubic-bezier(.34,1.56,.64,1), transform .3s ease, opacity .3s ease; box-shadow:0 20px 60px rgba(0,0,0,0.5); cursor:grab; }
-.bc:last-child{margin-bottom:0;}
-.bc.on{margin-bottom:16px;z-index:10;}
-.bc.off{transform:scale(0.92) translateY(-18px);opacity:0.35;z-index:5;filter:blur(0.5px);}
-.bc.off:nth-child(2){transform:scale(0.96) translateY(-10px);opacity:0.6;z-index:6;}
+.cards { position:relative; margin-bottom:24px; min-height:216px; }
+.bc { border-radius:20px; padding:22px 24px 20px; height:200px; position:absolute; top:0; left:0; right:0; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.5); cursor:grab; display:flex; flex-direction:column; transition:transform .45s cubic-bezier(.34,1.3,.64,1), opacity .35s ease, scale .45s cubic-bezier(.34,1.3,.64,1), filter .45s ease; will-change:transform,opacity; }
+.cards:has(.empty-state) { min-height:0; height:auto; }
+.bc.on { z-index:10; transform:translateY(0) scale(1); opacity:1; filter:none; }
+.bc.off { pointer-events:none; }
+.bc.stack-1 { z-index:9; transform:translateY(12px) scale(0.96); opacity:0.6; filter:blur(0.3px); }
+.bc.stack-2 { z-index:8; transform:translateY(24px) scale(0.92); opacity:0.35; filter:blur(0.6px); }
+.bc.stack-3 { z-index:7; transform:translateY(32px) scale(0.88); opacity:0.15; filter:blur(1px); }
+.bc.flying { z-index:20; pointer-events:none; transition:transform .32s cubic-bezier(.4,0,.8,.5), opacity .32s ease; }
 
 /* === 通用元素 === */
 .holo { position:absolute; top:24px; right:24px; width:32px; height:28px; z-index:2; opacity:0.4; }
@@ -448,6 +451,20 @@ textarea.form-i{resize:none;min-height:80px;}
 .qr-add-card { border:2px dashed var(--border2); background:transparent; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; padding:20px; border-radius:16px; color:var(--t3); font-size:13px; transition:all .15s; }
 .qr-add-card:active{transform:scale(.97);border-color:var(--gold);}
 
+/* ===== Invoice Folder ===== */
+.inv-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+.inv-card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:14px; display:flex; flex-direction:column; gap:8px; transition:all .15s; }
+.inv-card:active{transform:scale(.97);}
+.inv-card-thumb { width:100%; aspect-ratio:3/4; border-radius:10px; background:var(--card2); overflow:hidden; display:flex; align-items:center; justify-content:center; }
+.inv-card-thumb img { width:100%; height:100%; object-fit:cover; }
+.inv-card-thumb .inv-pdf-icon { font-size:32px; }
+.inv-card-name { font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.inv-card-meta { display:flex; justify-content:space-between; align-items:center; font-size:11px; color:var(--t3); }
+.inv-card-amt { color:var(--gold); font-weight:600; font-family:var(--font-mono); }
+.inv-add-card { border:2px dashed var(--border2); background:transparent; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; padding:20px; border-radius:16px; color:var(--t3); font-size:13px; transition:all .15s; min-height:160px; }
+.inv-add-card:active{transform:scale(.97);border-color:var(--gold);}
+.inv-cat-badge { display:inline-block; font-size:9px; padding:2px 6px; border-radius:4px; font-weight:600; background:var(--gold-bg); color:var(--gold); border:1px solid var(--gold-bd); }
+
 /* ===== Exchange Rate Settings ===== */
 .exrate-row { display:flex; justify-content:space-between; align-items:center; padding:14px 18px; border-bottom:1px solid var(--border); }
 .exrate-row:last-child{border-bottom:none;}
@@ -577,6 +594,7 @@ textarea.form-i{resize:none;min-height:80px;}
     <div class="info-g">
       <div class="info-r" onclick="showView('reports')"><span class="info-l">📊 收支报表</span><span class="info-v" style="color:var(--gold);">查看 ›</span></div>
       <div class="info-r" onclick="showView('qrcodes')"><span class="info-l">📱 二维码夹</span><span class="info-v" style="color:var(--gold);">管理 ›</span></div>
+      <div class="info-r" onclick="showView('invoices')"><span class="info-l">🧾 发票夹</span><span class="info-v" style="color:var(--gold);">管理 ›</span></div>
       <div class="info-r" onclick="openExchangeRateSettings()"><span class="info-l">💱 汇率换算</span><span class="info-v" style="color:var(--gold);" id="exrate-status">设置 ›</span></div>
     </div>
     <div class="sec" style="margin-top:8px;"><span class="st" style="font-size:13px;color:var(--t3);">安全与隐私</span></div>
@@ -591,14 +609,14 @@ textarea.form-i{resize:none;min-height:80px;}
       <div class="info-r" onclick="if(confirm('确定清除所有数据？此操作不可撤销。')){clearAll();toast('数据已清除');}"><span class="info-l">清除所有数据</span><span class="info-v" style="color:var(--red);">›</span></div>
     </div>
     <div class="info-g">
-      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v1.6.0 ›</span></div>
+      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v1.6.1 ›</span></div>
       <div class="info-r" onclick="showChangelog()"><span class="info-l">更新日志</span><span class="info-v" style="color:var(--gold);">查看 ›</span></div>
       <div class="info-r" onclick="checkUpdate()"><span class="info-l">检查更新</span><span class="info-v" style="color:var(--gold);" id="update-status">›</span></div>
       <div class="info-r"><span class="info-l">数据存储</span><span class="info-v" style="color:var(--t3);">仅本地浏览器</span></div>
     </div>
     <div style="text-align:center;padding:40px 20px;color:var(--t3);font-size:12px;">
       <div style="margin-bottom:8px;font-size:20px;letter-spacing:1px;">SubPilot</div>
-      <div style="margin-bottom:4px;">订阅管家 · v1.6.0 (Build 2026.08.07)</div>
+      <div style="margin-bottom:4px;">订阅管家 · v1.6.1 (Build 2026.08.07)</div>
       <div>所有数据仅保存在本地，隐私安全</div>
     </div>
     <input type="file" id="import-file" accept=".json" style="display:none;">
@@ -723,6 +741,25 @@ textarea.form-i{resize:none;min-height:80px;}
     </div>
     <div class="qr-cats" id="qr-cats"></div>
     <div class="qr-grid" id="qr-grid"></div>
+    <div style="height:20px;"></div>
+  </div>
+</div>
+
+<!-- View: Invoices -->
+<div class="view" id="view-invoices">
+  <div class="content">
+    <div class="hd">
+      <div class="ht"><h1>发票夹</h1><p id="inv-sub">电子发票管理</p></div>
+      <button class="ib" onclick="showView(state.lastView||'overview')">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px 16px;margin-bottom:16px;">
+      <div style="font-size:12px;color:var(--t3);margin-bottom:8px;">关于邮箱自动收取</div>
+      <div style="font-size:13px;color:var(--t2);line-height:1.6;">邮箱自动收取发票需要服务器端支持（IMAP轮询），纯前端PWA无法后台监控邮箱。当前支持手动上传发票图片/PDF，可查看、保存到本地。后续版本将接入云同步实现自动收取。</div>
+    </div>
+    <div class="qr-cats" id="inv-cats"></div>
+    <div class="inv-grid" id="inv-grid"></div>
     <div style="height:20px;"></div>
   </div>
 </div>
@@ -970,6 +1007,67 @@ textarea.form-i{resize:none;min-height:80px;}
     <div class="btn-row">
       <button class="btn btn-outline" onclick="closeSheet('sheet-qr-view')">关闭</button>
       <button class="btn btn-gold" onclick="downloadQR()">保存到本地</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sheet: Add Invoice -->
+<div class="sheet-overlay" id="sheet-inv">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="inv-sheet-title">添加发票</div>
+    <div class="form-g">
+      <label class="form-l">发票名称/商家</label>
+      <input type="text" class="form-i" id="inv-name" placeholder="如：美团外卖、拼多多">
+    </div>
+    <div class="form-g">
+      <label class="form-l">发票金额（元）</label>
+      <input type="text" class="form-i" id="inv-amount" placeholder="0.00" inputmode="decimal">
+    </div>
+    <div class="form-g">
+      <label class="form-l">分类</label>
+      <div class="row-pick" id="inv-cat-pick">
+        <button class="pick on" data-c="food">餐饮</button>
+        <button class="pick" data-c="shopping">购物</button>
+        <button class="pick" data-c="transport">交通</button>
+        <button class="pick" data-c="entertainment">娱乐</button>
+        <button class="pick" data-c="other">其他</button>
+      </div>
+    </div>
+    <div class="form-g">
+      <label class="form-l">发票日期</label>
+      <input type="date" class="form-i" id="inv-date">
+    </div>
+    <div class="form-g">
+      <label class="form-l">发票图片/PDF</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="file" id="inv-file-input" accept="image/*,.pdf" style="display:none;" onchange="previewInvFile(this)">
+        <button class="btn btn-outline" onclick="$('#inv-file-input').click()" style="white-space:nowrap;padding:10px 14px;font-size:13px;">选择文件</button>
+        <span style="font-size:12px;color:var(--t3);">支持图片或PDF</span>
+      </div>
+      <div id="inv-preview" style="margin-top:10px;"></div>
+    </div>
+    <div class="form-g">
+      <label class="form-l">备注</label>
+      <input type="text" class="form-i" id="inv-note" placeholder="可选">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-outline" onclick="closeSheet('sheet-inv')">取消</button>
+      <button class="btn btn-gold" onclick="saveInvoice()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Invoice Viewer Modal -->
+<div class="sheet-overlay" id="sheet-inv-view">
+  <div class="sheet" style="text-align:center;">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="inv-view-title">发票</div>
+    <div id="inv-view-meta" style="font-size:13px;color:var(--t2);margin-bottom:10px;"></div>
+    <div id="inv-view-img" style="margin:10px auto 20px;max-width:280px;border-radius:16px;overflow:hidden;background:#fff;"></div>
+    <div class="btn-row">
+      <button class="btn btn-outline" onclick="closeSheet('sheet-inv-view')">关闭</button>
+      <button class="btn btn-gold" onclick="downloadInvoice()">保存到本地</button>
     </div>
   </div>
 </div>
