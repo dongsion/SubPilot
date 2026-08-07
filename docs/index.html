@@ -396,6 +396,27 @@ textarea.form-i{resize:none;min-height:80px;}
 .toast{position:fixed;top:60px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--card2);border:1px solid var(--border2);color:var(--t1);padding:12px 24px;border-radius:999px;font-size:13px;font-weight:500;z-index:300;opacity:0;transition:all .3s;pointer-events:none;box-shadow:0 8px 30px rgba(0,0,0,0.4);}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
 
+/* ===== Lock Screen (Scroll Wheel) ===== */
+.lock-overlay { position:fixed; inset:0; background:#000; z-index:999; display:none; flex-direction:column; align-items:center; justify-content:center; padding:40px 24px; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px); }
+.lock-overlay.on { display:flex; animation:lockFadeIn .3s ease; }
+@keyframes lockFadeIn { from{opacity:0;} to{opacity:1;} }
+.lock-content { display:flex; flex-direction:column; align-items:center; width:100%; max-width:320px; }
+.lock-icon { color:var(--gold); margin-bottom:16px; opacity:0.7; }
+.lock-title { font-size:26px; font-weight:700; letter-spacing:2px; margin-bottom:4px; }
+.lock-subtitle { font-size:13px; color:var(--t2); margin-bottom:24px; text-align:center; transition:color .3s; }
+.lock-subtitle.error { color:var(--red); }
+.lock-wheels-wrap { position:relative; width:100%; margin-bottom:24px; }
+.lock-wheel-highlight { position:absolute; top:50%; left:0; right:0; height:44px; transform:translateY(-50%); background:var(--gold-bg); border-top:1px solid var(--gold-bd); border-bottom:1px solid var(--gold-bd); border-radius:10px; pointer-events:none; z-index:0; }
+.lock-wheels { display:flex; justify-content:center; gap:8px; position:relative; z-index:1; height:180px; overflow:hidden; mask-image:linear-gradient(to bottom, transparent 0%, #000 30%, #000 70%, transparent 100%); -webkit-mask-image:linear-gradient(to bottom, transparent 0%, #000 30%, #000 70%, transparent 100%); }
+.lock-wheel { width:56px; height:180px; overflow-y:scroll; scroll-snap-type:y mandatory; scrollbar-width:none; -ms-overflow-style:none; perspective:1000px; }
+.lock-wheel::-webkit-scrollbar { display:none; }
+.lock-wheel-item { height:44px; display:flex; align-items:center; justify-content:center; scroll-snap-align:center; font-size:22px; font-weight:600; font-family:var(--font-mono); color:var(--t3); transition:color .2s, transform .2s; }
+.lock-wheel-item.active { color:var(--gold); font-size:26px; }
+.lock-confirm-btn { width:100%; padding:15px; border-radius:16px; background:var(--gold); color:#000; border:none; font-size:16px; font-weight:700; font-family:inherit; transition:transform .15s; }
+.lock-confirm-btn:active { transform:scale(.96); }
+.lock-cancel-btn { width:100%; padding:13px; border-radius:14px; background:transparent; color:var(--t2); border:1px solid var(--border2); font-size:14px; font-weight:600; font-family:inherit; margin-top:10px; transition:transform .15s; }
+.lock-cancel-btn:active { transform:scale(.96); }
+
 /* ===== Reports ===== */
 .rep-period { display:flex; gap:8px; margin-bottom:16px; }
 .rp-btn { flex:1; padding:10px; border-radius:12px; background:var(--card); border:1px solid var(--border); color:var(--t2); font-size:13px; font-weight:600; font-family:inherit; transition:all .15s; }
@@ -580,6 +601,10 @@ textarea.form-i{resize:none;min-height:80px;}
       <div class="info-r" onclick="openCloudAuth()"><span class="info-l">☁️ 云端同步</span><span class="info-v" style="color:var(--gold);" id="cloud-status">未登录 ›</span></div>
       <div class="info-r" onclick="openCloudConfig()"><span class="info-l" style="font-size:13px;color:var(--t2);">云服务配置</span><span class="info-v" style="color:var(--t3);font-size:12px;" id="cloud-config-status">默认 ›</span></div>
     </div>
+    <div class="sec" style="margin-top:8px;"><span class="st" style="font-size:13px;color:var(--t3);">安全</span></div>
+    <div class="info-g">
+      <div class="info-r" onclick="openLockSettings()"><span class="info-l">🔒 应用密码</span><span class="info-v" style="color:var(--gold);" id="lock-status">未开启 ›</span></div>
+    </div>
     <div class="sec" style="margin-top:8px;"><span class="st" style="font-size:13px;color:var(--t3);">通知</span></div>
     <div class="info-g">
       <div class="info-r" onclick="toggleNotifications()"><span class="info-l">🔔 到期提醒</span><span class="info-v" style="color:var(--gold);" id="notif-status">未开启 ›</span></div>
@@ -591,14 +616,14 @@ textarea.form-i{resize:none;min-height:80px;}
       <div class="info-r" onclick="if(confirm('确定清除所有数据？此操作不可撤销。')){clearAll();toast('数据已清除');}"><span class="info-l">清除所有数据</span><span class="info-v" style="color:var(--red);">›</span></div>
     </div>
     <div class="info-g">
-      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v1.7.4 ›</span></div>
+      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v1.7.5 ›</span></div>
       <div class="info-r" onclick="showChangelog()"><span class="info-l">更新日志</span><span class="info-v" style="color:var(--gold);">查看 ›</span></div>
       <div class="info-r" onclick="checkUpdate()"><span class="info-l">检查更新</span><span class="info-v" style="color:var(--gold);" id="update-status">›</span></div>
       <div class="info-r"><span class="info-l">数据存储</span><span class="info-v" style="color:var(--t3);">仅本地浏览器</span></div>
     </div>
     <div style="text-align:center;padding:40px 20px;color:var(--t3);font-size:12px;">
       <div style="margin-bottom:8px;font-size:20px;letter-spacing:1px;">SubPilot</div>
-      <div style="margin-bottom:4px;">订阅管家 · v1.7.4 (Build 2026.08.07)</div>
+      <div style="margin-bottom:4px;">订阅管家 · v1.7.5 (Build 2026.08.07)</div>
       <div>所有数据默认仅保存在本地，开启云同步后加密上传至 Supabase</div>
     </div>
     <input type="file" id="import-file" accept=".json" style="display:none;">
@@ -650,6 +675,23 @@ textarea.form-i{resize:none;min-height:80px;}
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
       </button>
     </div>
+  </div>
+</div>
+
+<!-- Lock Screen (Scroll Wheel Password) -->
+<div class="lock-overlay" id="lock-screen">
+  <div class="lock-content">
+    <div class="lock-icon">
+      <svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    </div>
+    <div class="lock-title">SubPilot</div>
+    <div class="lock-subtitle" id="lock-subtitle">滚动输入密码解锁</div>
+    <div class="lock-wheels-wrap">
+      <div class="lock-wheels" id="lock-wheels"></div>
+      <div class="lock-wheel-highlight"></div>
+    </div>
+    <button class="lock-confirm-btn" id="lock-confirm-btn" onclick="confirmLockPassword()">确认</button>
+    <button class="lock-cancel-btn" id="lock-cancel-btn" style="display:none;" onclick="cancelLockAction()">取消</button>
   </div>
 </div>
 

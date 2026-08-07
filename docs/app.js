@@ -204,6 +204,7 @@ let state = {
   editSubId: null,
   cardIconPickerId: null,
   settings: {
+    appPassword: null,
     notifications: false,
     exRates: { USD: 7.25, EUR: 7.85, GBP: 9.20, JPY: 0.048, HKD: 0.93, TWD: 0.22 },
     defaultCurrency: 'CNY'
@@ -326,7 +327,7 @@ function load() {
     state.invoices = JSON.parse(localStorage.getItem(KEYS.invoices) || '[]');
     // Merge loaded settings with defaults to ensure all keys exist
     const loaded = JSON.parse(localStorage.getItem(KEYS.settings) || '{}');
-    const defaults = { notifications: false, exRates: { USD: 7.25, EUR: 7.85, GBP: 9.20, JPY: 0.048, HKD: 0.93, TWD: 0.22 }, defaultCurrency: 'CNY' };
+    const defaults = { appPassword: null, notifications: false, exRates: { USD: 7.25, EUR: 7.85, GBP: 9.20, JPY: 0.048, HKD: 0.93, TWD: 0.22 }, defaultCurrency: 'CNY' };
     state.settings = { ...defaults, ...loaded };
     if (!state.settings.exRates) state.settings.exRates = defaults.exRates;
   } catch(e) { console.error('Load error', e); }
@@ -1668,6 +1669,7 @@ function render() {
   renderReports();
   renderQRCodes();
   renderInvoices();
+  updateLockStatus();
   updateNotifStatus();
   updateExrateStatus();
   updateCloudStatus();
@@ -1689,7 +1691,7 @@ $$('#tx-fp .pl').forEach(p => p.onclick = () => {
 // ===== Data Management =====
 function clearAll() {
   state.accounts = []; state.subscriptions = []; state.transactions = []; state.qrcodes = []; state.invoices = [];
-  state.settings = { notifications: false, exRates: { USD: 7.25, EUR: 7.85, GBP: 9.20, JPY: 0.048, HKD: 0.93, TWD: 0.22 }, defaultCurrency: 'CNY' };
+  state.settings = { appPassword: null, notifications: false, exRates: { USD: 7.25, EUR: 7.85, GBP: 9.20, JPY: 0.048, HKD: 0.93, TWD: 0.22 }, defaultCurrency: 'CNY' };
   localStorage.removeItem(KEYS.accounts); localStorage.removeItem(KEYS.subscriptions); localStorage.removeItem(KEYS.transactions);
   localStorage.removeItem(KEYS.onboarded); localStorage.removeItem(KEYS.settings); localStorage.removeItem(KEYS.qrcodes);
   localStorage.removeItem(KEYS.invoices);
@@ -1726,9 +1728,14 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '1.7.4';
+const APP_VERSION = '1.7.5';
 const APP_BUILD = '2026.08.07';
 const CHANGELOG = [
+  { ver: '1.7.5', date: '2026-08-07', items: [
+    '新增应用密码：4位数字密码锁，iOS风格滚动转盘输入',
+    '设置中开启密码后，每次打开App需滚动输入密码解锁',
+    '支持修改密码和关闭密码，密码哈希不上传云端'
+  ]},
   { ver: '1.7.4', date: '2026-08-07', items: [
     '移除应用锁功能（Face ID/指纹/PIN密码），简化应用体验',
     '清理锁屏相关界面与代码'
@@ -1899,6 +1906,9 @@ function init() {
   }
 
   render();
+
+  // Show lock screen on app launch if password is set
+  showLockScreen();
 
   // Check subscription expiry reminders
   checkSubscriptionReminders();
@@ -2378,9 +2388,237 @@ function cancelAITx() {
 // Lock on visibility change (return from background)
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
+    showLockScreen();
     checkSubscriptionReminders();
   }
 });
+
+// ===== App Lock (Scroll Wheel Password) =====
+const WHEEL_ITEM_H = 44;
+const WHEEL_PAD = 2; // padding items top/bottom
+
+function hashPassword(pwd) {
+  let h = 5381;
+  for (let i = 0; i < pwd.length; i++) { h = ((h << 5) + h + pwd.charCodeAt(i)) | 0; }
+  return 'p' + (h >>> 0).toString(36);
+}
+
+function updateLockStatus() {
+  const el = $('#lock-status');
+  if (!el) return;
+  el.textContent = state.settings.appPassword ? '已开启 ›' : '未开启 ›';
+}
+
+// Build a single wheel column with digits 0-9
+function buildWheel(initialDigit) {
+  const wheel = document.createElement('div');
+  wheel.className = 'lock-wheel';
+  for (let i = 0; i < WHEEL_PAD; i++) wheel.appendChild(makeWheelItem(''));
+  for (let d = 0; d <= 9; d++) wheel.appendChild(makeWheelItem(String(d)));
+  for (let i = 0; i < WHEEL_PAD; i++) wheel.appendChild(makeWheelItem(''));
+  // Set initial scroll position
+  const targetIdx = WHEEL_PAD + (initialDigit || 0);
+  wheel.scrollTop = targetIdx * WHEEL_ITEM_H;
+  // Snap + highlight on scroll
+  let snapTimer = null;
+  wheel.addEventListener('scroll', () => {
+    updateWheelHighlight(wheel);
+    clearTimeout(snapTimer);
+    snapTimer = setTimeout(() => snapWheel(wheel), 80);
+  }, { passive: true });
+  return wheel;
+}
+
+function makeWheelItem(text) {
+  const item = document.createElement('div');
+  item.className = 'lock-wheel-item';
+  item.textContent = text;
+  return item;
+}
+
+function updateWheelHighlight(wheel) {
+  const items = wheel.querySelectorAll('.lock-wheel-item');
+  const center = wheel.scrollTop + wheel.clientHeight / 2;
+  items.forEach(item => {
+    const itemCenter = item.offsetTop + item.offsetHeight / 2;
+    const dist = Math.abs(center - itemCenter);
+    if (dist < WHEEL_ITEM_H * 0.6) {
+      item.classList.add('active');
+    } else {
+      item.classList.remove('active');
+    }
+  });
+}
+
+function snapWheel(wheel) {
+  const nearest = Math.round(wheel.scrollTop / WHEEL_ITEM_H) * WHEEL_ITEM_H;
+  wheel.scrollTo({ top: nearest, behavior: 'smooth' });
+}
+
+function getWheelDigit(wheel) {
+  const idx = Math.round(wheel.scrollTop / WHEEL_ITEM_H) - WHEEL_PAD;
+  return ((idx % 10) + 10) % 10;
+}
+
+function getWheelDigits() {
+  const wheels = $$('#lock-wheels .lock-wheel');
+  return Array.from(wheels).map(getWheelDigit).join('');
+}
+
+function resetWheels() {
+  const container = $('#lock-wheels');
+  container.innerHTML = '';
+  for (let i = 0; i < 4; i++) {
+    container.appendChild(buildWheel(0));
+  }
+  // Trigger initial highlight
+  $$('#lock-wheels .lock-wheel').forEach(updateWheelHighlight);
+}
+
+// Lock screen mode: 'unlock' | 'set' | 'confirm' | 'remove'
+let lockMode = 'unlock';
+
+function showLockScreen() {
+  if (!state.settings.appPassword) return;
+  lockMode = 'unlock';
+  const overlay = $('#lock-screen');
+  const subtitle = $('#lock-subtitle');
+  const confirmBtn = $('#lock-confirm-btn');
+  const cancelBtn = $('#lock-cancel-btn');
+  subtitle.textContent = '滚动输入密码解锁';
+  subtitle.classList.remove('error');
+  confirmBtn.style.display = 'block';
+  confirmBtn.textContent = '解锁';
+  cancelBtn.style.display = 'none';
+  resetWheels();
+  overlay.classList.add('on');
+  haptic('medium');
+}
+
+function hideLockScreen() {
+  $('#lock-screen').classList.remove('on');
+}
+
+function openLockSettings() {
+  if (state.settings.appPassword) {
+    // Already set - ask to change or remove
+    const choice = confirm('应用密码已开启\n\n确定 = 修改密码\n取消 = 关闭密码');
+    if (choice) {
+      // Verify old password first
+      lockMode = 'set';
+      const subtitle = $('#lock-subtitle');
+      const confirmBtn = $('#lock-confirm-btn');
+      const cancelBtn = $('#lock-cancel-btn');
+      subtitle.textContent = '请先输入当前密码';
+      subtitle.classList.remove('error');
+      confirmBtn.style.display = 'block';
+      confirmBtn.textContent = '确认';
+      cancelBtn.style.display = 'block';
+      resetWheels();
+      $('#lock-screen').classList.add('on');
+      // Temporarily set mode to verify-old
+      lockMode = 'verify-old';
+    } else {
+      // Remove password
+      state.settings.appPassword = null;
+      save();
+      updateLockStatus();
+      toast('应用密码已关闭');
+      haptic('success');
+    }
+    return;
+  }
+  // Set new password - first entry
+  lockMode = 'set';
+  const subtitle = $('#lock-subtitle');
+  const confirmBtn = $('#lock-confirm-btn');
+  const cancelBtn = $('#lock-cancel-btn');
+  subtitle.textContent = '滚动设置4位数字密码';
+  subtitle.classList.remove('error');
+  confirmBtn.style.display = 'block';
+  confirmBtn.textContent = '下一步';
+  cancelBtn.style.display = 'block';
+  resetWheels();
+  $('#lock-screen').classList.add('on');
+}
+
+let pendingPassword = '';
+
+function confirmLockPassword() {
+  haptic('medium');
+  const subtitle = $('#lock-subtitle');
+  const confirmBtn = $('#lock-confirm-btn');
+  const entered = getWheelDigits();
+
+  if (lockMode === 'unlock') {
+    if (hashPassword(entered) === state.settings.appPassword) {
+      hideLockScreen();
+      haptic('success');
+    } else {
+      subtitle.textContent = '密码错误，请重试';
+      subtitle.classList.add('error');
+      haptic('error');
+      resetWheels();
+      setTimeout(() => {
+        subtitle.textContent = '滚动输入密码解锁';
+        subtitle.classList.remove('error');
+      }, 1500);
+    }
+  } else if (lockMode === 'verify-old') {
+    if (hashPassword(entered) === state.settings.appPassword) {
+      // Old password correct, now set new
+      lockMode = 'set';
+      subtitle.textContent = '滚动设置新的4位密码';
+      subtitle.classList.remove('error');
+      confirmBtn.textContent = '下一步';
+      resetWheels();
+    } else {
+      subtitle.textContent = '当前密码错误';
+      subtitle.classList.add('error');
+      haptic('error');
+      resetWheels();
+      setTimeout(() => {
+        subtitle.textContent = '请先输入当前密码';
+        subtitle.classList.remove('error');
+      }, 1500);
+    }
+  } else if (lockMode === 'set') {
+    pendingPassword = entered;
+    lockMode = 'confirm';
+    subtitle.textContent = '请再次滚动输入确认';
+    subtitle.classList.remove('error');
+    confirmBtn.textContent = '确认';
+    resetWheels();
+  } else if (lockMode === 'confirm') {
+    if (entered === pendingPassword) {
+      state.settings.appPassword = hashPassword(entered);
+      save();
+      updateLockStatus();
+      hideLockScreen();
+      toast('应用密码已开启');
+      haptic('success');
+      pendingPassword = '';
+    } else {
+      subtitle.textContent = '两次密码不一致，请重新设置';
+      subtitle.classList.add('error');
+      haptic('error');
+      pendingPassword = '';
+      lockMode = 'set';
+      confirmBtn.textContent = '下一步';
+      resetWheels();
+      setTimeout(() => {
+        subtitle.textContent = '滚动设置4位数字密码';
+        subtitle.classList.remove('error');
+      }, 1500);
+    }
+  }
+}
+
+function cancelLockAction() {
+  haptic('light');
+  hideLockScreen();
+  pendingPassword = '';
+}
 
 // ===== Subscription Expiry Notifications =====
 function updateNotifStatus() {
@@ -3415,7 +3653,10 @@ async function syncToCloud() {
     for (const type of CLOUD_DATA_TYPES) {
       let localData;
       if (type === 'settings') {
-        localData = { ...state.settings };
+        // Don't sync app password hash for security
+        const safe = { ...state.settings };
+        delete safe.appPassword;
+        localData = safe;
       } else {
         localData = state[type];
       }
