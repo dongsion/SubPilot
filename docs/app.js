@@ -7,77 +7,157 @@ const KEYS = {
   onboarded: 'subpilot_onboarded'
 };
 
-// ===== Embedded Brand Icons (path data) =====
-const EMBEDDED_ICONS = {
-  spotify: 'M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.36-.66.48-1.02.24-2.82-1.74-6.36-2.1-10.56-1.14-.42.12-.78-.18-.9-.54-.12-.42.18-.78.54-.9 4.56-1.02 8.52-.6 11.64 1.32.42.18.48.66.3 1.02zm1.44-3.3c-.3.42-.84.6-1.26.3-3.24-1.98-8.16-2.58-11.94-1.38-.48.12-1.02-.12-1.14-.6-.12-.48.12-1.02.6-1.14C9.6 9.9 15 10.56 18.72 12.84c.36.18.54.78.24 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.3c-.6.18-1.2-.18-1.38-.72-.18-.6.18-1.2.72-1.38 4.26-1.26 11.28-1.02 15.72 1.62.54.3.72 1.02.42 1.56-.3.42-1.02.6-1.56.3z',
-  netflix: 'M5.4 0c.5.9 1.3 2.3 1.9 3.7C8.2 2.5 9 .8 9.5 0h3.5c-.5 1.3-1.3 3.2-2.3 5 1.1 1.9 2.3 4.3 3.1 5.9V0h3.1v16h-3.1c-.8-1.6-2.2-4.3-3.5-6.6-1 2-2.2 4.8-3 6.6H4.3C3.2 12.3 1.4 5.6 0 1.7V0h5.4z',
-  apple: 'M12.15 6.9c-.95 0-2.42-1.08-3.96-1.04-2.04.03-3.91 1.18-4.96 3.01C1.11 12.58 2.68 18 4.74 21c1.01 1.45 2.21 3.09 3.79 3.04 1.52-.07 2.09-.99 3.94-.99 1.83 0 2.35.99 3.96.95 1.64-.03 2.68-1.48 3.68-2.95 1.16-1.69 1.64-3.33 1.66-3.42-.04-.01-3.18-1.22-3.22-4.86-.03-3.04 2.48-4.49 2.6-4.56-1.43-2.09-3.62-2.32-4.39-2.38-2-.16-3.68 1.09-4.61 1.09zM15.53 3.83c.84-1.01 1.4-2.43 1.25-3.83-1.21.05-2.66.81-3.53 1.82-.78.9-1.45 2.34-1.27 3.71 1.34.1 2.72-.69 3.56-1.7z',
-  notion: 'M4.46 4.21c.75.6 1.03.56 2.11.41l11.29-1.62c.3-.04.62-.09.91-.05-.27.09-.56.22-.81.39L6.26 12.14c-.53.37-.67.52-.64.97l.13 6.59c.01.47.1.63.47.58l12.46-1.78c.52-.07.65-.22.65-.74V4.85c0-.48-.08-.71-.56-.64L6.85 5.94c-.86.12-1.29.06-1.8-.42l-.6-.91zm12.92 3.57v9.46c0 .22-.08.35-.3.38l-9.59 1.37c-.24.03-.32-.04-.32-.27V8.64c0-.21.05-.3.25-.33l9.66-1.38c.23-.03.31.05.31.29v.56z',
-  youtube: 'M23.5 6.19a3.02 3.02 0 0 0-2.12-2.14C19.51 3.55 12 3.55 12 3.55s-7.51 0-9.38.5A3.02 3.02 0 0 0 .5 6.19C0 8.07 0 12 0 12s0 3.93.5 5.81a3.02 3.02 0 0 0 2.12 2.14c1.87.5 9.38.5 9.38.5s7.51 0 9.38-.5a3.02 3.02 0 0 0 2.12-2.14C24 15.93 24 12 24 12s0-3.93-.5-5.81zM9.55 15.57V8.43L15.82 12l-6.27 3.57z',
-  adobelightroom: 'M11.6 0c-2.3 0-4.1.02-5.2.16-1.4.17-2.4.6-3.3 1.48C2.1 2.59 1.6 3.8 1.5 5.1c-.1 1.1-.2 2.8-.2 5v3.7c0 2.3.1 4 .2 5 .2 1.3.6 2.5 1.7 3.5.9.8 2 1.3 3.3 1.4 1.1.1 2.9.2 5.2.2s4.1-.1 5.2-.2c1.3-.1 2.4-.6 3.3-1.4 1-.9 1.5-2.1 1.7-3.5.1-1.1.2-2.8.2-5v-3.7c0-2.2-.1-3.9-.2-5-.2-1.3-.7-2.5-1.7-3.5C19.3.76 18.2.33 16.9.16c-1.1-.13-2.9-.16-5.2-.16zM6.6 5.9h1.6v8.3h4v1.3H6.6z',
-  github: 'M12 .3c-6.6 0-12 5.4-12 12 0 5.3 3.4 9.8 8.2 11.4.6.1.8-.3.8-.6 0-.3-.1-1-.1-2-3.3.7-4-1.6-4-1.6-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2 1-.3 2-.4 3-.4s2 .1 3 .4c2.3-1.6 3.3-1.2 3.3-1.2.6 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2 0 1.6-.1 2.9-.1 3.3 0 .3.2.7.8.6C20.6 22.1 24 17.6 24 12.3c0-6.6-5.4-12-12-12',
-  bilibili: 'M17.8 4.7h.9c1.5.05 2.8.58 3.8 1.57 1 .99 1.5 2.25 1.6 3.76v7.36c-.04 1.51-.56 2.77-1.56 3.77-1 .99-2.3 1.52-3.8 1.56H5.3c-1.5-.04-2.8-.56-3.8-1.56C.5 20.19 0 18.86 0 17.35V9.99c.04-1.51.56-2.77 1.56-3.76C2.56 5.23 3.82 4.71 5.3 4.65h.8L4.9 3.53c-.3-.25-.4-.57-.4-.9 0-.36.1-.66.4-.91.3-.25.6-.37.9-.37s.7.12.9.37l2.9 2.75c.1.07.1.14.2.21h4.3c.1-.07.1-.14.2-.21l2.9-2.75c.3-.25.6-.37.9-.37s.7.15.9.4c.3.25.4.55.4.9 0 .36-.1.66-.4.91L17.8 4.7zM5.3 7.24c-.7.02-1.4.28-1.9.77-.5.5-.8 1.1-.8 1.9v7.5c.02.8.3 1.4.8 1.9.5.5 1.1.8 1.9.8h13.3c.8-.02 1.4-.28 1.9-.77.5-.5.8-1.1.8-1.9V9.9c-.02-.8-.3-1.4-.8-1.9-.5-.5-1.1-.8-1.9-.8H5.3z',
-  google: 'M12.5 10.9v3.3h7.8c-.2 1.8-.9 3.2-1.8 4.1-1.1 1.1-2.9 2.4-6.1 2.4-4.8 0-8.6-3.9-8.6-8.7s3.8-8.7 8.6-8.7c2.6 0 4.5 1 5.9 2.3l2.3-2.3C18.7 1.4 16.1 0 12.5 0 5.9 0 .3 5.4.3 12s5.6 12 12.2 12c3.6 0 6.3-1.2 8.4-3.4 2.2-2.2 2.8-5.2 2.8-7.7 0-.8-.1-1.5-.2-2.1h-11z',
-  microsoft: 'M0 0h11.4v11.4H0zm12.6 0H24v11.4H12.6zM0 12.6h11.4V24H0zm12.6 0H24V24H12.6z',
-  adobe: 'M13.3.6c-.3-.2-.6-.2-.9-.2s-.6.1-.9.2L1.3 6.6c-.6.3-.9 1-.9 1.6v7.5c0 .7.4 1.3.9 1.6l3.6 2.1v-5.7L12 17.8c.6.3 1.3.3 1.8 0l10.2-5.9c.6-.3.9-1 .9-1.6V2.7L13.3.6zm0 2.3l8.4 4.9-8.4 4.9L4.9 7.8l8.4-4.9z',
-  dropbox: 'M6 1.8L0 6.4l3.9 3.1L6 7.2l6 4.7 6-4.7 2.1 2.3L24 6.4l-6-4.6-6 4.7L6 1.8zM0 11.8l3.9 3.1L6 12.6l6 4.7 6-4.7 2.1 2.3L24 11.8l-6 4.7-6-4.7-6 4.7-6-4.7zm6 6.3l6-4.7 6 4.7-6 4.7-6-4.7z',
-  discord: 'M20.3 4.4c-1.5-.7-3.1-1.2-4.9-1.5-.3.4-.5.9-.7 1.3-1.8-.3-3.7-.3-5.5 0-.2-.4-.4-.9-.7-1.3-1.8.3-3.4.8-4.9 1.5C.5 9-.3 13.6.1 18.1c2 1.5 4 2.3 6 3 .5-.6.9-1.3 1.2-2-1.3-.5-2.2-1.1-3-1.9.3-.2.5-.4.7-.6 1.3.6 2.6.9 4 1 1.4.1 2.8-.1 4.1-.5.1.2.4.4.7.6-.8.7-1.7 1.4-3 1.9.3.7.7 1.4 1.2 2 2-.7 4-1.5 6-3 .4-4.5-.4-9.1-3.6-13.7zM8 15.3c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4zm8 0c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4z'
+// ===== Embedded Brand Icons (SVG path data, viewBox 0 0 24 24) =====
+// Each entry: { path, bg } - path is SVG path d, bg is brand background color
+const BRAND_ICONS = {
+  spotify: { p: 'M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.36-.66.48-1.02.24-2.82-1.74-6.36-2.1-10.56-1.14-.42.12-.78-.18-.9-.54-.12-.42.18-.78.54-.9 4.56-1.02 8.52-.6 11.64 1.32.42.18.48.66.3 1.02zm1.44-3.3c-.3.42-.84.6-1.26.3-3.24-1.98-8.16-2.58-11.94-1.38-.48.12-1.02-.12-1.14-.6-.12-.48.12-1.02.6-1.14C9.6 9.9 15 10.56 18.72 12.84c.36.18.54.78.24 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.3c-.6.18-1.2-.18-1.38-.72-.18-.6.18-1.2.72-1.38 4.26-1.26 11.28-1.02 15.72 1.62.54.3.72 1.02.42 1.56-.3.42-1.02.6-1.56.3z', bg: '#1DB954' },
+  netflix: { p: 'M5.4 0l3 5.6V0h3v7.6L14.6 0h3.3L13.5 8.4 18 16h-3.3l-2.9-5.4V16H9V8.9L5.6 16H2.4L7 8 2.4 0z', bg: '#E50914' },
+  youtube: { p: 'M23.5 6.19a3.02 3.02 0 0 0-2.12-2.14C19.51 3.55 12 3.55 12 3.55s-7.51 0-9.38.5A3.02 3.02 0 0 0 .5 6.19C0 8.07 0 12 0 12s0 3.93.5 5.81a3.02 3.02 0 0 0 2.12 2.14c1.87.5 9.38.5 9.38.5s7.51 0 9.38-.5a3.02 3.02 0 0 0 2.12-2.14C24 15.93 24 12 24 12s0-3.93-.5-5.81zM9.55 15.57V8.43L15.82 12l-6.27 3.57z', bg: '#FF0000' },
+  apple: { p: 'M17.05 12.04c-.03-2.48 2.03-3.67 2.13-3.73-1.16-1.7-2.97-1.93-3.62-1.96-1.54-.16-3.01.91-3.79.91-.79 0-1.99-.89-3.27-.86-1.68.03-3.24.98-4.11 2.49-1.75 3.03-.45 7.51 1.26 9.97.83 1.2 1.82 2.55 3.12 2.5 1.25-.05 1.72-.81 3.23-.81 1.51 0 1.94.81 3.26.78 1.35-.02 2.21-1.23 3.03-2.43.96-1.4 1.35-2.76 1.37-2.83-.03-.01-2.61-1-2.64-3.97zM14.5 4.64c.69-.83 1.15-1.99 1.02-3.14-.99.04-2.18.66-2.89 1.49-.64.74-1.2 1.92-1.05 3.04 1.1.09 2.23-.56 2.92-1.39z', bg: '#ffffff' },
+  notion: { p: 'M4.46 4.21c.75.6 1.03.56 2.11.41l11.29-1.62c.3-.04.62-.09.91-.05-.27.09-.56.22-.81.39L6.26 12.14c-.53.37-.67.52-.64.97l.13 6.59c.01.47.1.63.47.58l12.46-1.78c.52-.07.65-.22.65-.74V4.85c0-.48-.08-.71-.56-.64L6.85 5.94c-.86.12-1.29.06-1.8-.42l-.59-.9zm12.92 3.57v9.46c0 .22-.08.35-.3.38l-9.59 1.37c-.24.03-.32-.04-.32-.27V8.64c0-.21.05-.3.25-.33l9.66-1.38c.23-.03.31.05.31.29v.56z', bg: '#ffffff' },
+  github: { p: 'M12 .3c-6.6 0-12 5.4-12 12 0 5.3 3.4 9.8 8.2 11.4.6.1.8-.3.8-.6 0-.3-.1-1-.1-2-3.3.7-4-1.6-4-1.6-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2 1-.3 2-.4 3-.4s2 .1 3 .4c2.3-1.6 3.3-1.2 3.3-1.2.6 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2 0 1.6-.1 2.9-.1 3.3 0 .3.2.7.8.6C20.6 22.1 24 17.6 24 12.3c0-6.6-5.4-12-12-12', bg: '#ffffff' },
+  figma: { p: 'M15.9 12c0-2.2 1.8-4 4-4s4 1.8 4 4-1.8 4-4 4H16v-4zm0-8c0-2.2 1.8-4 4-4s4 1.8 4 4-1.8 4-4 4H16V4zM8 0c2.2 0 4 1.8 4 4S10.2 12 8 12 4 10.2 4 8 5.8 0 8 0zm0 24c-2.2 0-4-1.8-4-4s1.8-4 4-4 4 1.8 4 4v4H8zm0-8c-2.2 0-4-1.8-4-4s1.8-4 4-4h4v8H8z', bg: '#F24E1E' },
+  discord: { p: 'M20.3 4.4c-1.5-.7-3.1-1.2-4.9-1.5-.3.4-.5.9-.7 1.3-1.8-.3-3.7-.3-5.5 0-.2-.4-.4-.9-.7-1.3-1.8.3-3.4.8-4.9 1.5C.5 9-.3 13.6.1 18.1c2 1.5 4 2.3 6 3 .5-.6.9-1.3 1.2-2-1.3-.5-2.2-1.1-3-1.9.3-.2.5-.4.7-.6 1.3.6 2.6.9 4 1 1.4.1 2.8-.1 4.1-.5.1.2.4.4.7.6-.8.7-1.7 1.4-3 1.9.3.7.7 1.4 1.2 2 2-.7 4-1.5 6-3 .4-4.5-.4-9.1-3.6-13.7zM8 15.3c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4zm8 0c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4z', bg: '#5865F2' },
+  google: { p: 'M21.35 11.1h-9.1v2.9h5.3c-.5 2.2-2.2 3.7-5.3 3.7-3.2 0-5.7-2.6-5.7-5.7s2.6-5.7 5.7-5.7c1.4 0 2.5.5 3.4 1.3l2.1-2.1C16.65 4.2 14.55 3.2 12.25 3.2 6.95 3.2 2.65 7.5 2.65 12s4.3 8.8 9.6 8.8c5.5 0 9.2-3.9 9.2-9.1 0-.6-.1-1.1-.1-1.6z', bg: '#4285F4' },
+  microsoft: { p: 'M0 0h11.4v11.4H0zm12.6 0H24v11.4H12.6zM0 12.6h11.4V24H0zm12.6 0H24V24H12.6z', bg: '#5E5CE6' },
+  chatgpt: { p: 'M22.3 10.1c-.3-1.4-1.2-2.5-2.5-3.1.2-.7.2-1.5-.1-2.3-.5-1.3-1.6-2.3-3-2.6-.7-.2-1.4-.1-2 .1-.7-1.1-1.8-1.9-3.2-2-1.4-.1-2.7.5-3.5 1.5-1.3-.2-2.7.3-3.6 1.3-.9 1-1.3 2.4-.9 3.7-1.1.6-1.9 1.6-2.2 2.9-.3 1.3-.1 2.7.6 3.8-.3 1.4-.1 2.9.8 4 .9 1.2 2.3 1.9 3.8 2 .1.7.4 1.4.9 2 .7.8 1.7 1.3 2.8 1.3.5 0 1-.1 1.4-.3.5 1.3 1.7 2.3 3.1 2.5 1.4.2 2.8-.3 3.7-1.3 1.3.3 2.7-.1 3.7-1 .9-.9 1.4-2.2 1.2-3.5.6-.3 1.1-.7 1.5-1.3.9-1.3 1-3 .2-4.4.3-.4.4-1 .5-1.6.1-.7-.1-1.4-.3-2z', bg: '#10a37f' },
+  wechat: { p: 'M8.7 3C4.5 3 1 5.9 1 9.5c0 2 1.1 3.7 2.9 4.9l-.7 2.2 2.6-1.3c.9.2 1.8.4 2.8.4h.7c-.1-.4-.2-.8-.2-1.3 0-3.2 3.1-5.8 7-5.8h.5C15.9 5.3 12.6 3 8.7 3zM6.3 7.8c.5 0 .9.4.9.9s-.4.9-.9.9-.9-.4-.9-.9.4-.9.9-.9zm4.8 0c.5 0 .9.4.9.9s-.4.9-.9.9-.9-.4-.9-.9.4-.9.9-.9zm5.2 2.2c-3.3 0-6 2.3-6 5.2 0 2.9 2.7 5.2 6 5.2.7 0 1.4-.1 2.1-.3l2 1-.5-1.7c1.5-1 2.4-2.5 2.4-4.2 0-2.9-2.7-5.2-6-5.2zm-2 3.3c.4 0 .7.3.7.7s-.3.7-.7.7-.7-.3-.7-.7.3-.7.7-.7zm3.9 0c.4 0 .7.3.7.7s-.3.7-.7.7-.7-.3-.7-.7.3-.7.7-.7z', bg: '#07C160' },
+  alipay: { p: 'M18.5 3H5.5C4.1 3 3 4.1 3 5.5v13C3 19.9 4.1 21 5.5 21h13c1.4 0 2.5-1.1 2.5-2.5V5.5C21 4.1 19.9 3 18.5 3zm-3.7 12.8c-.9-.3-2.2-.9-3.6-1.8-.8 1-1.8 1.8-3.2 1.8-2 0-3.3-1.5-3.2-3 0-1.3 1-2.5 3-2.5.8 0 1.8.3 2.8.7.4-.7.7-1.5.9-2.3H6.3V7.5h4.3v-1h-5V5.7h5v-1h1.7v1h5v.8h-5v1h4.2l-.3.7c-.4 1.3-1 2.4-1.7 3.4 1.2.5 2.4.9 3.3 1.2l-.5 1.3c-.8-.2-2-.5-3.2-1-.9.8-1.9 1.4-3 1.8l.5-1.3zm-5.7-1c-1.3 0-2 .8-2 1.6s.7 1.4 1.8 1.4c1 0 2-.7 2.8-1.8-1-.7-1.9-1.2-2.6-1.2z', bg: '#1677FF' },
+  qqmusic: { p: 'M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.5 9.4c-.1 1.2-.8 2.3-1.9 2.9-.4.2-.9.4-1.3.4-.2 0-.4 0-.5-.1-.3-.1-.5-.4-.5-.7 0-.4.3-.8.8-.9.5-.1 1-.3 1.3-.7.3-.4.4-.9.4-1.4V8.1c0-.2.1-.3.3-.3l1.7-.5c.2-.1.3 0 .4.1.1.1.1.2.1.4v.9c.1 0 .1 0 0 .1v.6c.1 1.1-.1 2.1-.8 2.8z', bg: '#31C27C' },
+  neteasecloudmusic: { p: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.96 8.3c.07 0 .13.06.13.14v2.1c0 .08-.05.13-.1.15-.06.02-.12 0-.16-.06-1.37-1.94-3.56-1.36-4.65-.86-.32.15-.44.53-.28.84.15.32.53.44.84.29.93-.44 2.4-.8 3.23.84.35.7.33 1.64-.26 2.4-.96 1.22-2.86 1.36-4.24.31-1.8-1.37-1.74-4.04.14-5.31 1.4-.94 3.25-.78 4.62.22.06-.03.08-.07.08-.14V8.6c0-.06-.04-.1-.1-.12l-4.8-1.3c-.08-.02-.1-.08-.08-.16l.32-1.2c.02-.08.08-.12.16-.1l5.16 1.4c.06.02.1.08.1.16v2.92c-.02.04 0 .08 0 .1z', bg: '#C20C0C' },
+  bilibili: { p: 'M17.8 4.7h.9c1.5.05 2.8.58 3.8 1.57 1 .99 1.5 2.25 1.6 3.76v7.36c-.04 1.51-.56 2.77-1.56 3.77-1 .99-2.3 1.52-3.8 1.56H5.3c-1.5-.04-2.8-.56-3.8-1.56C.5 20.19 0 18.86 0 17.35V9.99c.04-1.51.56-2.77 1.56-3.76C2.56 5.23 3.82 4.71 5.3 4.65h.8L4.9 3.53c-.3-.25-.4-.57-.4-.9 0-.36.1-.66.4-.91.3-.25.6-.37.9-.37s.7.12.9.37l2.9 2.75c.1.07.1.14.2.21h4.3c.1-.07.1-.14.2-.21l2.9-2.75c.3-.25.6-.37.9-.37s.7.15.9.4c.3.25.4.55.4.9 0 .36-.1.66-.4.91L17.8 4.7zM5.3 7.24c-.7.02-1.4.28-1.9.77-.5.5-.8 1.1-.8 1.9v7.5c.02.8.3 1.4.8 1.9.5.5 1.1.8 1.9.8h13.3c.8-.02 1.4-.28 1.9-.77.5-.5.8-1.1.8-1.9V9.9c-.02-.8-.3-1.4-.8-1.9-.5-.5-1.1-.8-1.9-.8H5.3z', bg: '#00A1D6' },
+  iqiyi: { p: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1.3 14.4c-.4 0-.7-.3-.7-.7V8.3c0-.4.3-.7.7-.7s.7.3.7.7v7.4c0 .4-.3.7-.7.7zm5.3 0c-.4 0-.7-.3-.7-.7V8.3c0-.4.3-.7.7-.7s.7.3.7.7v7.4c0 .4-.3.7-.7.7z', bg: '#00BE06' },
+  tencentvideo: { p: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5.3 13.7c-.2.3-.5.4-.9.3l-2.9-1.1c-.3-.1-.6 0-.7.3l-.6 1.3c-.2.3-.5.5-.9.5-.4 0-.7-.2-.9-.5L6.7 11c-.2-.4-.1-.8.2-1.1.3-.2.8-.2 1.1.1l2.5 2.9V7.3c0-.4.3-.7.7-.7s.7.3.7.7v8.7l2.6-2.9c.3-.3.7-.3 1-.1.3.2.4.7.1 1l-1.8 2.1 2.5 1c.4.1.6.5.4.9z', bg: '#FF6A00' },
+  youku: { p: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2.2 14.1l-3.1-.8c-.4-.1-.6-.5-.5-.9l1.1-4.1c.1-.4.5-.6.9-.5l3.1.8c.4.1.6.5.5.9l-1.1 4.1c-.1.4-.5.6-.9.5zm7.4-.6c-.1.3-.4.5-.8.5l-3.5.1c-.4 0-.7-.3-.7-.6l.2-4.3c0-.4.3-.6.7-.7l3.5-.2c.4 0 .7.3.7.6l-.1 4.6z', bg: '#1FB1EB' },
+  baidu: { p: 'M7.6 11.6c-.5-.9-1.2-1.6-2.2-1.6-1.6 0-2.5 1.7-2.5 3.7 0 2.1 1.1 3.6 2.7 3.6 1.3 0 2.2-.8 2.5-2.1H10c-.2.3-.3.6-.3 1 0 .8.4 1.4 1.2 1.4.7 0 1.2-.6 1.2-1.4 0-.5-.2-.9-.5-1.2.9-.8 1.5-2 1.5-3.4 0-2.5-1.5-4.5-3.7-4.5-1.1 0-2 .5-2.7 1.3-.3-.5-.7-.9-1.3-.9-.8 0-1.4.7-1.4 1.7 0 .8.4 1.5 1.1 2-.3.1-.5.3-.5.6 0 .2.2.4.4.4h1.2c.2-.1.2-.3.1-.5zm.9-3.3c1.2 0 2.1 1.3 2.1 3s-.9 3-2.1 3-2.1-1.3-2.1-3 .9-3 2.1-3zm8.7-1.5c-1.8 0-3.3 1.5-3.3 3.3 0 1.1.6 2.1 1.4 2.7-.1.2-.2.4-.2.7 0 .6.5 1 1.1 1s1.1-.4 1.1-1c0-.3-.1-.5-.2-.7.8-.6 1.4-1.6 1.4-2.7 0-1.8-1.5-3.3-3.3-3.3zm0 5c-.9 0-1.7-.8-1.7-1.7s.8-1.7 1.7-1.7 1.7.8 1.7 1.7-.8 1.7-1.7 1.7z', bg: '#2319DC' },
+  wps: { p: 'M4 3h16c.6 0 1 .4 1 1v16c0 .6-.4 1-1 1H4c-.6 0-1-.4-1-1V4c0-.6.4-1 1-1zm3.1 4.6L4 14h4.5L7.1 7.6zM12 7.6L9.5 14h5L12 7.6zm4.9 0L14.5 14H20l-3.1-6.4z', bg: '#D32D27' },
+  dropbox: { p: 'M6 1.8L0 6.4l3.9 3.1L6 7.2l6 4.7 6-4.7 2.1 2.3L24 6.4l-6-4.6-6 4.7L6 1.8zM0 11.8l3.9 3.1L6 12.6l6 4.7 6-4.7 2.1 2.3L24 11.8l-6 4.7-6-4.7-6 4.7-6-4.7zm6 6.3l6-4.7 6 4.7-6 4.7-6-4.7z', bg: '#0061FF' },
+  adobe: { p: 'M13.3.6c-.3-.2-.6-.2-.9-.2s-.6.1-.9.2L1.3 6.6c-.6.3-.9 1-.9 1.6v7.5c0 .7.4 1.3.9 1.6l3.6 2.1v-5.7L12 17.8c.6.3 1.3.3 1.8 0l10.2-5.9c.6-.3.9-1 .9-1.6V2.7L13.3.6z', bg: '#FF0000' },
+  canva: { p: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-.8 14.5l-4-4c-.2-.2-.2-.5 0-.7l4-4c.2-.2.5-.2.7 0l1.4 1.4c.2.2.2.5 0 .7L10.9 12l2.4 2.4c.2.2.2.5 0 .7l-1.4 1.4c-.2.2-.5.2-.7 0z', bg: '#00C4CC' },
+  xiaohongshu: { p: 'M3 3h18v18H3V3zm4.8 4.2v9.6h2.1v-3.4c0-.9.4-1.5 1.2-1.5.7 0 1 .5 1 1.4v3.5h2.1v-3.9c0-2-1.1-2.9-2.5-2.9-1.1 0-1.8.5-2.1 1.2h-.1V7.2H7.8zm9.5 5.3c0 2.3-1.4 4.3-3.5 4.3-2 0-3.5-2-3.5-4.3s1.5-4.3 3.5-4.3c2.1 0 3.5 2 3.5 4.3zm-2.1 0c0-1.4-.7-2.5-1.5-2.5-.9 0-1.5 1.1-1.5 2.5s.6 2.5 1.5 2.5c.8 0 1.5-1.1 1.5-2.5z', bg: '#FF2442' },
+  douyin: { p: 'M12.5 2h-2v12.2c0 1.8-1.5 3.3-3.3 3.3S4 16 4 14.2s1.5-3.3 3.3-3.3c.3 0 .7 0 1 .1v-2.1c-.4-.1-.7-.1-1-.1C4.2 8.8 1.8 11.2 1.8 14.2S4.2 19.6 7.2 19.6s5.4-2.4 5.4-5.4V7.8c1.2.8 2.6 1.3 4.1 1.3V7.1c-1.6 0-3-1-3.7-2.4l-.5-.7V2z', bg: '#000000' },
+  zhihu: { p: 'M5.7 3C4.2 3 3 4.2 3 5.7v12.6c0 1.5 1.2 2.7 2.7 2.7h12.6c1.5 0 2.7-1.2 2.7-2.7V5.7C21 4.2 19.8 3 18.3 3H5.7zm2.6 4h3.1v1.7H9.8c-.1 1.2-.4 2.3-.8 3.3l1.5.7-.8 1.5-1.3-.6c-.6 1-1.4 1.9-2.4 2.5l-.9-1.4c.7-.4 1.3-.9 1.8-1.6.4-.6.8-1.4 1-2.2H5.8V7h2.5zm8.4 0h1.8v1.8h-1.8v5.8h-1.8V8.8h-1.8V7h1.8V5.2h1.8V7z', bg: '#0066FF' },
+  weibo: { p: 'M10.1 20.6c-4.2.4-7.8-1.5-8-4.3-.2-2.8 3.1-5.4 7.3-5.8 4.2-.4 7.8 1.5 8 4.3.2 2.8-3.1 5.4-7.3 5.8zm8.5-9.7c-.3-.1-.5-.1-.4-.5.3-.8.3-1.5 0-2-.6-.8-2.1-.8-3.9 0 0 0-.5.2-.4-.2.2-.7.2-1.3-.1-1.6-.7-.7-2.6.1-4.3 1.7-1.3 1.2-2 2.5-2 3.6 0 2.1 2.7 3.4 6 3.4 3.9 0 6.5-2.3 6.5-4.1 0-.1-.1-.2-.2-.3-.2-.1-.8-.2-1.2 0-.1 0-.1 0-.2-.1 0 0-.2-.1 0 0zm.7-5.8c-.8-.9-2-1.3-3.1-1.1-.3 0-.5.3-.4.6 0 .3.3.5.5.4.8-.2 1.6.2 2.1.8.5.6.6 1.4.4 2.1-.1.3.1.5.3.6.3.1.5-.1.6-.3.4-1.1.2-2.3-.4-3.1zm1.8-1.7c-1.4-1.6-3.4-2.3-5.4-1.9-.3.1-.5.4-.4.7.1.3.4.4.7.4 1.5-.3 3.1.2 4.2 1.4 1.1 1.3 1.3 3 .7 4.5-.1.3 0 .6.3.7h.3c.2 0 .4-.2.4-.4.7-1.8.4-3.9-.8-5.4z', bg: '#E6162D' },
+  taobao: { p: 'M3 5v14h18V5H3zm6.6 8.5c-.4 1-1.2 1.9-2.2 2.3l-.7-1.2c.8-.3 1.4-.9 1.7-1.6l-1.8-.3.3-1.6 2.4.1c.1-.4.1-.8.1-1.2H6.5V8.8h3.1c0-.3-.1-.6-.1-.9H5.7V6.6h3.9c0-.3-.1-.6-.2-.9l1.8-.4c.1.4.3.8.3 1.3h3.5v1.3h-3.3c0 .3.1.6.1.9h2.8l-.2 1.5-1.8-.1c.4.6.9 1.2 1.6 1.5l-.9 1.2c-.8-.4-1.4-1-1.8-1.7-.4.7-1.1 1.3-2 1.8-.1 0-.1.1 0 .1-.2-.1-.1-.1 0-.1zm6.4-.2l-.9-1.2c-.3.2-.7.3-1 .4l-.5-1.5c1.3-.3 2.2-1.1 2.6-2.2H18l.3-1.5h-2.2c0-.3-.1-.6-.2-.8l1.6-.5-.6-1.4-1.9.5c-.3-.5-.7-.9-1.3-1l-.8 1.4c.3.2.6.4.7.7-.2.3-.3.7-.4 1.1H11l-.3 1.5h1.8c-.1.7-.5 1.4-1.2 1.8l.7 1.4c.3-.3.5-.6.6-.9.4.5.9.9 1.5 1.1l-.6.9z', bg: '#FF4400' },
+  jd: { p: 'M3 5v14h18V5H3zm4.5 3.5h2.1v2.4c0 .8-.4 1.3-1 1.3-.7 0-1-.5-1-1.3V8.5zm3.4 0h2.1c.1 1.1.1 2.2 0 3.4-.1.5-.5.7-1 .7s-1-.2-1.1-.7V8.5zm3.3 0h2.1v4.2h-2.1V8.5zm-6.7 5.7h8.8v1.3H7.5v-1.3z', bg: '#E1251B' },
+  meituan: { p: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z', bg: '#FFD101' },
+  eleme: { p: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1.5 5v3.5c0 .3-.2.5-.5.5H7c-.3 0-.5-.2-.5-.5V7h1.5v3h1V7h1.5zm5 0v7c0 .3-.2.5-.5.5h-3c-.3 0-.5-.2-.5-.5v-7H14v5.5h1V7h1.5z', bg: '#007AFF' },
+  pinduoduo: { p: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 6c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm4 0c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm-6 5c0-1.1 2-2 4-2s4 .9 4 2v1H8v-1z', bg: '#E02E24' },
+  unionpay: { p: 'M4 7h16c1.1 0 2 .9 2 2v6c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V9c0-1.1.9-2 2-2zm2.5 3v4H5v-4h1.5zm4 0l-1.5 4H7.5l1.5-4h1.5zm4 0l-1.5 4H11l1.5-4h2zm4 0h-1.5v4H17l1.5-4z', bg: '#E21836' },
+  // 银行类 - 用银行卡图标+品牌色
+  cmb: { p: 'M12 2L2 7v2h20V7L12 2zm-8 9v7h2v-7h3v7h2v-7h2v7h2v-7h3v7h2v-7H4z', bg: '#C8102E' },
+  icbc: { p: 'M12 2L2 7v2h20V7L12 2zm-8 9v7h2v-7h3v7h2v-7h2v7h2v-7h3v7h2v-7H4z', bg: '#B40020' },
+  ccb: { p: 'M12 2L2 7v2h20V7L12 2zm-8 9v7h2v-7h3v7h2v-7h2v7h2v-7h3v7h2v-7H4z', bg: '#003F88' },
+  abc: { p: 'M12 2L2 7v2h20V7L12 2zm-8 9v7h2v-7h3v7h2v-7h2v7h2v-7h3v7h2v-7H4z', bg: '#009A44' },
+  boc: { p: 'M12 2L2 7v2h20V7L12 2zm-8 9v7h2v-7h3v7h2v-7h2v7h2v-7h3v7h2v-7H4z', bg: '#AF272F' },
+  bankcomm: { p: 'M12 2L2 7v2h20V7L12 2zm-8 9v7h2v-7h3v7h2v-7h2v7h2v-7h3v7h2v-7H4z', bg: '#005BAC' },
+  spdb: { p: 'M12 2L2 7v2h20V7L12 2zm-8 9v7h2v-7h3v7h2v-7h2v7h2v-7h3v7h2v-7H4z', bg: '#C8102E' },
+  cmbc: { p: 'M12 2L2 7v2h20V7L12 2zm-8 9v7h2v-7h3v7h2v-7h2v7h2v-7h3v7h2v-7H4z', bg: '#005BAC' },
+  citic: { p: 'M12 2L2 7v2h20V7L12 2zm-8 9v7h2v-7h3v7h2v-7h2v7h2v-7h3v7h2v-7H4z', bg: '#E60012' },
+  ceb: { p: 'M12 2L2 7v2h20V7L12 2zm-8 9v7h2v-7h3v7h2v-7h2v7h2v-7h3v7h2v-7H4z', bg: '#7B2E86' },
+  psbc: { p: 'M12 2L2 7v2h20V7L12 2zm-8 9v7h2v-7h3v7h2v-7h2v7h2v-7h3v7h2v-7H4z', bg: '#007A33' },
+  // 理财类
+  licaitong: { p: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 5c-2.8 0-5 2.2-5 5 0 .6.1 1.1.3 1.6C6 13.8 5 12.7 5 11.3 5 9 6.8 7 9.2 7c.5 0 .9.1 1.4.3C11.2 5.9 12.5 5 14 5c2.2 0 4 1.8 4 4 0 .3 0 .6-.1.8.4.1.8.3 1.1.5V10c0-2.8-2.2-5-5-5h-2zm0 4c-1.7 0-3 1.3-3 3s1.3 3 3 3 3-1.3 3-3-1.3-3-3-3z', bg: '#FA9D3B' },
+  yuebao: { p: 'M18.5 3H5.5C4.1 3 3 4.1 3 5.5v13C3 19.9 4.1 21 5.5 21h13c1.4 0 2.5-1.1 2.5-2.5V5.5C21 4.1 19.9 3 18.5 3zm-3.7 12.8c-.9-.3-2.2-.9-3.6-1.8-.8 1-1.8 1.8-3.2 1.8-2 0-3.3-1.5-3.2-3 0-1.3 1-2.5 3-2.5.8 0 1.8.3 2.8.7.4-.7.7-1.5.9-2.3H6.3V7.5h4.3v-1h-5V5.7h5v-1h1.7v1h5v.8h-5v1h4.2l-.3.7c-.4 1.3-1 2.4-1.7 3.4 1.2.5 2.4.9 3.3 1.2l-.5 1.3c-.8-.2-2-.5-3.2-1-.9.8-1.9 1.4-3 1.8l.5-1.3zm-5.7-1c-1.3 0-2 .8-2 1.6s.7 1.4 1.8 1.4c1 0 2-.7 2.8-1.8-1-.7-1.9-1.2-2.6-1.2z', bg: '#FF7300' },
+  // 通用钱包图标
+  wallet: { p: 'M21 7H5V5c0-1.1.9-2 2-2h12c1.1 0 2 .9 2 2v2zm0 2v8c0 1.1-.9 2-2 2H5c-1.1 0-2-.9-2-2V9h18zm-5 5c0-1.1-.9-2-2-2s-2 .9-2 2 .9 2 2 2 2-.9 2-2z', bg: '#d4af7a' }
 };
 
-// ===== Brand Icon Database =====
+// ===== Brand Database =====
 const BRANDS = {
-  'spotify': { name: 'Spotify', slug: 'spotify', color: '#1DB954', cat: '娱乐' },
-  'netflix': { name: 'Netflix', slug: 'netflix', color: '#E50914', cat: '娱乐' },
-  'youtube': { name: 'YouTube Premium', slug: 'youtube', color: '#FF0000', cat: '娱乐' },
-  'youtube premium': { name: 'YouTube Premium', slug: 'youtube', color: '#FF0000', cat: '娱乐' },
-  'notion': { name: 'Notion', slug: 'notion', color: '#ffffff', cat: '生产力' },
-  'icloud': { name: 'iCloud+', slug: 'apple', color: '#ffffff', cat: '工具' },
-  'icloud+': { name: 'iCloud+', slug: 'apple', color: '#ffffff', cat: '工具' },
-  'apple': { name: 'Apple', slug: 'apple', color: '#ffffff', cat: '工具' },
-  'lightroom': { name: 'Adobe Lightroom', slug: 'adobelightroom', color: '#31A8FF', cat: '工具' },
-  'adobe lightroom': { name: 'Adobe Lightroom', slug: 'adobelightroom', color: '#31A8FF', cat: '工具' },
-  'photoshop': { name: 'Adobe Photoshop', slug: 'adobephotoshop', color: '#31A8FF', cat: '工具' },
-  'wps': { name: 'WPS Office', slug: 'wps', color: '#D32D27', cat: '生产力' },
-  'wps office': { name: 'WPS Office', slug: 'wps', color: '#D32D27', cat: '生产力' },
-  'figma': { name: 'Figma', slug: 'figma', color: '#F24E1E', cat: '生产力' },
-  'chatgpt': { name: 'ChatGPT', slug: 'openai', color: '#10a37f', cat: '工具' },
-  'github': { name: 'GitHub', slug: 'github', color: '#ffffff', cat: '工具' },
-  '1password': { name: '1Password', slug: '1password', color: '#0094F5', cat: '工具' },
-  'notability': { name: 'Notability', slug: 'notability', color: '#5EEAD4', cat: '生产力' },
-  'goodnotes': { name: 'GoodNotes', slug: 'goodnotes', color: '#FF6B6B', cat: '生产力' },
-  'procreate': { name: 'Procreate', slug: 'procreate', color: '#00C7BE', cat: '工具' },
-  'discord': { name: 'Discord Nitro', slug: 'discord', color: '#5865F2', cat: '娱乐' },
-  'discord nitro': { name: 'Discord Nitro', slug: 'discord', color: '#5865F2', cat: '娱乐' },
-  'nintendo': { name: 'Nintendo Online', slug: 'nintendoswitch', color: '#E60012', cat: '娱乐' },
-  'playstation': { name: 'PlayStation Plus', slug: 'playstation', color: '#003791', cat: '娱乐' },
-  'xbox': { name: 'Xbox Game Pass', slug: 'xbox', color: '#107C10', cat: '娱乐' },
-  'baidu': { name: '百度网盘', slug: 'baidu', color: '#2319DC', cat: '工具' },
-  '百度网盘': { name: '百度网盘', slug: 'baidu', color: '#2319DC', cat: '工具' },
-  'qq音乐': { name: 'QQ音乐', slug: 'qqmusic', color: '#31C27C', cat: '娱乐' },
-  'qq': { name: 'QQ会员', slug: 'tencentqq', color: '#12B7F5', cat: '娱乐' },
-  '网易云音乐': { name: '网易云音乐', slug: 'neteasecloudmusic', color: '#C20C0C', cat: '娱乐' },
-  'bilibili': { name: '哔哩哔哩', slug: 'bilibili', color: '#00A1D6', cat: '娱乐' },
-  '哔哩哔哩': { name: '哔哩哔哩', slug: 'bilibili', color: '#00A1D6', cat: '娱乐' },
-  '爱奇艺': { name: '爱奇艺', slug: 'iqiyi', color: '#00BE06', cat: '娱乐' },
-  '腾讯视频': { name: '腾讯视频', slug: 'tencentvideo', color: '#FF6A00', cat: '娱乐' },
-  '优酷': { name: '优酷', slug: 'youku', color: '#1FB1EB', cat: '娱乐' },
-  'dropbox': { name: 'Dropbox', slug: 'dropbox', color: '#0061FF', cat: '工具' },
-  'google one': { name: 'Google One', slug: 'google', color: '#4285F4', cat: '工具' },
-  'google': { name: 'Google', slug: 'google', color: '#4285F4', cat: '工具' },
-  'microsoft 365': { name: 'Microsoft 365', slug: 'microsoft', color: '#5E5CE6', cat: '生产力' },
-  'office': { name: 'Microsoft 365', slug: 'microsoft', color: '#5E5CE6', cat: '生产力' },
-  'canva': { name: 'Canva', slug: 'canva', color: '#00C4CC', cat: '生产力' },
-  'setapp': { name: 'Setapp', slug: 'setapp', color: '#0067FF', cat: '工具' },
-  'adobe': { name: 'Adobe Creative Cloud', slug: 'adobe', color: '#FF0000', cat: '工具' },
-  'creative cloud': { name: 'Adobe Creative Cloud', slug: 'adobe', color: '#FF0000', cat: '工具' },
-  'expressvpn': { name: 'ExpressVPN', slug: 'expressvpn', color: '#DA3940', cat: '工具' },
-  'surfshark': { name: 'Surfshark', slug: 'surfshark', color: '#00D8A8', cat: '工具' },
-  'duolingo': { name: 'Duolingo', slug: 'duolingo', color: '#58CC02', cat: '学习' },
-  'medium': { name: 'Medium', slug: 'medium', color: '#ffffff', cat: '阅读' },
-  'substack': { name: 'Substack', slug: 'substack', color: '#FF6719', cat: '阅读' },
-  'kindle': { name: 'Kindle Unlimited', slug: 'amazon', color: '#FF9900', cat: '阅读' },
-  'amazon prime': { name: 'Amazon Prime', slug: 'amazon', color: '#FF9900', cat: '娱乐' },
-  'spotify premium': { name: 'Spotify', slug: 'spotify', color: '#1DB954', cat: '娱乐' }
+  'spotify': { name: 'Spotify', slug: 'spotify', cat: '娱乐' },
+  'netflix': { name: 'Netflix', slug: 'netflix', cat: '娱乐' },
+  'youtube': { name: 'YouTube Premium', slug: 'youtube', cat: '娱乐' },
+  'youtube premium': { name: 'YouTube Premium', slug: 'youtube', cat: '娱乐' },
+  'notion': { name: 'Notion', slug: 'notion', cat: '生产力' },
+  'icloud': { name: 'iCloud+', slug: 'apple', cat: '工具' },
+  'icloud+': { name: 'iCloud+', slug: 'apple', cat: '工具' },
+  'apple': { name: 'Apple', slug: 'apple', cat: '工具' },
+  'app store': { name: 'App Store', slug: 'apple', cat: '娱乐' },
+  'apple music': { name: 'Apple Music', slug: 'apple', cat: '娱乐' },
+  'apple tv': { name: 'Apple TV+', slug: 'apple', cat: '娱乐' },
+  'lightroom': { name: 'Adobe Lightroom', slug: 'adobe', cat: '工具' },
+  'adobe lightroom': { name: 'Adobe Lightroom', slug: 'adobe', cat: '工具' },
+  'photoshop': { name: 'Adobe Photoshop', slug: 'adobe', cat: '工具' },
+  'wps': { name: 'WPS Office', slug: 'wps', cat: '生产力' },
+  'wps office': { name: 'WPS Office', slug: 'wps', cat: '生产力' },
+  'figma': { name: 'Figma', slug: 'figma', cat: '生产力' },
+  'chatgpt': { name: 'ChatGPT', slug: 'chatgpt', cat: '工具' },
+  'github': { name: 'GitHub', slug: 'github', cat: '工具' },
+  'discord': { name: 'Discord Nitro', slug: 'discord', cat: '娱乐' },
+  'discord nitro': { name: 'Discord Nitro', slug: 'discord', cat: '娱乐' },
+  'baidu': { name: '百度网盘', slug: 'baidu', cat: '工具' },
+  '百度网盘': { name: '百度网盘', slug: 'baidu', cat: '工具' },
+  'qq音乐': { name: 'QQ音乐', slug: 'qqmusic', cat: '娱乐' },
+  '网易云音乐': { name: '网易云音乐', slug: 'neteasecloudmusic', cat: '娱乐' },
+  '网易云': { name: '网易云音乐', slug: 'neteasecloudmusic', cat: '娱乐' },
+  'bilibili': { name: '哔哩哔哩', slug: 'bilibili', cat: '娱乐' },
+  '哔哩哔哩': { name: '哔哩哔哩', slug: 'bilibili', cat: '娱乐' },
+  'b站': { name: '哔哩哔哩', slug: 'bilibili', cat: '娱乐' },
+  '爱奇艺': { name: '爱奇艺', slug: 'iqiyi', cat: '娱乐' },
+  '腾讯视频': { name: '腾讯视频', slug: 'tencentvideo', cat: '娱乐' },
+  '优酷': { name: '优酷', slug: 'youku', cat: '娱乐' },
+  '芒果tv': { name: '芒果TV', slug: 'mgtv', cat: '娱乐' },
+  '小红书': { name: '小红书', slug: 'xiaohongshu', cat: '娱乐' },
+  '抖音': { name: '抖音', slug: 'douyin', cat: '娱乐' },
+  '快手': { name: '快手', slug: 'kuaishou', cat: '娱乐' },
+  '知乎': { name: '知乎', slug: 'zhihu', cat: '阅读' },
+  '微博': { name: '微博', slug: 'weibo', cat: '娱乐' },
+  '淘宝': { name: '淘宝88VIP', slug: 'taobao', cat: '购物' },
+  '88vip': { name: '淘宝88VIP', slug: 'taobao', cat: '购物' },
+  '京东': { name: '京东PLUS', slug: 'jd', cat: '购物' },
+  '京东plus': { name: '京东PLUS', slug: 'jd', cat: '购物' },
+  'plus会员': { name: '京东PLUS', slug: 'jd', cat: '购物' },
+  '美团': { name: '美团会员', slug: 'meituan', cat: '生活' },
+  '饿了么': { name: '饿了么', slug: 'eleme', cat: '生活' },
+  '拼多多': { name: '拼多多', slug: 'pinduoduo', cat: '购物' },
+  'dropbox': { name: 'Dropbox', slug: 'dropbox', cat: '工具' },
+  'google one': { name: 'Google One', slug: 'google', cat: '工具' },
+  'google': { name: 'Google', slug: 'google', cat: '工具' },
+  'microsoft 365': { name: 'Microsoft 365', slug: 'microsoft', cat: '生产力' },
+  'office': { name: 'Microsoft 365', slug: 'microsoft', cat: '生产力' },
+  'canva': { name: 'Canva', slug: 'canva', cat: '生产力' },
+  'adobe': { name: 'Adobe Creative Cloud', slug: 'adobe', cat: '工具' },
+  'creative cloud': { name: 'Adobe Creative Cloud', slug: 'adobe', cat: '工具' },
+  'spotify premium': { name: 'Spotify', slug: 'spotify', cat: '娱乐' },
+  // 支付平台
+  '云闪付': { name: '云闪付', slug: 'unionpay', cat: '工具' },
+  '支付宝': { name: '支付宝', slug: 'alipay', cat: '工具' },
+  '微信': { name: '微信', slug: 'wechat', cat: '工具' },
+  '微信支付': { name: '微信支付', slug: 'wechat', cat: '工具' },
+  // 理财平台
+  '理财通': { name: '理财通', slug: 'licaicai', cat: '理财' },
+  '余额宝': { name: '余额宝', slug: 'yuebao', cat: '理财' },
+  '零钱通': { name: '零钱通', slug: 'wechat', cat: '理财' },
+  '京东金融': { name: '京东金融', slug: 'jd', cat: '理财' },
+  '度小满': { name: '度小满', slug: 'baidu', cat: '理财' },
+  // 银行
+  '招商银行': { name: '招商银行', slug: 'cmb', cat: '银行' },
+  '招行': { name: '招商银行', slug: 'cmb', cat: '银行' },
+  '工商银行': { name: '工商银行', slug: 'icbc', cat: '银行' },
+  '工行': { name: '工商银行', slug: 'icbc', cat: '银行' },
+  '建设银行': { name: '建设银行', slug: 'ccb', cat: '银行' },
+  '建行': { name: '建设银行', slug: 'ccb', cat: '银行' },
+  '农业银行': { name: '农业银行', slug: 'abc', cat: '银行' },
+  '农行': { name: '农业银行', slug: 'abc', cat: '银行' },
+  '中国银行': { name: '中国银行', slug: 'boc', cat: '银行' },
+  '中行': { name: '中国银行', slug: 'boc', cat: '银行' },
+  '交通银行': { name: '交通银行', slug: 'bankcomm', cat: '银行' },
+  '交行': { name: '交通银行', slug: 'bankcomm', cat: '银行' },
+  '浦发银行': { name: '浦发银行', slug: 'spdb', cat: '银行' },
+  '浦发': { name: '浦发银行', slug: 'spdb', cat: '银行' },
+  '民生银行': { name: '民生银行', slug: 'cmbc', cat: '银行' },
+  '民生': { name: '民生银行', slug: 'cmbc', cat: '银行' },
+  '中信银行': { name: '中信银行', slug: 'citic', cat: '银行' },
+  '中信': { name: '中信银行', slug: 'citic', cat: '银行' },
+  '光大银行': { name: '光大银行', slug: 'ceb', cat: '银行' },
+  '光大': { name: '光大银行', slug: 'ceb', cat: '银行' },
+  '邮储银行': { name: '邮储银行', slug: 'psbc', cat: '银行' },
+  '邮储': { name: '邮储银行', slug: 'psbc', cat: '银行' },
+  '兴业银行': { name: '兴业银行', slug: 'cib', cat: '银行' },
+  '平安银行': { name: '平安银行', slug: 'pab', cat: '银行' },
+  '广发银行': { name: '广发银行', slug: 'cgb', cat: '银行' },
+  '华夏银行': { name: '华夏银行', slug: 'hxb', cat: '银行' }
 };
 
 // Expense categories
@@ -113,7 +193,95 @@ let state = {
   selectedCat: 'food',
   selectedCycle: 'month',
   selectedAcctType: 'bank',
+  selectedCardColor: 'gold',
   currentSubId: null
+};
+
+// Card color themes
+const CARD_THEMES = {
+  gold: {
+    gradient: 'linear-gradient(145deg,#1c1c1e 0%,#0d0d0d 100%)',
+    border: 'rgba(255,255,255,0.06)',
+    accent: '#d4af7a',
+    text: '#fff',
+    subtext: 'rgba(255,255,255,0.5)',
+    chipBg: 'linear-gradient(135deg,#c8c8c8 0%,#909090 40%,#d0d0d0 60%,#888 100%)',
+    hasChip: true
+  },
+  blue: {
+    gradient: 'linear-gradient(145deg,#0a1628 0%,#0d1f3c 50%,#061020 100%)',
+    border: 'rgba(22,119,255,0.15)',
+    accent: '#4A9EFF',
+    text: '#fff',
+    subtext: 'rgba(255,255,255,0.4)',
+    chipBg: 'linear-gradient(135deg,#c8c8c8 0%,#909090 40%,#d0d0d0 60%,#888 100%)',
+    hasChip: true
+  },
+  green: {
+    gradient: 'linear-gradient(145deg,#0a1f12 0%,#0d2818 50%,#061a0e 100%)',
+    border: 'rgba(7,193,96,0.12)',
+    accent: '#2DC770',
+    text: '#fff',
+    subtext: 'rgba(255,255,255,0.4)',
+    chipBg: 'linear-gradient(135deg,#c8c8c8 0%,#909090 40%,#d0d0d0 60%,#888 100%)',
+    hasChip: true
+  },
+  red: {
+    gradient: 'linear-gradient(145deg,#2a0a0a 0%,#1a0505 50%,#100303 100%)',
+    border: 'rgba(255,92,72,0.15)',
+    accent: '#FF5C48',
+    text: '#fff',
+    subtext: 'rgba(255,255,255,0.4)',
+    chipBg: 'linear-gradient(135deg,#c8c8c8 0%,#909090 40%,#d0d0d0 60%,#888 100%)',
+    hasChip: true
+  },
+  purple: {
+    gradient: 'linear-gradient(145deg,#1a0a2a 0%,#100518 50%,#080310 100%)',
+    border: 'rgba(180,100,255,0.15)',
+    accent: '#B464FF',
+    text: '#fff',
+    subtext: 'rgba(255,255,255,0.4)',
+    chipBg: 'linear-gradient(135deg,#c8c8c8 0%,#909090 40%,#d0d0d0 60%,#888 100%)',
+    hasChip: true
+  },
+  pink: {
+    gradient: 'linear-gradient(145deg,#2a0a1a 0%,#180510 50%,#100308 100%)',
+    border: 'rgba(255,100,150,0.15)',
+    accent: '#FF6496',
+    text: '#fff',
+    subtext: 'rgba(255,255,255,0.4)',
+    chipBg: 'linear-gradient(135deg,#c8c8c8 0%,#909090 40%,#d0d0d0 60%,#888 100%)',
+    hasChip: true
+  },
+  orange: {
+    gradient: 'linear-gradient(145deg,#2a1a0a 0%,#181005 50%,#100a03 100%)',
+    border: 'rgba(255,159,10,0.15)',
+    accent: '#FF9F0A',
+    text: '#fff',
+    subtext: 'rgba(255,255,255,0.4)',
+    chipBg: 'linear-gradient(135deg,#c8c8c8 0%,#909090 40%,#d0d0d0 60%,#888 100%)',
+    hasChip: true
+  },
+  dark: {
+    gradient: 'linear-gradient(145deg,#141416 0%,#0a0a0c 100%)',
+    border: 'rgba(255,255,255,0.08)',
+    accent: '#fff',
+    text: '#fff',
+    subtext: 'rgba(255,255,255,0.4)',
+    chipBg: 'linear-gradient(135deg,#c8c8c8 0%,#909090 40%,#d0d0d0 60%,#888 100%)',
+    hasChip: true
+  }
+};
+
+// Account type config
+const ACCOUNT_TYPES = {
+  bank: { name: '储蓄卡', brand: 'UnionPay', hasChip: true, hasHolo: true },
+  alipay: { name: '支付宝', brand: 'Alipay', hasChip: false, hasHolo: false },
+  wechat: { name: '微信零钱', brand: 'WeChat Pay', hasChip: false, hasHolo: false },
+  yunshanfu: { name: '云闪付', brand: 'UnionPay', hasChip: false, hasHolo: false },
+  licaicai: { name: '理财通', brand: 'Licaitong', hasChip: false, hasHolo: false },
+  yuebao: { name: '余额宝', brand: 'Yuebao', hasChip: false, hasHolo: false },
+  other: { name: '钱包', brand: 'Wallet', hasChip: false, hasHolo: false }
 };
 
 // ===== Storage =====
@@ -187,10 +355,21 @@ function toast(msg) {
 
 // ===== Brand Icon =====
 function brandIconSvg(brand) {
-  if (!brand) return letterIcon('?', 'rgba(255,255,255,0.3)');
-  const letter = (brand.name[0]||'?').toUpperCase();
-  const color = brand.color || '#d4af7a';
-  return `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:${color};letter-spacing:0;">${letter}</div>`;
+  if (!brand) return letterIcon('?', '#d4af7a');
+  const bi = BRAND_ICONS[brand.slug];
+  if (bi && bi.p) {
+    // Real brand icon on colored background
+    const fg = isLightColor(bi.bg) ? '#000' : '#fff';
+    return `<div style="width:100%;height:100%;border-radius:12px;background:${bi.bg};display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 24 24" style="width:26px;height:26px;fill:${fg};"><path d="${bi.p}"/></svg></div>`;
+  }
+  // Fallback: colored letter badge
+  return letterIcon((brand.name[0]||'?').toUpperCase(), bi ? bi.bg : '#d4af7a');
+}
+
+function isLightColor(hex) {
+  const h = hex.replace('#','');
+  const r = parseInt(h.substr(0,2),16), g = parseInt(h.substr(2,2),16), b = parseInt(h.substr(4,2),16);
+  return (r*299+g*587+b*114)/1000 > 150;
 }
 
 function matchBrand(name) {
@@ -202,8 +381,9 @@ function matchBrand(name) {
   return null;
 }
 
-function letterIcon(letter, color) {
-  return `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:${color};">${letter}</div>`;
+function letterIcon(letter, bg) {
+  const fg = isLightColor(bg) ? '#000' : '#fff';
+  return `<div style="width:100%;height:100%;border-radius:12px;background:${bg};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:${fg};">${letter}</div>`;
 }
 
 function txIconSvg(type) {
@@ -413,7 +593,9 @@ function openAddAccount() {
   $('#acct-balance').value = '0';
   $('#acct-num').value = '';
   state.selectedAcctType = 'bank';
+  state.selectedCardColor = 'gold';
   $$('#acct-type-pick .pick').forEach(p => p.classList.toggle('on', p.dataset.t === 'bank'));
+  $$('#acct-color-pick .color-pick').forEach(p => p.classList.toggle('on', p.dataset.c === 'gold'));
   openSheet('sheet-acct');
 }
 
@@ -422,9 +604,35 @@ function saveAccount() {
   if (!name) { toast('请输入账户名称'); return; }
   const balance = parseFloat($('#acct-balance').value) || 0;
   const cardNumber = $('#acct-num').value.trim();
+  
+  // Auto-detect account type from name
+  let acctType = state.selectedAcctType;
+  let acctColor = state.selectedCardColor;
+  const brand = matchBrand(name);
+  if (brand) {
+    // Map brand to account type
+    if (brand.slug === 'alipay') acctType = 'alipay';
+    else if (brand.slug === 'wechat') acctType = 'wechat';
+    else if (brand.slug === 'unionpay') acctType = 'yunshanfu';
+    else if (brand.slug === 'licaicai') acctType = 'licaicai';
+    else if (brand.slug === 'yuebao') acctType = 'yuebao';
+    else if (['cmb','icbc','ccb','abc','boc','bankcomm','spdb','cmbc','citic','ceb','psbc','cib','pab','cgb','hxb'].includes(brand.slug)) {
+      acctType = 'bank';
+      // Use brand color for bank cards
+      const bi = BRAND_ICONS[brand.slug];
+      if (bi) {
+        // Map brand bg color to closest theme
+        if (bi.bg.includes('003F88') || bi.bg.includes('005BAC') || bi.bg.includes('007A33')) acctColor = 'blue';
+        else if (bi.bg.includes('009A44') || bi.bg.includes('007A33')) acctColor = 'green';
+        else if (bi.bg.includes('B40020') || bi.bg.includes('C8102E') || bi.bg.includes('AF272F') || bi.bg.includes('E60012') || bi.bg.includes('7B2E86')) acctColor = 'red';
+      }
+    }
+  }
+  
   const acct = {
-    id: genId(), name, type: state.selectedAcctType, balance,
-    cardNumber, createdAt: new Date().toISOString()
+    id: genId(), name, type: acctType, balance,
+    cardNumber, color: acctColor, brandSlug: brand?.slug || null,
+    createdAt: new Date().toISOString()
   };
   state.accounts.push(acct);
   save();
@@ -437,6 +645,45 @@ $$('#acct-type-pick .pick').forEach(p => p.onclick = () => {
   state.selectedAcctType = p.dataset.t;
   $$('#acct-type-pick .pick').forEach(x => x.classList.remove('on'));
   p.classList.add('on');
+});
+
+$$('#acct-color-pick .color-pick').forEach(p => p.onclick = () => {
+  state.selectedCardColor = p.dataset.c;
+  $$('#acct-color-pick .color-pick').forEach(x => {
+    x.classList.remove('on');
+    x.style.boxShadow = '';
+    x.style.borderColor = 'transparent';
+  });
+  p.classList.add('on');
+});
+
+// Auto-detect type when typing account name
+$('#acct-name').addEventListener('input', () => {
+  const name = $('#acct-name').value;
+  const brand = matchBrand(name);
+  if (brand) {
+    let autoType = 'bank';
+    let autoColor = 'gold';
+    if (brand.slug === 'alipay') { autoType = 'alipay'; autoColor = 'blue'; }
+    else if (brand.slug === 'wechat') { autoType = 'wechat'; autoColor = 'green'; }
+    else if (brand.slug === 'unionpay') { autoType = 'yunshanfu'; autoColor = 'red'; }
+    else if (brand.slug === 'licaicai') { autoType = 'licaicai'; autoColor = 'orange'; }
+    else if (brand.slug === 'yuebao') { autoType = 'yuebao'; autoColor = 'orange'; }
+    else if (['cmb','icbc','boc','spdb','citic'].includes(brand.slug)) { autoType = 'bank'; autoColor = 'red'; }
+    else if (['ccb','bankcomm','cmbc'].includes(brand.slug)) { autoType = 'bank'; autoColor = 'blue'; }
+    else if (['abc','psbc'].includes(brand.slug)) { autoType = 'bank'; autoColor = 'green'; }
+    else if (brand.slug === 'ceb') { autoType = 'bank'; autoColor = 'purple'; }
+    
+    state.selectedAcctType = autoType;
+    state.selectedCardColor = autoColor;
+    $$('#acct-type-pick .pick').forEach(x => x.classList.toggle('on', x.dataset.t === autoType));
+    $$('#acct-color-pick .color-pick').forEach(x => {
+      const isOn = x.dataset.c === autoColor;
+      x.classList.toggle('on', isOn);
+      x.style.boxShadow = isOn ? '0 0 0 2px var(--gold)' : '';
+      x.style.borderColor = isOn ? 'var(--gold)' : 'transparent';
+    });
+  }
 });
 
 // ===== Subscription Auto-Deduction =====
@@ -593,7 +840,9 @@ function renderSubDetail() {
   const yearly = monthly * 12;
   const startDate = sub.createdAt ? new Date(sub.createdAt).toLocaleDateString('zh-CN') : '未知';
   const iconHtml = sub.brand ? brandIconSvg(sub.brand) : letterIcon((sub.name[0]||'?').toUpperCase(), 'rgba(255,255,255,0.4)');
-  const heroBg = sub.brand ? `background:linear-gradient(150deg,${sub.brand}22,${sub.brand}08);border:1px solid ${sub.brand}15;` : '';
+  const bi = sub.brand ? BRAND_ICONS[sub.brand.slug] : null;
+  const brandColor = bi ? bi.bg : 'rgba(255,255,255,0.1)';
+  const heroBg = sub.brand ? `background:linear-gradient(150deg,${brandColor}22,${brandColor}08);border:1px solid ${brandColor}15;` : '';
 
   $('#subdetail-body').innerHTML = `
     <div class="sub-detail-hero" style="${heroBg}">
@@ -694,7 +943,8 @@ function renderTx() {
     html += `<div class="mh"><span class="mht">${label}</span><span class="mht">${sumText}</span></div>`;
     groups[date].forEach(t => {
       const acct = state.accounts.find(a => a.id === t.accountId);
-      const acctColor = acct ? { bank: '#8b3a3a', alipay: '#1a3a6e', wechat: '#1a4a2a', other: '#3a3a3a' }[acct.type] || '#3a3a3a' : '#3a3a3a';
+      const theme = acct ? (CARD_THEMES[acct.color] || CARD_THEMES.gold) : CARD_THEMES.gold;
+      const acctColor = theme.accent;
       const isSub = t.isSubscription;
       const icClass = isSub ? 'txi is' : (t.type === 'income' ? 'txi is2' : 'txi');
       const iconContent = isSub ? txIconSvg('sub') : txIconSvg(t.category);
@@ -724,36 +974,54 @@ function renderAccounts() {
   } else {
     cs.innerHTML = state.accounts.map((a, i) => {
       const isOn = i === state.activeCardIdx;
-      const typeClass = 'type-' + a.type;
-      // 品牌logo用SVG图标更专业
-      const logoSvg = {
-        bank: `<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2L2 7v2h20V7L12 2zm-8 9v7h2v-7h3v7h2v-7h2v7h2v-7h3v7h2v-7H4z"/></svg>`,
-        alipay: `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M18.5 3H5.5C4.1 3 3 4.1 3 5.5v13C3 19.9 4.1 21 5.5 21h13c1.4 0 2.5-1.1 2.5-2.5V5.5C21 4.1 19.9 3 18.5 3zm-3.7 12.8c-.9-.3-2.2-.9-3.6-1.8-.8 1-1.8 1.8-3.2 1.8-2 0-3.3-1.5-3.2-3 0-1.3 1-2.5 3-2.5.8 0 1.8.3 2.8.7.4-.7.7-1.5.9-2.3H6.3V7.5h4.3v-1h-5V5.7h5v-1h1.7v1h5v.8h-5v1h4.2l-.3.7c-.4 1.3-1 2.4-1.7 3.4 1.2.5 2.4.9 3.3 1.2l-.5 1.3c-.8-.2-2-.5-3.2-1-.9.8-1.9 1.4-3 1.8l.5-1.3zm-5.7-1c-1.3 0-2 .8-2 1.6s.7 1.4 1.8 1.4c1 0 2-.7 2.8-1.8-1-.7-1.9-1.2-2.6-1.2z"/></svg>`,
-        wechat: `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M8.7 3C4.5 3 1 5.9 1 9.5c0 2 1.1 3.7 2.9 4.9l-.7 2.2 2.6-1.3c.9.2 1.8.4 2.8.4h.7c-.1-.4-.2-.8-.2-1.3 0-3.2 3.1-5.8 7-5.8h.5C15.9 5.3 12.6 3 8.7 3zM6.3 7.8c.5 0 .9.4.9.9s-.4.9-.9.9-.9-.4-.9-.9.4-.9.9-.9zm4.8 0c.5 0 .9.4.9.9s-.4.9-.9.9-.9-.4-.9-.9.4-.9.9-.9zm5.2 2.2c-3.3 0-6 2.3-6 5.2 0 2.9 2.7 5.2 6 5.2.7 0 1.4-.1 2.1-.3l2 1-.5-1.7c1.5-1 2.4-2.5 2.4-4.2 0-2.9-2.7-5.2-6-5.2zm-2 3.3c.4 0 .7.3.7.7s-.3.7-.7.7-.7-.3-.7-.7.3-.7.7-.7zm3.9 0c.4 0 .7.3.7.7s-.3.7-.7.7-.7-.3-.7-.7.3-.7.7-.7z"/></svg>`,
-        other: `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 10h4.5a1.5 1.5 0 010 3H9"/></svg>`
-      }[a.type] || a.name[0];
-      const cardType = { bank: '储蓄卡', alipay: '支付宝', wechat: '微信零钱', other: '钱包' }[a.type] || '账户';
-      const cardBrand = { bank: 'UnionPay', alipay: 'Alipay', wechat: 'WeChat Pay', other: 'Wallet' }[a.type] || '';
-      // 非银行卡不显示NFC图标
-      const holoSvg = a.type === 'bank'
+      // Compatibility with old data - map old types
+      let acctTypeKey = a.type;
+      if (!ACCOUNT_TYPES[acctTypeKey]) acctTypeKey = 'other';
+      const acctType = ACCOUNT_TYPES[acctTypeKey];
+      // Ensure color exists
+      if (!a.color) a.color = 'gold';
+      const theme = CARD_THEMES[a.color] || CARD_THEMES.gold;
+      
+      // Get brand icon
+      let logoHtml;
+      const brandSlug = a.brandSlug || (a.type === 'alipay' ? 'alipay' : a.type === 'wechat' ? 'wechat' : a.type === 'yunshanfu' ? 'unionpay' : a.type === 'licaicai' ? 'licaicai' : a.type === 'yuebao' ? 'yuebao' : null);
+      if (brandSlug && BRAND_ICONS[brandSlug]) {
+        const bi = BRAND_ICONS[brandSlug];
+        const fg = isLightColor(bi.bg) ? '#000' : '#fff';
+        logoHtml = `<div style="width:100%;height:100%;border-radius:10px;background:${bi.bg};display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:${fg};"><path d="${bi.p}"/></svg></div>`;
+      } else {
+        // Generic logo for account type
+        logoHtml = `<svg viewBox="0 0 24 24" width="20" height="20" fill="${theme.accent}"><path d="M12 2L2 7v2h20V7L12 2zm-8 9v7h2v-7h3v7h2v-7h2v7h2v-7h3v7h2v-7H4z"/></svg>`;
+      }
+      
+      // NFC icon for bank cards
+      const holoSvg = acctType.hasHolo
         ? `<div class="holo"><svg viewBox="0 0 24 28"><path d="M8 6c5.5 0 10 4.5 10 10M12 6c3.3 0 6 2.7 6 6M4 6c7.7 0 14 6.3 14 14M8 10c3.3 0 6 2.7 6 6M12 14c1.1 0 2 .9 2 2"/></svg></div>`
         : '';
-      // 卡号/标识文字
+      
+      // Chip for bank cards
+      const chipHtml = acctType.hasChip ? `<div class="chip" style="background:${theme.chipBg};"></div>` : '';
+      
+      // Card identifier text
       const cardIdent = a.cardNumber
         ? '•••• •••• •••• ' + a.cardNumber
-        : { bank: 'BANK CARD', alipay: 'ALIPAY WALLET', wechat: 'WECHAT WALLET', other: 'DIGITAL WALLET' }[a.type] || '';
-      return `<div class="bc ${typeClass} ${isOn?'on':'off'}" data-idx="${i}">
+        : (a.type === 'bank' ? 'BANK CARD' : a.type === 'alipay' ? 'ALIPAY WALLET' : a.type === 'wechat' ? 'WECHAT WALLET' : a.type === 'yunshanfu' ? 'UNIONPAY' : a.type === 'licaicai' ? 'LICAITONG' : a.type === 'yuebao' ? 'YUEBAO' : 'DIGITAL WALLET');
+      
+      // Custom inline styles for card
+      const cardStyle = `background:${theme.gradient};border:1px solid ${theme.border};`;
+      
+      return `<div class="bc bc-custom ${isOn?'on':'off'}" data-idx="${i}" style="${cardStyle}">
         ${holoSvg}
         <div class="bct">
-          <div class="bcti"><div class="bcn">${a.name}</div><div class="bcty">${cardType}${a.cardNumber ? ' · 尾号'+a.cardNumber : ''}</div></div>
-          <div class="bcl">${logoSvg}</div>
+          <div class="bcti"><div class="bcn" style="color:${theme.accent};">${a.name}</div><div class="bcty" style="color:${theme.subtext};">${acctType.name}${a.cardNumber ? ' · 尾号'+a.cardNumber : ''}</div></div>
+          <div class="bcl" style="background:rgba(255,255,255,0.04);border:1px solid ${theme.border};">${logoHtml}</div>
         </div>
         <div style="flex:1;"></div>
-        ${a.type === 'bank' ? '<div class="chip"></div>' : ''}
-        <div class="bcnm">${cardIdent}</div>
+        ${chipHtml}
+        <div class="bcnm" style="color:${theme.subtext};">${cardIdent}</div>
         <div class="bcb">
-          <div><div class="bcbl">可用余额</div><div class="bcv">¥${fmt(Math.round(a.balance))}</div></div>
-          <div class="bcbn">${cardBrand}</div>
+          <div><div class="bcbl" style="color:${theme.subtext};">可用余额</div><div class="bcv" style="color:${theme.text};">¥${fmt(Math.round(a.balance))}</div></div>
+          <div class="bcbn" style="color:${theme.accent};opacity:0.6;">${acctType.brand}</div>
         </div>
       </div>`;
     }).join('');
@@ -890,5 +1158,405 @@ $('#sub-price')?.addEventListener('input', function(e) {
 $('#acct-balance')?.addEventListener('input', function(e) {
   this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
 });
+
+// ===== AI Smart Bookkeeping =====
+// Category keywords mapping
+const CATEGORY_KEYWORDS = {
+  food: ['吃饭','餐','吃','外卖','饭','早','午','晚','食','美食','聚餐','奶茶','咖啡','饮料','水果','零食','小吃','饿了么','美团','肯德基','kfc','麦当劳','星巴克','瑞幸','海底捞','烧烤','火锅','早餐','午餐','晚餐','宵夜'],
+  shopping: ['购物','买','淘宝','京东','拼多多','衣服','鞋','包','化妆品','护肤品','电商','网购','商场','双十一','双十二','618','打折','数码','手机','电脑','耳机','相机','电子产品','数码产品','配件'],
+  transport: ['交通','打车','滴滴','地铁','公交','出租','高铁','火车','机票','飞机','加油','停车','过路费','油费','出行','共享单车','哈啰','青桔','高德'],
+  entertainment: ['娱乐','电影','游戏','会员','演出','门票','ktv','酒吧','派对','旅游','酒店','景点','度假','音乐','视频','充值'],
+  home: ['日用','超市','买菜','菜市场','水电','电费','水费','燃气','话费','手机费','网费','宽带','物业','房租','日用品','纸巾','洗衣液','家居'],
+  medical: ['医疗','看病','医院','药','挂号','体检','诊所','牙医','买药','医药费'],
+  study: ['学习','教育','课程','书','培训','学费','买书','教材','网课','知识付费'],
+  other: ['转账','转给','发红包','还款','还钱','借钱'],
+  salary: ['工资','薪水','发薪','薪资','奖金','提成','收入','到账'],
+  bonus: ['红包'],
+  invest: ['理财','收益','利息','股票','基金','投资','分红']
+};
+
+// Income keywords
+const INCOME_KEYWORDS = ['收入','工资','到账','收到','转入','红包收','退款','返现','奖金','发了','赚','利息','收益','报销','还钱给我','转给我'];
+// Expense keywords
+const EXPENSE_KEYWORDS = ['花了','花掉','支出','消费','用了','扣了','付了','付款','买了','吃饭','打车','花','买','付','扣','交','充'];
+
+// Account keywords mapping (matches to account types or names)
+const ACCOUNT_KEYWORDS = {
+  wechat: ['微信','wechat','wx','零钱','微信支付'],
+  alipay: ['支付宝','alipay','余额宝','花呗'],
+  yunshanfu: ['云闪付','银联'],
+  licaicai: ['理财通'],
+  cash: ['现金','现款','钞票']
+};
+
+// AI state
+let aiState = {
+  messages: [],
+  pendingTx: null
+};
+
+function openAIChat() {
+  const overlay = $('#ai-chat');
+  overlay.classList.add('on');
+  renderAIMessages();
+  renderQuickReplies();
+  setTimeout(() => $('#ai-input').focus(), 300);
+  // Auto-grow textarea
+  $('#ai-input').addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+  });
+}
+
+function closeAIChat() {
+  $('#ai-chat').classList.remove('on');
+}
+
+function renderAIMessages() {
+  const container = $('#ai-messages');
+  if (aiState.messages.length === 0) {
+    // Welcome message
+    aiState.messages.push({
+      role: 'bot',
+      text: '你好！我是AI记账助手，可以用一句话帮你记账。试试说：\n• 今天用微信花了20元吃饭\n• 支付宝收到工资8000元\n• 招行卡扣了Netflix订阅68元',
+      isWelcome: true
+    });
+  }
+  container.innerHTML = aiState.messages.map(msg => {
+    if (msg.role === 'bot') {
+      return `<div class="ai-msg bot">
+        <div class="ai-msg-ic">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a4 4 0 0 1 4 4v1h.5a2.5 2.5 0 0 1 0 5H16v1a4 4 0 0 1-8 0v-1H7.5a2.5 2.5 0 0 1 0-5H8V6a4 4 0 0 1 4-4z"/></svg>
+        </div>
+        <div class="ai-msg-bubble">${msg.text}</div>
+      </div>`;
+    } else {
+      return `<div class="ai-msg user">
+        <div class="ai-msg-ic">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+        </div>
+        <div class="ai-msg-bubble">
+          ${msg.text}
+          ${msg.txPreview ? renderTxPreview(msg.txPreview) : ''}
+        </div>
+      </div>`;
+    }
+  }).join('');
+  container.scrollTop = container.scrollHeight;
+}
+
+function renderTxPreview(tx) {
+  const typeText = tx.type === 'income' ? '收入' : '支出';
+  const account = state.accounts.find(a => a.id === tx.accountId);
+  const allCats = [...EXPENSE_CATS, ...INCOME_CATS];
+  const catInfo = allCats.find(c => c.id === tx.category);
+  return `<div class="ai-tx-card">
+    <div class="ai-tx-row"><span class="ai-tx-label">类型</span><span class="ai-tx-value">${typeText}</span></div>
+    <div class="ai-tx-row"><span class="ai-tx-label">金额</span><span class="ai-tx-value" style="color:${tx.type==='income'?'#30d158':'var(--red)'};">${tx.type==='income'?'+':'-'}¥${fmt(tx.amount)}</span></div>
+    <div class="ai-tx-row"><span class="ai-tx-label">分类</span><span class="ai-tx-value">${catInfo?.name || tx.categoryName}</span></div>
+    <div class="ai-tx-row"><span class="ai-tx-label">账户</span><span class="ai-tx-value">${account?.name || '未选择'}</span></div>
+    <div class="ai-tx-row"><span class="ai-tx-label">日期</span><span class="ai-tx-value">${tx.date}</span></div>
+    ${tx.note ? `<div class="ai-tx-row"><span class="ai-tx-label">备注</span><span class="ai-tx-value">${tx.note}</span></div>` : ''}
+    <div class="ai-actions">
+      <button class="ai-action-btn" onclick="cancelAITx()">取消</button>
+      <button class="ai-action-btn confirm" onclick="confirmAITx()">确认记账</button>
+    </div>
+  </div>`;
+}
+
+function renderQuickReplies() {
+  const quick = $('#ai-quick');
+  if (state.accounts.length === 0) {
+    quick.innerHTML = `<span style="color:var(--t3);font-size:12px;">请先在「账户」页面添加至少一个账户</span>`;
+    return;
+  }
+  const suggestions = [
+    '今天吃饭花了30元',
+    '微信打车25',
+    '支付宝充话费100',
+    '收到工资5000'
+  ];
+  quick.innerHTML = suggestions.map(s => `<button class="ai-quick-btn" onclick="$('#ai-input').value='${s}';sendAIMessage();">${s}</button>`).join('');
+}
+
+function parseNaturalLanguage(text) {
+  const result = {
+    amount: null,
+    type: 'expense',
+    category: 'other',
+    categoryName: '其他',
+    accountId: null,
+    accountName: null,
+    date: today(),
+    note: '',
+    confidence: 0
+  };
+  
+  // Normalize text
+  let normalized = text.toLowerCase().trim();
+  
+  // 1. Extract amount (supports patterns like: 20元, 20块, 20块钱, 20, ¥20)
+  const amountPatterns = [
+    /(\d+(?:\.\d{1,2})?)\s*元/,
+    /(\d+(?:\.\d{1,2})?)\s*块/,
+    /(\d+(?:\.\d{1,2})?)\s*块钱/,
+    /(\d+(?:\.\d{1,2})?)\s*rmb/,
+    /¥\s*(\d+(?:\.\d{1,2})?)/,
+    /(\d+(?:\.\d{1,2})?)\s*(?:刀|美元)/,
+    /花了?\s*(\d+(?:\.\d{1,2})?)/,
+    /用了?\s*(\d+(?:\.\d{1,2})?)/,
+    /付了?\s*(\d+(?:\.\d{1,2})?)/,
+    /扣了?\s*(\d+(?:\.\d{1,2})?)/,
+    /收入\s*(\d+(?:\.\d{1,2})?)/,
+    /收到\s*(\d+(?:\.\d{1,2})?)/,
+    /(\d+(?:\.\d{1,2})?)/  // fallback - just number
+  ];
+  
+  for (const pattern of amountPatterns) {
+    const match = normalized.match(pattern);
+    if (match) {
+      result.amount = parseFloat(match[1]);
+      break;
+    }
+  }
+  
+  // 2. Determine transaction type (income/expense)
+  const isIncome = INCOME_KEYWORDS.some(kw => normalized.includes(kw));
+  const isExpense = EXPENSE_KEYWORDS.some(kw => normalized.includes(kw));
+  if (isIncome && !isExpense) {
+    result.type = 'income';
+  } else if (normalized.includes('收入') || normalized.includes('收到') || normalized.includes('工资') || normalized.includes('到账')) {
+    result.type = 'income';
+  }
+  
+  // 3. Find account
+  let matchedAccount = null;
+  
+  // Check account type keywords
+  for (const [typeKey, keywords] of Object.entries(ACCOUNT_KEYWORDS)) {
+    for (const kw of keywords) {
+      if (normalized.includes(kw.toLowerCase())) {
+        // Find account of this type
+        matchedAccount = state.accounts.find(a => a.type === typeKey);
+        if (matchedAccount) break;
+      }
+    }
+    if (matchedAccount) break;
+  }
+  
+  // If no type match, search by account name
+  if (!matchedAccount) {
+    for (const acct of state.accounts) {
+      const acctName = acct.name.toLowerCase();
+      if (normalized.includes(acctName) || acctName.includes(normalized.substring(0, 2))) {
+        matchedAccount = acct;
+        break;
+      }
+    }
+  }
+  
+  // If still no match, use the first account or active account
+  if (!matchedAccount) {
+    if (state.accounts.length > 0) {
+      matchedAccount = state.accounts[state.activeCardIdx] || state.accounts[0];
+    }
+  }
+  
+  if (matchedAccount) {
+    result.accountId = matchedAccount.id;
+    result.accountName = matchedAccount.name;
+  }
+  
+  // 4. Determine category
+  let bestCat = 'other';
+  let bestCatName = '其他';
+  let bestScore = 0;
+  
+  const allCats = [...EXPENSE_CATS, ...INCOME_CATS];
+  
+  for (const [catKey, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
+    for (const kw of keywords) {
+      if (normalized.includes(kw.toLowerCase())) {
+        const score = kw.length; // longer keyword = higher confidence
+        if (score > bestScore) {
+          bestScore = score;
+          bestCat = catKey;
+          const catInfo = allCats.find(c => c.id === catKey);
+          bestCatName = catInfo?.name || '其他';
+        }
+      }
+    }
+  }
+  
+  // Income categories - special handling
+  if (result.type === 'income') {
+    if (normalized.includes('工资') || normalized.includes('薪水') || normalized.includes('发薪')) {
+      bestCat = 'salary';
+      bestCatName = '工资';
+    } else if (normalized.includes('红包')) {
+      bestCat = 'bonus';
+      bestCatName = '红包';
+    } else if (normalized.includes('理财') || normalized.includes('收益') || normalized.includes('利息') || normalized.includes('投资')) {
+      bestCat = 'invest';
+      bestCatName = '理财';
+    } else if (normalized.includes('报销')) {
+      bestCat = 'other_in';
+      bestCatName = '报销';
+    } else {
+      bestCat = 'other_in';
+      bestCatName = '其他';
+    }
+  }
+  
+  result.category = bestCat;
+  result.categoryName = bestCatName;
+  
+  // 5. Determine date
+  if (normalized.includes('今天') || normalized.includes('今日')) {
+    result.date = today();
+  } else if (normalized.includes('昨天') || normalized.includes('昨日')) {
+    result.date = addDays(today(), -1);
+  } else if (normalized.includes('前天')) {
+    result.date = addDays(today(), -2);
+  }
+  
+  // 6. Extract note (use the original text as note if nothing specific)
+  // Remove amount and common keywords to get note
+  let note = text;
+  const wordsToRemove = ['今天','昨天','前天','用','在','花了','花','花掉','支出','消费','用了','扣了','付了','付款','买了','元','块','块钱','人民币','微信','支付宝','云闪付','现金','吃饭','打车','收到','收入','工资','的'];
+  for (const w of wordsToRemove) {
+    note = note.replace(new RegExp(w, 'g'), '');
+  }
+  note = note.replace(/\d+(?:\.\d{1,2})?/g, '').trim();
+  result.note = note || bestCatName;
+  
+  // Calculate confidence
+  result.confidence = (result.amount ? 40 : 0) + (result.accountId ? 30 : 0) + (bestScore > 0 ? 30 : 0);
+  
+  return result;
+}
+
+function aiResponse(parsed) {
+  if (!parsed.amount) {
+    return '抱歉，我没听清楚金额是多少。能再说一遍吗？比如"花了20元吃饭"';
+  }
+  if (!parsed.accountId && state.accounts.length === 0) {
+    return '你还没有添加任何账户哦。请先去「账户」页面添加一个账户，然后再试吧~';
+  }
+  
+  const typeText = parsed.type === 'income' ? '收入' : '支出';
+  let response = `好的，我理解了：`;
+  response += `\n• ${typeText} ¥${fmt(parsed.amount)}`;
+  response += `\n• 分类：${parsed.categoryName}`;
+  response += `\n• 账户：${parsed.accountName || '默认账户'}`;
+  if (parsed.confidence < 70) {
+    response += `\n\n如果信息有误，你可以手动调整或重新描述。确认无误后点击「确认记账」即可。`;
+  } else {
+    response += `\n\n确认无误请点击「确认记账」，我来帮你记录~`;
+  }
+  return response;
+}
+
+function sendAIMessage() {
+  const input = $('#ai-input');
+  const text = input.value.trim();
+  if (!text) return;
+  
+  // Add user message
+  aiState.messages.push({ role: 'user', text });
+  
+  // Parse the message
+  const parsed = parseNaturalLanguage(text);
+  aiState.pendingTx = parsed;
+  
+  // Add bot response with preview
+  aiState.messages.push({
+    role: 'user',
+    text: '',
+    txPreview: parsed.amount ? parsed : null
+  });
+  
+  // Add bot text response
+  aiState.messages.push({
+    role: 'bot',
+    text: aiResponse(parsed)
+  });
+  
+  input.value = '';
+  input.style.height = 'auto';
+  renderAIMessages();
+  renderQuickReplies();
+}
+
+function confirmAITx() {
+  if (!aiState.pendingTx || !aiState.pendingTx.amount) {
+    toast('无法记账：缺少金额信息');
+    return;
+  }
+  
+  const tx = aiState.pendingTx;
+  if (!tx.accountId && state.accounts.length > 0) {
+    tx.accountId = state.accounts[state.activeCardIdx]?.id || state.accounts[0].id;
+  }
+  
+  if (!tx.accountId) {
+    toast('请先添加账户');
+    return;
+  }
+  
+  // Create transaction
+  const now = new Date();
+  const txRecord = {
+    id: genId(),
+    type: tx.type,
+    amount: tx.amount,
+    category: tx.category,
+    categoryName: tx.categoryName,
+    accountId: tx.accountId,
+    note: tx.note,
+    date: tx.date,
+    time: `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`,
+    isSubscription: false,
+    createdAt: now.toISOString()
+  };
+  
+  state.transactions.unshift(txRecord);
+  
+  // Update account balance
+  const acct = state.accounts.find(a => a.id === tx.accountId);
+  if (acct) {
+    if (tx.type === 'expense') {
+      acct.balance -= tx.amount;
+    } else {
+      acct.balance += tx.amount;
+    }
+  }
+  
+  save();
+  render();
+  
+  // Remove the preview message and add success message
+  aiState.messages = aiState.messages.filter(m => !m.txPreview);
+  aiState.messages.push({
+    role: 'bot',
+    text: `✅ 已成功记账！${tx.type==='income'?'收入':'支出'} ¥${fmt(tx.amount)} 已${tx.type==='income'?'存入':'从'}${acct?.name || '账户'}${tx.type==='income'?'':'扣除'}。`
+  });
+  
+  aiState.pendingTx = null;
+  renderAIMessages();
+  renderQuickReplies();
+  toast('记账成功');
+}
+
+function cancelAITx() {
+  aiState.messages = aiState.messages.filter(m => !m.txPreview);
+  aiState.messages.push({
+    role: 'bot',
+    text: '好的，已取消。你可以重新描述，或者试试快捷回复~'
+  });
+  aiState.pendingTx = null;
+  renderAIMessages();
+  renderQuickReplies();
+}
 
 init();
