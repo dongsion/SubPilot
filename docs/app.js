@@ -1722,9 +1722,13 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '1.7.9';
+const APP_VERSION = '1.8.0';
 const APP_BUILD = '2026.08.07';
 const CHANGELOG = [
+  { ver: '1.8.0', date: '2026-08-07', items: [
+    '彻底修复导航栏按钮位置：去掉safe-area底部padding，按钮紧贴屏幕底部',
+    '导航栏仅保留2px底部间距，适配所有设备'
+  ]},
   { ver: '1.7.9', date: '2026-08-07', items: [
     '修复导航栏按钮仍未贴底：去掉额外6px间距，仅保留安全区高度'
   ]},
