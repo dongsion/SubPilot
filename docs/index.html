@@ -533,14 +533,14 @@ textarea.form-i{resize:none;min-height:80px;}
       <div class="info-r" onclick="if(confirm('确定清除所有数据？此操作不可撤销。')){clearAll();toast('数据已清除');}"><span class="info-l">清除所有数据</span><span class="info-v" style="color:var(--red);">›</span></div>
     </div>
     <div class="info-g">
-      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v1.3.0 ›</span></div>
+      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v1.4.0 ›</span></div>
       <div class="info-r" onclick="showChangelog()"><span class="info-l">更新日志</span><span class="info-v" style="color:var(--gold);">查看 ›</span></div>
       <div class="info-r" onclick="checkUpdate()"><span class="info-l">检查更新</span><span class="info-v" style="color:var(--gold);" id="update-status">›</span></div>
       <div class="info-r"><span class="info-l">数据存储</span><span class="info-v" style="color:var(--t3);">仅本地浏览器</span></div>
     </div>
     <div style="text-align:center;padding:40px 20px;color:var(--t3);font-size:12px;">
       <div style="margin-bottom:8px;font-size:20px;letter-spacing:1px;">SubPilot</div>
-      <div style="margin-bottom:4px;">订阅管家 · v1.3.0 (Build 2026.08.07)</div>
+      <div style="margin-bottom:4px;">订阅管家 · v1.4.0 (Build 2026.08.07)</div>
       <div>所有数据仅保存在本地，隐私安全</div>
     </div>
     <input type="file" id="import-file" accept=".json" style="display:none;">
@@ -636,14 +636,14 @@ textarea.form-i{resize:none;min-height:80px;}
 <div class="sheet-overlay" id="sheet-sub">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-title">添加订阅</div>
+    <div class="sheet-title" id="sub-sheet-title">添加订阅</div>
     <div class="form-g">
       <label class="form-l">服务名称</label>
       <input type="text" class="form-i" id="sub-name" placeholder="如：Netflix、Spotify" list="sub-suggest">
       <datalist id="sub-suggest"></datalist>
     </div>
     <div class="form-g">
-      <label class="form-l">App Store 链接 <span style="font-size:11px;color:var(--t3);font-weight:400;">（可选，用于自动获取图标）</span></label>
+      <label class="form-l">App Store 链接 <span style="font-size:11px;color:var(--t3);font-weight:400;">（粘贴链接自动获取图标）</span></label>
       <div style="display:flex;gap:8px;align-items:center;">
         <input type="text" class="form-i" id="sub-appurl" placeholder="粘贴App Store链接" style="flex:1;">
         <button class="btn btn-gold" id="sub-fetch-btn" onclick="fetchAppIcon()" style="white-space:nowrap;padding:10px 14px;font-size:13px;">获取图标</button>

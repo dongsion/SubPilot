@@ -195,7 +195,8 @@ let state = {
   selectedAcctType: 'bank',
   selectedCardColor: 'gold',
   currentSubId: null,
-  fetchedAppIcon: null
+  fetchedAppIcon: null,
+  editSubId: null
 };
 
 // Card color themes
@@ -522,6 +523,8 @@ $$('#tx-type .type-opt').forEach(b => {
 
 // ===== Add Subscription =====
 function openAddSub() {
+  state.editSubId = null;
+  $('#sub-sheet-title').textContent = '添加订阅';
   $('#sub-name').value = '';
   $('#sub-appurl').value = '';
   $('#sub-icon-preview').innerHTML = '';
@@ -532,6 +535,80 @@ function openAddSub() {
   state.fetchedAppIcon = null; // Reset fetched icon
   $$('#sub-cycle-pick .pick').forEach(p => p.classList.toggle('on', p.dataset.c === 'month'));
   renderSubAcctPick();
+  renderSubSuggest();
+  openSheet('sheet-sub');
+}
+
+function openEditSub(id) {
+  const sub = state.subscriptions.find(s => s.id === id);
+  if (!sub) return;
+  state.editSubId = id;
+  $('#sub-sheet-title').textContent = '编辑订阅';
+  $('#sub-name').value = sub.name;
+  $('#sub-appurl').value = sub.appUrl || '';
+  $('#sub-price').value = sub.price;
+  $('#sub-nextdate').value = sub.nextDate;
+  $('#sub-note').value = sub.note || '';
+  state.selectedCycle = sub.cycle;
+  state.fetchedAppIcon = sub.brand?.iconUrl ? { iconUrl: sub.brand.iconUrl, name: sub.brand.name } : null;
+  const previewEl = $('#sub-icon-preview');
+  if (state.fetchedAppIcon) {
+    previewEl.innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px;padding:10px;background:rgba(255,255,255,0.04);border-radius:12px;border:1px solid var(--border);">
+        <img src="${state.fetchedAppIcon.iconUrl}" style="width:48px;height:48px;border-radius:12px;object-fit:cover;" onerror="this.style.opacity=0.3;" />
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:600;color:var(--t1);">${state.fetchedAppIcon.name || sub.name}</div>
+          <div style="font-size:11px;color:var(--gold);margin-top:2px;">当前图标 · 可粘贴新链接替换</div>
+        </div>
+      </div>
+    `;
+  } else if (sub.brand) {
+    // Show built-in brand icon
+    const bi = BRAND_ICONS[sub.brand.slug];
+    if (bi && bi.p) {
+      const fg = isLightColor(bi.bg) ? '#000' : '#fff';
+      previewEl.innerHTML = `
+        <div style="display:flex;align-items:center;gap:12px;padding:10px;background:rgba(255,255,255,0.04);border-radius:12px;border:1px solid var(--border);">
+          <div style="width:48px;height:48px;border-radius:12px;background:${bi.bg};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg viewBox="0 0 24 24" style="width:26px;height:26px;fill:${fg};"><path d="${bi.p}"/></svg>
+          </div>
+          <div style="flex:1;">
+            <div style="font-size:14px;font-weight:600;color:var(--t1);">${sub.brand.name}</div>
+            <div style="font-size:11px;color:var(--gold);margin-top:2px;">内置图标 · 可粘贴链接替换</div>
+          </div>
+        </div>
+      `;
+    } else {
+      const bg = bi ? bi.bg : '#d4af7a';
+      const fg = isLightColor(bg) ? '#000' : '#fff';
+      previewEl.innerHTML = `
+        <div style="display:flex;align-items:center;gap:12px;padding:10px;background:rgba(255,255,255,0.04);border-radius:12px;border:1px solid var(--border);">
+          <div style="width:48px;height:48px;border-radius:12px;background:${bg};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:${fg};flex-shrink:0;">${(sub.brand.name[0]||'?').toUpperCase()}</div>
+          <div style="flex:1;">
+            <div style="font-size:14px;font-weight:600;color:var(--t1);">${sub.brand.name}</div>
+            <div style="font-size:11px;color:var(--gold);margin-top:2px;">字母图标 · 可粘贴链接替换</div>
+          </div>
+        </div>
+      `;
+    }
+  } else {
+    previewEl.innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px;padding:10px;background:rgba(255,255,255,0.04);border-radius:12px;border:1px solid var(--border);">
+        <div style="width:48px;height:48px;border-radius:12px;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:var(--t2);flex-shrink:0;">${(sub.name[0]||'?').toUpperCase()}</div>
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:600;color:var(--t1);">${sub.name}</div>
+          <div style="font-size:11px;color:var(--gold);margin-top:2px;">无图标 · 可粘贴链接获取</div>
+        </div>
+      </div>
+    `;
+  }
+  $$('#sub-cycle-pick .pick').forEach(p => p.classList.toggle('on', p.dataset.c === sub.cycle));
+  renderSubAcctPick();
+  if (sub.accountId) {
+    $$('#sub-acct-pick .pick').forEach(b => {
+      b.classList.toggle('on', b.dataset.id === sub.accountId);
+    });
+  }
   renderSubSuggest();
   openSheet('sheet-sub');
 }
@@ -586,18 +663,34 @@ function saveSub() {
     }
   }
   
-  const sub = {
-    id: genId(), name, price, cycle: state.selectedCycle,
-    nextDate, note, accountId,
-    brand: brand ? { name: brand.name, slug: brand.slug, color: brand.color, cat: brand.cat, iconUrl: brand.iconUrl || null } : null,
-    appUrl: appUrl || null,
-    autoRenew: true,
-    createdAt: new Date().toISOString()
-  };
-  state.subscriptions.push(sub);
+  const isEdit = !!state.editSubId;
+  if (isEdit) {
+    const existing = state.subscriptions.find(s => s.id === state.editSubId);
+    if (existing) {
+      existing.name = name;
+      existing.price = price;
+      existing.cycle = state.selectedCycle;
+      existing.nextDate = nextDate;
+      existing.note = note;
+      existing.accountId = accountId;
+      existing.brand = brand ? { name: brand.name, slug: brand.slug, color: brand.color, cat: brand.cat, iconUrl: brand.iconUrl || null } : null;
+      existing.appUrl = appUrl || null;
+    }
+    state.editSubId = null;
+  } else {
+    const sub = {
+      id: genId(), name, price, cycle: state.selectedCycle,
+      nextDate, note, accountId,
+      brand: brand ? { name: brand.name, slug: brand.slug, color: brand.color, cat: brand.cat, iconUrl: brand.iconUrl || null } : null,
+      appUrl: appUrl || null,
+      autoRenew: true,
+      createdAt: new Date().toISOString()
+    };
+    state.subscriptions.push(sub);
+  }
   save();
   closeSheet('sheet-sub');
-  toast('订阅已添加');
+  toast(isEdit ? '订阅已更新' : '订阅已添加');
   render();
 }
 
@@ -709,6 +802,19 @@ async function searchAppByName(name) {
   } catch(e) {}
   return null;
 }
+
+// Auto-fetch icon when user pastes an App Store link
+let _iconFetchTimer = null;
+$('#sub-appurl').addEventListener('input', () => {
+  clearTimeout(_iconFetchTimer);
+  _iconFetchTimer = setTimeout(() => {
+    const url = $('#sub-appurl').value.trim();
+    // Auto-trigger fetch if it looks like an App Store link
+    if (url.length > 10 && /apps\.apple\.com|itunes\.apple\.com|id\d+/.test(url)) {
+      fetchAppIcon();
+    }
+  }, 500);
+});
 
 $$('#sub-cycle-pick .pick').forEach(p => p.onclick = () => {
   state.selectedCycle = p.dataset.c;
@@ -1021,7 +1127,7 @@ function renderSubDetail() {
     </div>
     <div class="btn-row">
       <button class="btn btn-danger" onclick="deleteSub('${sub.id}')">删除订阅</button>
-      <button class="btn btn-gold" onclick="toast('编辑功能开发中')">编辑</button>
+      <button class="btn btn-gold" onclick="openEditSub('${sub.id}')">编辑</button>
     </div>
     <div style="height:20px;"></div>
   `;
@@ -1265,9 +1371,15 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '1.3.0';
+const APP_VERSION = '1.4.0';
 const APP_BUILD = '2026.08.07';
 const CHANGELOG = [
+  { ver: '1.4.0', date: '2026-08-07', items: [
+    '修复订阅编辑功能，表单标题动态切换',
+    '编辑时显示当前图标预览（内置/字母/远程）',
+    '粘贴 App Store 链接自动获取图标，无需手动点击',
+    '优化图标替换流程，编辑时可一键替换图标'
+  ]},
   { ver: '1.3.0', date: '2026-08-07', items: [
     '新增 App Store 链接获取应用图标功能',
     '通过 iTunes API 自动获取高清应用图标和应用名称',
