@@ -1584,9 +1584,14 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '1.5.4';
+const APP_VERSION = '1.5.5';
 const APP_BUILD = '2026.08.07';
 const CHANGELOG = [
+  { ver: '1.5.5', date: '2026-08-07', items: [
+    '修复底部导航栏位置，紧贴屏幕底部不再悬空',
+    '使用 env(safe-area-inset-bottom) 自动适配不同设备底部安全区',
+    '内容区和FAB按钮底部间距同步优化'
+  ]},
   { ver: '1.5.4', date: '2026-08-07', items: [
     '账户页默认只显示卡片，点击卡片展开详细信息',
     '快捷操作、收支统计、支出分布图折叠隐藏，点击后才显示',
