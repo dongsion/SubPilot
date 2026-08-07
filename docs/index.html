@@ -117,6 +117,9 @@ input { font-family:inherit; }
 .bcbl { font-size:9px; text-transform:uppercase; letter-spacing:1.5px; font-weight:600; opacity:0.4; }
 .bcv { font-size:28px; font-weight:300; font-family:var(--font-mono); letter-spacing:0.5px; line-height:1.1; margin-top:2px; }
 .bcbn { font-size:10px; font-weight:600; letter-spacing:2px; text-transform:uppercase; opacity:0.5; }
+.bcl { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; cursor:pointer; transition:transform .2s; }
+.bcl:active{transform:scale(.9);}
+.bcl img{width:100%;height:100%;border-radius:10px;object-fit:cover;}
 .chip { width:42px; height:32px; border-radius:6px; position:relative; margin-bottom:14px; z-index:2; box-shadow:0 2px 8px rgba(0,0,0,0.3); overflow:hidden; }
 .chip::before{content:'';position:absolute;inset:5px;border:1px solid rgba(0,0,0,0.15);border-radius:3px;}
 .chip::after{content:'';position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(0,0,0,0.12);box-shadow:0 6px 0 rgba(0,0,0,0.1),0 -6px 0 rgba(0,0,0,0.1);}
@@ -264,10 +267,11 @@ input { font-family:inherit; }
 .fab:active{transform:scale(.9);}
 @media (max-width:430px){ .fab{right:20px;} }
 
-/* AI Button */
-.aibtn { position:fixed; bottom:calc(150px + env(safe-area-inset-bottom, 0px)); right:calc(50% - 215px + 20px); width:50px; height:50px; border-radius:50%; background:linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff; border:none; font-size:22px; box-shadow:0 8px 24px rgba(99,102,241,0.4); z-index:90; display:flex; align-items:center; justify-content:center; transition:transform .2s; }
-.aibtn:active{transform:scale(.9);}
-@media (max-width:430px){ .aibtn{right:22px;} }
+/* AI Button - now in tab bar center */
+.ai-tab { flex:0 0 auto; }
+.ai-tab-btn { width:44px; height:44px; border-radius:50%; background:linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 16px rgba(99,102,241,0.4); margin-top:-14px; transition:transform .2s; }
+.ai-tab-btn:active{transform:scale(.9);}
+.ai-tab span{font-size:9px;color:var(--t3);font-weight:600;margin-top:2px;}
 
 /* AI Chat */
 .ai-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); z-index:300; display:none; flex-direction:column; padding-top:env(safe-area-inset-top, 0px); padding-bottom:env(safe-area-inset-bottom, 0px); padding-left:env(safe-area-inset-left, 0px); padding-right:env(safe-area-inset-right, 0px); }
@@ -513,14 +517,14 @@ textarea.form-i{resize:none;min-height:80px;}
       <div class="info-r" onclick="if(confirm('确定清除所有数据？此操作不可撤销。')){clearAll();toast('数据已清除');}"><span class="info-l">清除所有数据</span><span class="info-v" style="color:var(--red);">›</span></div>
     </div>
     <div class="info-g">
-      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v1.4.3 ›</span></div>
+      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v1.5.0 ›</span></div>
       <div class="info-r" onclick="showChangelog()"><span class="info-l">更新日志</span><span class="info-v" style="color:var(--gold);">查看 ›</span></div>
       <div class="info-r" onclick="checkUpdate()"><span class="info-l">检查更新</span><span class="info-v" style="color:var(--gold);" id="update-status">›</span></div>
       <div class="info-r"><span class="info-l">数据存储</span><span class="info-v" style="color:var(--t3);">仅本地浏览器</span></div>
     </div>
     <div style="text-align:center;padding:40px 20px;color:var(--t3);font-size:12px;">
       <div style="margin-bottom:8px;font-size:20px;letter-spacing:1px;">SubPilot</div>
-      <div style="margin-bottom:4px;">订阅管家 · v1.4.3 (Build 2026.08.07)</div>
+      <div style="margin-bottom:4px;">订阅管家 · v1.5.0 (Build 2026.08.07)</div>
       <div>所有数据仅保存在本地，隐私安全</div>
     </div>
     <input type="file" id="import-file" accept=".json" style="display:none;">
@@ -536,21 +540,20 @@ textarea.form-i{resize:none;min-height:80px;}
   <button class="tbi" data-v="subs" onclick="showView('subs')">
     <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M8 21V9M15 21V9"/></svg>订阅
   </button>
-  <button class="tbi" data-v="tx" onclick="showView('tx')">
-    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/></svg>流水
+  <button class="tbi ai-tab" onclick="openAIChat()">
+    <div class="ai-tab-btn"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a4 4 0 0 1 4 4v1h.5a2.5 2.5 0 0 1 0 5H16v1a4 4 0 0 1-8 0v-1H7.5a2.5 2.5 0 0 1 0-5H8V6a4 4 0 0 1 4-4z"/><path d="M9 18v1a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-1"/><path d="M8 22h8"/></svg></div>
+    <span>AI</span>
   </button>
   <button class="tbi" data-v="accounts" onclick="showView('accounts')">
     <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>账户
+  </button>
+  <button class="tbi" data-v="tx" onclick="showView('tx')">
+    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/></svg>流水
   </button>
 </div>
 
 <!-- FAB -->
 <button class="fab" id="fab" onclick="fabAction()">+</button>
-
-<!-- AI Button -->
-<button class="aibtn" onclick="openAIChat()" title="AI记账">
-  <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a4 4 0 0 1 4 4v1h.5a2.5 2.5 0 0 1 0 5H16v1a4 4 0 0 1-8 0v-1H7.5a2.5 2.5 0 0 1 0-5H8V6a4 4 0 0 1 4-4z"/><path d="M9 18v1a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-1"/><path d="M8 22h8"/></svg>
-</button>
 
 <!-- AI Chat -->
 <div class="ai-overlay" id="ai-chat">
@@ -713,6 +716,26 @@ textarea.form-i{resize:none;min-height:80px;}
     <div class="btn-row">
       <button class="btn btn-outline" onclick="closeSheet('sheet-acct')">取消</button>
       <button class="btn btn-gold" onclick="saveAccount()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sheet: Card Icon Picker -->
+<div class="sheet-overlay" id="sheet-card-icon">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">替换卡面图标</div>
+    <div class="form-g">
+      <label class="form-l">App Store 链接 <span style="font-size:11px;color:var(--t3);font-weight:400;">（粘贴链接自动获取图标）</span></label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="text" class="form-i" id="card-icon-input" placeholder="粘贴App Store链接" style="flex:1;">
+        <button class="btn btn-gold" id="card-icon-fetch-btn" onclick="fetchCardIcon()" style="white-space:nowrap;padding:10px 14px;font-size:13px;">获取图标</button>
+      </div>
+      <div id="card-icon-preview" style="margin-top:8px;"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-outline" onclick="closeSheet('sheet-card-icon')">完成</button>
+      <button class="btn btn-danger" onclick="clearCardIcon()">清除图标</button>
     </div>
   </div>
 </div>

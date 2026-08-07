@@ -196,7 +196,8 @@ let state = {
   selectedCardColor: 'gold',
   currentSubId: null,
   fetchedAppIcon: null,
-  editSubId: null
+  editSubId: null,
+  cardIconPickerId: null
 };
 
 // Card color themes
@@ -931,6 +932,128 @@ $('#acct-name').addEventListener('input', () => {
   }
 });
 
+// ===== Card Icon Picker (App Store link) =====
+function openCardIconPicker(acctId) {
+  state.cardIconPickerId = acctId;
+  const acct = state.accounts.find(a => a.id === acctId);
+  if (!acct) return;
+  $('#card-icon-input').value = acct.iconUrl || '';
+  $('#card-icon-preview').innerHTML = acct.iconUrl
+    ? `<div style="display:flex;align-items:center;gap:12px;padding:10px;background:rgba(255,255,255,0.04);border-radius:12px;border:1px solid var(--border);"><img src="${acct.iconUrl}" style="width:48px;height:48px;border-radius:12px;object-fit:cover;" onerror="this.style.opacity=0.3;" /><div style="flex:1;"><div style="font-size:14px;font-weight:600;color:var(--t1);">${acct.name}</div><div style="font-size:11px;color:var(--gold);margin-top:2px;">当前图标 · 可粘贴新链接替换</div></div></div>`
+    : `<div style="font-size:12px;color:var(--t3);padding:8px;">粘贴 App Store 链接自动获取图标</div>`;
+  openSheet('sheet-card-icon');
+}
+
+async function fetchCardIcon() {
+  const urlInput = $('#card-icon-input');
+  const url = urlInput.value.trim();
+  const previewEl = $('#card-icon-preview');
+  const btn = $('#card-icon-fetch-btn');
+
+  if (!url) {
+    toast('请先粘贴App Store链接');
+    return;
+  }
+
+  let appId = null;
+  const idMatch = url.match(/id(\d+)/);
+  if (idMatch) appId = idMatch[1];
+
+  if (!appId) {
+    const acct = state.accounts.find(a => a.id === state.cardIconPickerId);
+    const appName = acct ? acct.name : extractAppNameFromUrl(url);
+    if (appName) {
+      previewEl.innerHTML = '<div style="font-size:12px;color:var(--t3);padding:8px;">正在搜索应用...</div>';
+      btn.disabled = true;
+      btn.textContent = '搜索中...';
+      try {
+        const result = await searchAppByName(appName);
+        if (result) appId = result.trackId;
+      } catch(e) {}
+      btn.disabled = false;
+      btn.textContent = '获取图标';
+    }
+  }
+
+  if (!appId) {
+    previewEl.innerHTML = '<div style="font-size:12px;color:var(--red);padding:8px;">未找到应用，请检查链接是否正确</div>';
+    toast('无法识别链接');
+    return;
+  }
+
+  previewEl.innerHTML = '<div style="font-size:12px;color:var(--t3);padding:8px;">正在获取图标...</div>';
+  btn.disabled = true;
+  btn.textContent = '获取中...';
+
+  try {
+    const resp = await fetch(`https://itunes.apple.com/lookup?id=${appId}&country=cn`);
+    if (!resp.ok) throw new Error('network');
+    const data = await resp.json();
+
+    if (data.results && data.results.length > 0) {
+      const app = data.results[0];
+      const iconUrl = app.artworkUrl512 || app.artworkUrl100 || app.artworkUrl60;
+
+      if (iconUrl) {
+        const acct = state.accounts.find(a => a.id === state.cardIconPickerId);
+        if (acct) {
+          acct.iconUrl = iconUrl;
+          save();
+        }
+        previewEl.innerHTML = `
+          <div style="display:flex;align-items:center;gap:12px;padding:10px;background:rgba(255,255,255,0.04);border-radius:12px;border:1px solid var(--border);">
+            <img src="${iconUrl}" style="width:48px;height:48px;border-radius:12px;object-fit:cover;" onerror="this.style.opacity=0.3;" />
+            <div style="flex:1;">
+              <div style="font-size:14px;font-weight:600;color:var(--t1);">${app.trackName}</div>
+              <div style="font-size:11px;color:var(--gold);margin-top:2px;">图标已更新 ✓</div>
+            </div>
+          </div>
+        `;
+        toast('图标更新成功');
+        render();
+      } else {
+        throw new Error('no icon');
+      }
+    } else {
+      throw new Error('not found');
+    }
+  } catch(e) {
+    previewEl.innerHTML = '<div style="font-size:12px;color:var(--red);padding:8px;">获取失败，请检查链接或网络</div>';
+    toast('获取失败');
+  }
+
+  btn.disabled = false;
+  btn.textContent = '获取图标';
+}
+
+function clearCardIcon() {
+  const acct = state.accounts.find(a => a.id === state.cardIconPickerId);
+  if (acct) {
+    acct.iconUrl = null;
+    save();
+    render();
+  }
+  closeSheet('sheet-card-icon');
+  toast('图标已清除');
+}
+
+// Auto-fetch on paste
+let _cardIconTimer = null;
+document.addEventListener('DOMContentLoaded', () => {
+  const ciInput = $('#card-icon-input');
+  if (ciInput) {
+    ciInput.addEventListener('input', () => {
+      clearTimeout(_cardIconTimer);
+      _cardIconTimer = setTimeout(() => {
+        const url = ciInput.value.trim();
+        if (url.length > 10 && /apps\.apple\.com|itunes\.apple\.com|id\d+/.test(url)) {
+          fetchCardIcon();
+        }
+      }, 500);
+    });
+  }
+});
+
 // ===== Subscription Auto-Deduction =====
 function processAutoDeductions() {
   const now = today();
@@ -1252,14 +1375,20 @@ function renderAccounts() {
       
       // Get brand icon
       let logoHtml;
+      let logoClickAttr = '';
       const brandSlug = a.brandSlug || (a.type === 'alipay' ? 'alipay' : a.type === 'wechat' ? 'wechat' : a.type === 'yunshanfu' ? 'unionpay' : a.type === 'licaicai' ? 'licaicai' : a.type === 'yuebao' ? 'yuebao' : null);
-      if (brandSlug && BRAND_ICONS[brandSlug]) {
+      if (a.iconUrl) {
+        logoHtml = `<img src="${a.iconUrl}" style="width:100%;height:100%;border-radius:10px;object-fit:cover;" onerror="this.style.opacity=0.3;" />`;
+        logoClickAttr = `onclick="openCardIconPicker('${a.id}')"`;
+      } else if (brandSlug && BRAND_ICONS[brandSlug]) {
         const bi = BRAND_ICONS[brandSlug];
         const fg = isLightColor(bi.bg) ? '#000' : '#fff';
-        logoHtml = `<div style="width:100%;height:100%;border-radius:10px;background:${bi.bg};display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:${fg};"><path d="${bi.p}"/></svg></div>`;
+        logoHtml = `<svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:${fg};"><path d="${bi.p}"/></svg>`;
+        logoClickAttr = `onclick="openCardIconPicker('${a.id}')"`;
       } else {
         // Generic logo for account type
         logoHtml = `<svg viewBox="0 0 24 24" width="20" height="20" fill="${theme.accent}"><path d="M12 2L2 7v2h20V7L12 2zm-8 9v7h2v-7h3v7h2v-7h2v7h2v-7h3v7h2v-7H4z"/></svg>`;
+        logoClickAttr = `onclick="openCardIconPicker('${a.id}')"`;
       }
       
       // NFC icon for bank cards
@@ -1282,18 +1411,19 @@ function renderAccounts() {
         ${holoSvg}
         <div class="bct">
           <div class="bcti"><div class="bcn" style="color:${theme.accent};">${a.name}</div><div class="bcty" style="color:${theme.subtext};">${acctType.name}${a.cardNumber ? ' · 尾号'+a.cardNumber : ''}</div></div>
-          <div class="bcl" style="background:rgba(255,255,255,0.04);border:1px solid ${theme.border};">${logoHtml}</div>
+          <div class="bcl" style="background:rgba(255,255,255,0.04);border:1px solid ${theme.border};" ${logoClickAttr}>${logoHtml}</div>
         </div>
         <div style="flex:1;"></div>
         ${chipHtml}
         <div class="bcnm" style="color:${theme.subtext};">${cardIdent}</div>
         <div class="bcb">
-          <div><div class="bcbl" style="color:${theme.subtext};">可用余额</div><div class="bcv" style="color:${theme.text};">¥${fmt(Math.round(a.balance))}</div></div>
           <div class="bcbn" style="color:${theme.accent};opacity:0.6;">${acctType.brand}</div>
+          <div style="text-align:right;"><div class="bcbl" style="color:${theme.subtext};">可用余额</div><div class="bcv" style="color:${theme.text};">¥${fmt(Math.round(a.balance))}</div></div>
         </div>
       </div>`;
     }).join('');
-    cs.querySelectorAll('.bc').forEach(c => c.onclick = () => {
+    cs.querySelectorAll('.bc').forEach(c => c.onclick = (e) => {
+      if (e.target.closest('.bcl')) return; // Don't toggle card when clicking icon
       state.activeCardIdx = parseInt(c.dataset.idx);
       render();
     });
@@ -1394,9 +1524,16 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '1.4.3';
+const APP_VERSION = '1.5.0';
 const APP_BUILD = '2026.08.07';
 const CHANGELOG = [
+  { ver: '1.5.0', date: '2026-08-07', items: [
+    '调换流水和账户页面在底部导航栏的位置',
+    'AI记账按钮从悬浮移至底部导航栏中间',
+    '卡面布局优化：可用余额移至右下角，BANK CARD移至左下角',
+    '卡面右上角图标支持点击弹窗，粘贴App Store链接自动识别替换图标',
+    '移除悬浮AI按钮，界面更简洁'
+  ]},
   { ver: '1.4.3', date: '2026-08-07', items: [
     '移除顶部模拟状态栏（信号/WiFi/时间），使用系统原生状态栏',
     '适配刘海屏安全区域'
