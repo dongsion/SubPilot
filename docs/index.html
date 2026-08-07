@@ -548,7 +548,6 @@ textarea.form-i{resize:none;min-height:80px;}
   <div class="content">
     <div class="hd">
       <div class="ht"><h1>账户</h1><p id="acct-sub">0张卡片</p></div>
-      <button class="ib" onclick="openAddAccount()">+</button>
     </div>
     <div class="cards" id="cards-stack"></div>
     <div id="swipe-hint" style="text-align:center;font-size:11px;color:var(--t3);margin:-8px 0 16px;letter-spacing:0.5px;">← 向右滑动切换卡片 · 点击查看详情 →</div>
@@ -616,14 +615,14 @@ textarea.form-i{resize:none;min-height:80px;}
       <div class="info-r" onclick="if(confirm('确定清除所有数据？此操作不可撤销。')){clearAll();toast('数据已清除');}"><span class="info-l">清除所有数据</span><span class="info-v" style="color:var(--red);">›</span></div>
     </div>
     <div class="info-g">
-      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v1.7.6 ›</span></div>
+      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v1.7.7 ›</span></div>
       <div class="info-r" onclick="showChangelog()"><span class="info-l">更新日志</span><span class="info-v" style="color:var(--gold);">查看 ›</span></div>
       <div class="info-r" onclick="checkUpdate()"><span class="info-l">检查更新</span><span class="info-v" style="color:var(--gold);" id="update-status">›</span></div>
       <div class="info-r"><span class="info-l">数据存储</span><span class="info-v" style="color:var(--t3);">仅本地浏览器</span></div>
     </div>
     <div style="text-align:center;padding:40px 20px;color:var(--t3);font-size:12px;">
       <div style="margin-bottom:8px;font-size:20px;letter-spacing:1px;">SubPilot</div>
-      <div style="margin-bottom:4px;">订阅管家 · v1.7.6 (Build 2026.08.07)</div>
+      <div style="margin-bottom:4px;">订阅管家 · v1.7.7 (Build 2026.08.07)</div>
       <div>所有数据默认仅保存在本地，开启云同步后加密上传至 Supabase</div>
     </div>
     <input type="file" id="import-file" accept=".json" style="display:none;">

@@ -512,9 +512,9 @@ function showView(name) {
   $$('.tbi').forEach(t => t.classList.remove('on'));
   const tab = document.querySelector(`.tbi[data-v="${name}"]`);
   if (tab) tab.classList.add('on');
-  // Hide FAB on views that don't need it
+  // FAB only shows on accounts (card pack) view
   const fab = $('#fab');
-  if (fab) fab.style.display = (name === 'reports' || name === 'settings' || name === 'subdetail') ? 'none' : 'flex';
+  if (fab) fab.style.display = (name === 'accounts') ? 'flex' : 'none';
   // Reset account detail visibility when navigating
   if (name === 'accounts') {
     const detailEl = $('#acct-detail-section');
@@ -530,13 +530,7 @@ function closeSheet(id) { $(`#${id}`).classList.remove('on'); }
 $$('.sheet-overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) o.classList.remove('on'); }));
 
 function fabAction() {
-  const v = state.currentView;
-  if (v === 'tx' || v === 'overview') openAddTx();
-  else if (v === 'subs') openAddSub();
-  else if (v === 'accounts') openAddAccount();
-  else if (v === 'qrcodes') openAddQRCode();
-  else if (v === 'invoices') openAddInvoice();
-  else openAddTx();
+  openAddAccount();
 }
 
 // ===== Add Transaction =====
@@ -1728,9 +1722,12 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '1.7.6';
+const APP_VERSION = '1.7.7';
 const APP_BUILD = '2026.08.07';
 const CHANGELOG = [
+  { ver: '1.7.7', date: '2026-08-07', items: [
+    '添加按钮仅在卡包(账户)页面显示，其他页面用各自标题栏按钮添加'
+  ]},
   { ver: '1.7.6', date: '2026-08-07', items: [
     '修复密码滚轮对不准问题：改用CSS padding居中，DOM插入后设置初始位置',
     '优化滚动吸附：增加scroll-snap-stop防止跳过数字，改进高亮判定'
