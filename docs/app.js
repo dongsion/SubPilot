@@ -1733,9 +1733,13 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '1.7.2';
+const APP_VERSION = '1.7.3';
 const APP_BUILD = '2026.08.07';
 const CHANGELOG = [
+  { ver: '1.7.3', date: '2026-08-07', items: [
+    '修复登录/注册错误提示，明确引导关闭邮箱确认',
+    '优化邮箱确认未通过时的用户提示'
+  ]},
   { ver: '1.7.2', date: '2026-08-07', items: [
     '登录改为邮箱+密码方式，无需收邮件验证码，开箱即用',
     '注册/登录双Tab切换，密码可见切换',
@@ -3486,7 +3490,6 @@ async function submitAuth() {
       });
       data = res.data; error = res.error;
       if (!error && data.user) {
-        // If email confirmation is enabled, data.user will exist but session may be null
         if (data.session) {
           state.cloudUser = data.user;
           setAuthMsg('注册成功！正在同步数据...', false);
@@ -3498,10 +3501,10 @@ async function submitAuth() {
             syncToCloud();
           }, 800);
         } else {
-          setAuthMsg('注册成功！请直接登录', false);
-          switchAuthTab('login');
+          // Email confirmation is required but email can't be received
+          setAuthMsg('⚠️ 请先去Supabase后台关闭"Confirm email"开关（Authentication→Providers→Email），关掉后重新注册', true);
           btn.disabled = false; btn.style.opacity = '';
-          haptic('success');
+          haptic('error');
         }
         return;
       }
@@ -3526,13 +3529,12 @@ async function submitAuth() {
 
     if (error) {
       let msg = error.message || '操作失败';
-      // Translate common errors to Chinese
       if (msg.includes('Invalid login')) msg = '邮箱或密码错误';
       else if (msg.includes('already registered')) msg = '该邮箱已注册，请直接登录';
       else if (msg.includes('Password should be')) msg = '密码至少6位';
-      else if (msg.includes('rate limit')) msg = '操作过于频繁，请稍后再试';
+      else if (msg.includes('rate limit')) msg = '操作过于频繁，请1小时后再试';
       else if (msg.includes('Email not confirmed')) {
-        msg = '请先登录后验证邮箱，或关闭邮箱确认设置';
+        msg = '⚠️ 请先去Supabase后台关闭"Confirm email"开关（Authentication→Providers→Email），关掉后重新注册即可';
       }
       setAuthMsg(msg, true);
       haptic('error');
