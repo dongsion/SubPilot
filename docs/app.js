@@ -1125,6 +1125,73 @@ $('#import-file').addEventListener('change', e => {
   reader.readAsText(file);
 });
 
+// ===== Version Management =====
+const APP_VERSION = '1.2.0';
+const APP_BUILD = '2026.08.07';
+const CHANGELOG = [
+  { ver: '1.2.0', date: '2026-08-07', items: [
+    '新增 AI 智能记账功能，一句话自动记账',
+    '新增自定义卡面颜色，8种高级配色主题',
+    '新增云闪付、理财通、余额宝账户类型',
+    '升级品牌图标库，支持40+真实品牌SVG图标',
+    '优化卡面渲染，支持品牌自动识别'
+  ]},
+  { ver: '1.1.0', date: '2026-08-06', items: [
+    '新增差异化卡面设计（银行卡/支付宝/微信）',
+    '新增真实品牌SVG图标替代剪影图标',
+    '新增订阅自动扣款关联账户',
+    '新增记账功能（收入/支出流水）'
+  ]},
+  { ver: '1.0.0', date: '2026-08-05', items: [
+    'SubPilot 订阅管家正式发布',
+    '订阅管理核心功能（概览、列表、详情）',
+    '账户管理（银行卡/钱包）',
+    'PWA 离线支持'
+  ]}
+];
+
+function showVersionInfo() {
+  let msg = `SubPilot 订阅管家\n\n版本：v${APP_VERSION}\n构建：${APP_BUILD}\n\n当前为最新版本`;
+  alert(msg);
+}
+
+function showChangelog() {
+  let html = '';
+  for (const log of CHANGELOG) {
+    html += `【v${log.ver}】${log.date}\n`;
+    for (const item of log.items) {
+      html += `  · ${item}\n`;
+    }
+    html += '\n';
+  }
+  alert('SubPilot 更新日志\n\n' + html.trim());
+}
+
+async function checkUpdate() {
+  const statusEl = $('#update-status');
+  statusEl.textContent = '检查中...';
+  try {
+    const resp = await fetch('https://api.github.com/repos/dongsion/SubPilot/commits/main', { cache: 'no-store' });
+    if (!resp.ok) throw new Error('network');
+    const data = await resp.json();
+    const remoteDate = data.commit?.committer?.date?.slice(0, 10) || '';
+    const localDate = APP_BUILD;
+    if (remoteDate > localDate) {
+      statusEl.textContent = '有新版';
+      statusEl.style.color = 'var(--gold)';
+      alert(`发现新版本！\n\n线上最新更新日期：${remoteDate}\n你的版本构建日期：${localDate}\n\n请访问 GitHub 获取最新版本：\nhttps://dongsion.github.io/SubPilot/`);
+    } else {
+      statusEl.textContent = '最新 ✓';
+      statusEl.style.color = '#30d158';
+      toast('已是最新版本');
+    }
+  } catch(e) {
+    statusEl.textContent = '›';
+    statusEl.style.color = 'var(--gold)';
+    alert(`当前版本：v${APP_VERSION} (Build ${APP_BUILD})\n\n无法连接网络检查更新，请手动访问：\nhttps://dongsion.github.io/SubPilot/`);
+  }
+}
+
 // ===== Clock =====
 function updateClock() {
   const d = new Date();
