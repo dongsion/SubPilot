@@ -423,6 +423,11 @@ function showView(name) {
   $$('.tbi').forEach(t => t.classList.remove('on'));
   const tab = document.querySelector(`.tbi[data-v="${name}"]`);
   if (tab) tab.classList.add('on');
+  // Reset account detail visibility when navigating
+  if (name === 'accounts') {
+    const detailEl = $('#acct-detail-section');
+    if (detailEl) detailEl.style.display = 'none';
+  }
   render();
 }
 
@@ -1426,9 +1431,15 @@ function renderAccounts() {
       </div>`;
     }).join('');
     cs.querySelectorAll('.bc').forEach(c => {
-      // Click: only for icon, don't cycle cards
+      // Click to toggle detail section (only for active card)
       c.onclick = (e) => {
         if (e.target.closest('.bcl')) return; // icon handled separately
+        const detailEl = $('#acct-detail-section');
+        if (c.classList.contains('on')) {
+          // Toggle detail visibility
+          const isVisible = detailEl.style.display !== 'none';
+          detailEl.style.display = isVisible ? 'none' : 'block';
+        }
       };
       // Swipe right to cycle card to back
       let startX = 0, startY = 0, currentX = 0, isDragging = false, isSwipe = false;
@@ -1465,6 +1476,7 @@ function renderAccounts() {
           c.style.opacity = '0';
           setTimeout(() => {
             state.activeCardIdx = (state.activeCardIdx + 1) % state.accounts.length;
+            $('#acct-detail-section').style.display = 'none';
             render();
           }, 300);
         } else {
@@ -1572,9 +1584,14 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '1.5.3';
+const APP_VERSION = '1.5.4';
 const APP_BUILD = '2026.08.07';
 const CHANGELOG = [
+  { ver: '1.5.4', date: '2026-08-07', items: [
+    '账户页默认只显示卡片，点击卡片展开详细信息',
+    '快捷操作、收支统计、支出分布图折叠隐藏，点击后才显示',
+    '滑动切换卡片时自动收起详细信息'
+  ]},
   { ver: '1.5.3', date: '2026-08-07', items: [
     '卡面支持右滑切换，划走的卡自动到后面',
     '滑动时卡片跟随手指移动并渐隐，带旋转动效',
