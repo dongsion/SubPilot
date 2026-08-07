@@ -106,32 +106,39 @@ input { font-family:inherit; }
 .rf{fill:none;stroke-width:3;stroke-linecap:round;}
 .rt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;font-family:var(--font-mono);}
 
-/* Bank cards */
+/* Bank cards - 金属深空风格 */
 .cards { position:relative; margin-bottom:24px; }
-.bc { border-radius:22px; padding:26px 24px; height:180px; position:relative; overflow:hidden; margin-bottom:-120px; transition:all .5s cubic-bezier(.34,1.56,.64,1); box-shadow:0 20px 60px rgba(0,0,0,0.5); cursor:pointer; }
+.bc { border-radius:20px; padding:26px 24px; height:180px; position:relative; overflow:hidden; margin-bottom:-120px; transition:all .5s cubic-bezier(.34,1.56,.64,1); box-shadow:0 20px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06); cursor:pointer; }
 .bc:last-child{margin-bottom:0;}
 .bc.on{margin-bottom:16px;z-index:10;}
-.bc.off{transform:scale(0.92) translateY(-18px);opacity:0.45;z-index:5;filter:blur(0.5px);}
-.bc.off:nth-child(2){transform:scale(0.96) translateY(-10px);opacity:0.7;z-index:6;}
-.bc::before{content:'';position:absolute;top:-40%;right:-15%;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,0.05),transparent 60%);pointer-events:none;}
-.bc.dark1{background:linear-gradient(150deg,#1a1215,#0e0809);border:1px solid rgba(180,80,80,0.08);}
-.bc.dark2{background:linear-gradient(150deg,#0f1420,#080c14);border:1px solid rgba(80,120,200,0.08);}
-.bc.dark3{background:linear-gradient(150deg,#0d1810,#070e0a);border:1px solid rgba(80,160,100,0.08);}
-.bc.dark4{background:linear-gradient(150deg,#1a1620,#0e0a14);border:1px solid rgba(160,120,200,0.08);}
-.chip { width:38px; height:28px; border-radius:7px; background:linear-gradient(135deg,#d4af7a,#a8854e); position:relative; margin-bottom:14px; }
-.chip::before{content:'';position:absolute;inset:4px;border:1.5px solid rgba(0,0,0,0.1);border-radius:3px;}
-.chip::after{content:'';position:absolute;top:50%;left:0;right:0;height:1.5px;background:rgba(0,0,0,0.1);}
-.holo { position:absolute; top:22px; right:22px; width:44px; height:34px; border-radius:8px; background:linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.015) 40%,rgba(255,255,255,0.04) 60%,rgba(255,255,255,0.01)); }
+.bc.off{transform:scale(0.92) translateY(-18px);opacity:0.4;z-index:5;filter:blur(0.5px);}
+.bc.off:nth-child(2){transform:scale(0.96) translateY(-10px);opacity:0.65;z-index:6;}
+/* 金属拉丝纹理 */
+.bc::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent,transparent 2px,rgba(255,255,255,0.012) 2px,rgba(255,255,255,0.012) 4px);pointer-events:none;z-index:0;}
+/* 顶部金色高光条 */
+.bc::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,122,0.35),transparent);z-index:1;}
+/* 4种微妙色调区分 */
+.bc.dark1{background:linear-gradient(145deg,#1c1c1e 0%,#0d0d0d 100%);border:1px solid rgba(255,255,255,0.06);}
+.bc.dark2{background:linear-gradient(145deg,#1a1a1c 0%,#0c0c0e 100%);border:1px solid rgba(212,175,122,0.08);}
+.bc.dark3{background:linear-gradient(145deg,#1b1b1d 0%,#0b0b0d 100%);border:1px solid rgba(255,255,255,0.05);}
+.bc.dark4{background:linear-gradient(145deg,#1d1d1f 0%,#0e0e10 100%);border:1px solid rgba(255,255,255,0.07);}
+/* 银色芯片 */
+.chip { width:42px; height:32px; border-radius:6px; background:linear-gradient(135deg,#c8c8c8 0%,#909090 40%,#d0d0d0 60%,#888 100%); position:relative; margin-bottom:14px; z-index:2; box-shadow:0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.3); overflow:hidden; }
+.chip::before{content:'';position:absolute;inset:5px;border:1px solid rgba(0,0,0,0.15);border-radius:3px;}
+.chip::after{content:'';position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(0,0,0,0.12);box-shadow:0 6px 0 rgba(0,0,0,0.1),0 -6px 0 rgba(0,0,0,0.1);}
+/* Contactless标识 */
+.holo { position:absolute; top:24px; right:24px; width:32px; height:28px; z-index:2; opacity:0.5; }
+.holo svg{width:32px;height:28px;fill:none;stroke:rgba(255,255,255,0.4);stroke-width:1.5;stroke-linecap:round;}
 .bct { display:flex; justify-content:space-between; align-items:flex-start; position:relative; z-index:2; margin-bottom:auto; }
-.bcti { display:flex; flex-direction:column; gap:3px; }
-.bcn { font-size:18px; font-weight:600; letter-spacing:-0.2px; }
-.bcty { font-size:11px; color:var(--t3); font-weight:500; letter-spacing:0.3px; }
-.bcl { width:36px; height:36px; border-radius:10px; background:rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; color:var(--t2); border:1px solid var(--border); }
-.bcnm { font-size:14px; letter-spacing:3.5px; font-family:var(--font-mono); color:rgba(255,255,255,0.4); font-weight:500; margin-bottom:12px; position:relative; z-index:2; }
+.bcti { display:flex; flex-direction:column; gap:4px; }
+.bcn { font-size:15px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--gold); opacity:0.9; }
+.bcty { font-size:11px; color:rgba(255,255,255,0.35); font-weight:500; letter-spacing:1px; text-transform:uppercase; }
+.bcl { width:36px; height:36px; border-radius:10px; background:rgba(255,255,255,0.04); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; color:var(--gold); border:1px solid rgba(212,175,122,0.15); opacity:0.8; }
+.bcnm { font-size:14px; letter-spacing:5px; font-family:var(--font-mono); color:rgba(255,255,255,0.45); font-weight:400; margin-bottom:14px; position:relative; z-index:2; text-shadow:0 1px 2px rgba(0,0,0,0.4); }
 .bcb { display:flex; justify-content:space-between; align-items:flex-end; position:relative; z-index:2; }
-.bcbl { font-size:10px; color:var(--t3); text-transform:uppercase; letter-spacing:0.8px; font-weight:500; }
-.bcv { font-size:30px; font-weight:700; font-family:var(--font-mono); letter-spacing:-1px; line-height:1.1; }
-.bcbn { font-size:11px; font-weight:600; color:rgba(255,255,255,0.25); letter-spacing:0.5px; }
+.bcbl { font-size:9px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1.5px; font-weight:600; }
+.bcv { font-size:28px; font-weight:300; font-family:var(--font-mono); letter-spacing:0.5px; line-height:1.1; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.3); }
+.bcbn { font-size:10px; font-weight:600; color:rgba(212,175,122,0.5); letter-spacing:2px; text-transform:uppercase; }
 
 /* Quick actions */
 .qa { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:20px; }

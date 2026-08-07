@@ -729,7 +729,7 @@ function renderAccounts() {
       const cardType = { bank: '储蓄卡', alipay: '支付宝', wechat: '微信零钱', other: '钱包' }[a.type] || '账户';
       const cardBrand = { bank: 'UnionPay', alipay: 'Alipay', wechat: 'WeChat', other: '' }[a.type] || '';
       return `<div class="bc ${a.colorClass} ${isOn?'on':'off'}" data-idx="${i}">
-        <div class="holo"></div>
+        <div class="holo"><svg viewBox="0 0 24 28"><path d="M8 6c5.5 0 10 4.5 10 10M12 6c3.3 0 6 2.7 6 6M4 6c7.7 0 14 6.3 14 14M8 10c3.3 0 6 2.7 6 6M12 14c1.1 0 2 .9 2 2"/></svg></div>
         <div class="bct">
           <div class="bcti"><div class="bcn">${a.name}</div><div class="bcty">${cardType}${a.cardNumber ? ' · 尾号'+a.cardNumber : ''}</div></div>
           <div class="bcl">${cardLogo}</div>
