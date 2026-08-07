@@ -392,6 +392,66 @@ textarea.form-i{resize:none;min-height:80px;}
 .empty-state .es-sub{font-size:12px;}
 .toast{position:fixed;top:60px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--card2);border:1px solid var(--border2);color:var(--t1);padding:12px 24px;border-radius:999px;font-size:13px;font-weight:500;z-index:300;opacity:0;transition:all .3s;pointer-events:none;box-shadow:0 8px 30px rgba(0,0,0,0.4);}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ===== Lock Screen ===== */
+.lock-overlay { position:fixed; inset:0; background:#000; z-index:999; display:none; flex-direction:column; align-items:center; justify-content:center; padding:40px 24px; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px); }
+.lock-overlay.on { display:flex; }
+.lock-content { display:flex; flex-direction:column; align-items:center; width:100%; max-width:300px; }
+.lock-icon { color:var(--gold); margin-bottom:20px; opacity:0.8; }
+.lock-title { font-size:28px; font-weight:700; letter-spacing:2px; margin-bottom:6px; }
+.lock-subtitle { font-size:13px; color:var(--t2); margin-bottom:32px; text-align:center; }
+.lock-unlock-btn { width:100%; padding:16px; border-radius:16px; background:var(--gold); color:#000; border:none; font-size:16px; font-weight:600; font-family:inherit; margin-top:8px; transition:transform .15s; }
+.lock-unlock-btn:active{transform:scale(.96);}
+.lock-pin-area { width:100%; }
+
+/* ===== PIN Pad ===== */
+.pin-dots { display:flex; gap:16px; justify-content:center; margin-bottom:28px; }
+.pin-dots span { width:14px; height:14px; border-radius:50%; border:2px solid var(--t3); transition:all .2s; }
+.pin-dots span.filled { background:var(--gold); border-color:var(--gold); }
+.pin-dots span.error { border-color:var(--red); background:var(--red); animation:pinShake .4s; }
+@keyframes pinShake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-8px);} 75%{transform:translateX(8px);} }
+.pin-pad { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; max-width:280px; margin:0 auto; }
+.pk { aspect-ratio:1; border-radius:50%; background:rgba(255,255,255,0.06); border:1px solid var(--border); color:var(--t1); font-size:24px; font-weight:600; font-family:var(--font-mono); display:flex; align-items:center; justify-content:center; transition:all .12s; }
+.pk:active{transform:scale(.9);background:rgba(255,255,255,0.12);}
+.pk-action { font-size:14px; color:var(--t2); background:transparent; border:none; }
+
+/* ===== Reports ===== */
+.rep-period { display:flex; gap:8px; margin-bottom:16px; }
+.rp-btn { flex:1; padding:10px; border-radius:12px; background:var(--card); border:1px solid var(--border); color:var(--t2); font-size:13px; font-weight:600; font-family:inherit; transition:all .15s; }
+.rp-btn.on { background:var(--gold-bg); color:var(--gold); border-color:var(--gold-bd); }
+.rep-summary { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:16px; }
+.rep-stat { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:14px 16px; }
+.rep-stat-label { font-size:10px; color:var(--t3); text-transform:uppercase; letter-spacing:0.6px; font-weight:600; margin-bottom:6px; }
+.rep-stat-val { font-size:22px; font-weight:700; font-family:var(--font-mono); letter-spacing:-0.5px; }
+.rep-chart-box { background:var(--card); border:1px solid var(--border); border-radius:20px; padding:18px 20px; margin-bottom:14px; }
+.rep-line-chart { height:140px; position:relative; margin-top:8px; }
+.rep-pie-chart { display:flex; gap:16px; align-items:center; margin-top:8px; }
+.rep-compare { margin-top:8px; }
+.rep-cmp-row { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border); }
+.rep-cmp-row:last-child{border-bottom:none;}
+.rep-cmp-label { font-size:13px; color:var(--t2); }
+.rep-cmp-val { font-size:15px; font-weight:700; font-family:var(--font-mono); }
+.rep-cmp-val.up{color:var(--green);}
+.rep-cmp-val.down{color:var(--red);}
+
+/* ===== QR Code ===== */
+.qr-cats { display:flex; gap:7px; margin-bottom:16px; flex-wrap:wrap; }
+.qr-cat { padding:7px 16px; border-radius:999px; border:none; font-size:12px; font-weight:600; font-family:inherit; transition:all .15s; }
+.qr-cat.on { background:#fff; color:#000; }
+.qr-cat.off { background:var(--card); color:var(--t2); border:1px solid var(--border); }
+.qr-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+.qr-card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:14px; display:flex; flex-direction:column; align-items:center; gap:10px; transition:all .15s; }
+.qr-card:active{transform:scale(.97);}
+.qr-card-img { width:100%; aspect-ratio:1; border-radius:12px; background:#fff; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+.qr-card-img img { width:100%; height:100%; object-fit:cover; }
+.qr-card-name { font-size:13px; font-weight:600; text-align:center; }
+.qr-add-card { border:2px dashed var(--border2); background:transparent; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; padding:20px; border-radius:16px; color:var(--t3); font-size:13px; transition:all .15s; }
+.qr-add-card:active{transform:scale(.97);border-color:var(--gold);}
+
+/* ===== Exchange Rate Settings ===== */
+.exrate-row { display:flex; justify-content:space-between; align-items:center; padding:14px 18px; border-bottom:1px solid var(--border); }
+.exrate-row:last-child{border-bottom:none;}
+.exrate-input { width:80px; text-align:right; background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:8px; padding:6px 10px; color:var(--t1); font-family:var(--font-mono); font-size:14px; outline:none; }
 </style>
 </head>
 <body>
@@ -515,19 +575,30 @@ textarea.form-i{resize:none;min-height:80px;}
       </button>
     </div>
     <div class="info-g">
+      <div class="info-r" onclick="showView('reports')"><span class="info-l">📊 收支报表</span><span class="info-v" style="color:var(--gold);">查看 ›</span></div>
+      <div class="info-r" onclick="showView('qrcodes')"><span class="info-l">📱 二维码夹</span><span class="info-v" style="color:var(--gold);">管理 ›</span></div>
+      <div class="info-r" onclick="openExchangeRateSettings()"><span class="info-l">💱 汇率换算</span><span class="info-v" style="color:var(--gold);" id="exrate-status">设置 ›</span></div>
+    </div>
+    <div class="sec" style="margin-top:8px;"><span class="st" style="font-size:13px;color:var(--t3);">安全与隐私</span></div>
+    <div class="info-g">
+      <div class="info-r" onclick="openLockSettings()"><span class="info-l">🔒 应用锁</span><span class="info-v" style="color:var(--gold);" id="lock-status">未开启 ›</span></div>
+      <div class="info-r" onclick="toggleNotifications()"><span class="info-l">🔔 到期提醒</span><span class="info-v" style="color:var(--gold);" id="notif-status">未开启 ›</span></div>
+    </div>
+    <div class="sec" style="margin-top:8px;"><span class="st" style="font-size:13px;color:var(--t3);">数据管理</span></div>
+    <div class="info-g">
       <div class="info-r" onclick="exportData()"><span class="info-l">导出数据</span><span class="info-v" style="color:var(--gold);">JSON ›</span></div>
       <div class="info-r" onclick="importDataPrompt()"><span class="info-l">导入数据</span><span class="info-v" style="color:var(--gold);">选择文件 ›</span></div>
       <div class="info-r" onclick="if(confirm('确定清除所有数据？此操作不可撤销。')){clearAll();toast('数据已清除');}"><span class="info-l">清除所有数据</span><span class="info-v" style="color:var(--red);">›</span></div>
     </div>
     <div class="info-g">
-      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v1.5.5 ›</span></div>
+      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v1.6.0 ›</span></div>
       <div class="info-r" onclick="showChangelog()"><span class="info-l">更新日志</span><span class="info-v" style="color:var(--gold);">查看 ›</span></div>
       <div class="info-r" onclick="checkUpdate()"><span class="info-l">检查更新</span><span class="info-v" style="color:var(--gold);" id="update-status">›</span></div>
       <div class="info-r"><span class="info-l">数据存储</span><span class="info-v" style="color:var(--t3);">仅本地浏览器</span></div>
     </div>
     <div style="text-align:center;padding:40px 20px;color:var(--t3);font-size:12px;">
       <div style="margin-bottom:8px;font-size:20px;letter-spacing:1px;">SubPilot</div>
-      <div style="margin-bottom:4px;">订阅管家 · v1.5.5 (Build 2026.08.07)</div>
+      <div style="margin-bottom:4px;">订阅管家 · v1.6.0 (Build 2026.08.07)</div>
       <div>所有数据仅保存在本地，隐私安全</div>
     </div>
     <input type="file" id="import-file" accept=".json" style="display:none;">
@@ -579,6 +650,80 @@ textarea.form-i{resize:none;min-height:80px;}
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
       </button>
     </div>
+  </div>
+</div>
+
+<!-- Lock Screen -->
+<div class="lock-overlay" id="lock-screen">
+  <div class="lock-content">
+    <div class="lock-icon">
+      <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    </div>
+    <div class="lock-title">SubPilot</div>
+    <div class="lock-subtitle" id="lock-subtitle">点击下方按钮解锁</div>
+    <div class="lock-pin-area" id="lock-pin-area" style="display:none;">
+      <div class="pin-dots" id="pin-dots"><span></span><span></span><span></span><span></span></div>
+      <div class="pin-pad" id="pin-pad">
+        <button class="pk" onclick="pinInput('1')">1</button>
+        <button class="pk" onclick="pinInput('2')">2</button>
+        <button class="pk" onclick="pinInput('3')">3</button>
+        <button class="pk" onclick="pinInput('4')">4</button>
+        <button class="pk" onclick="pinInput('5')">5</button>
+        <button class="pk" onclick="pinInput('6')">6</button>
+        <button class="pk" onclick="pinInput('7')">7</button>
+        <button class="pk" onclick="pinInput('8')">8</button>
+        <button class="pk" onclick="pinInput('9')">9</button>
+        <button class="pk pk-action" onclick="pinCancel()">取消</button>
+        <button class="pk" onclick="pinInput('0')">0</button>
+        <button class="pk pk-action" onclick="pinDelete()">⌫</button>
+      </div>
+    </div>
+    <button class="lock-unlock-btn" id="lock-unlock-btn" onclick="attemptUnlock()">解锁</button>
+  </div>
+</div>
+
+<!-- View: Reports -->
+<div class="view" id="view-reports">
+  <div class="content">
+    <div class="hd">
+      <div class="ht"><h1>报表</h1><p id="reports-sub">收支分析</p></div>
+      <button class="ib" onclick="showView(state.lastView||'overview')">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+    </div>
+    <div class="rep-period">
+      <button class="rp-btn on" data-p="month" onclick="switchReportPeriod('month')">月报</button>
+      <button class="rp-btn" data-p="year" onclick="switchReportPeriod('year')">年报</button>
+    </div>
+    <div class="rep-summary" id="rep-summary"></div>
+    <div class="rep-chart-box">
+      <div class="sec"><span class="st">收支趋势</span></div>
+      <div id="rep-line-chart" class="rep-line-chart"></div>
+    </div>
+    <div class="rep-chart-box">
+      <div class="sec"><span class="st">支出分类</span></div>
+      <div id="rep-pie-chart" class="rep-pie-chart"></div>
+    </div>
+    <div class="rep-chart-box">
+      <div class="sec"><span class="st">同比环比</span></div>
+      <div id="rep-compare" class="rep-compare"></div>
+    </div>
+    <div style="height:20px;"></div>
+  </div>
+</div>
+
+<!-- View: QR Codes -->
+<div class="view" id="view-qrcodes">
+  <div class="content">
+    <div class="hd">
+      <div class="ht"><h1>二维码夹</h1><p id="qr-sub">常用二维码</p></div>
+      <button class="ib" onclick="showView(state.lastView||'overview')">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+    </div>
+    <div class="qr-cats" id="qr-cats"></div>
+    <div class="qr-grid" id="qr-grid"></div>
+    <div style="height:20px;"></div>
   </div>
 </div>
 
@@ -637,8 +782,20 @@ textarea.form-i{resize:none;min-height:80px;}
       <div id="sub-icon-preview" style="margin-top:8px;"></div>
     </div>
     <div class="form-g">
-      <label class="form-l">金额（元）</label>
-      <input type="text" class="form-i" id="sub-price" placeholder="0.00" inputmode="decimal">
+      <label class="form-l">金额与币种</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="text" class="form-i" id="sub-price" placeholder="0.00" inputmode="decimal" style="flex:1;">
+        <select class="form-i" id="sub-currency" style="width:90px;flex:none;padding:14px 10px;">
+          <option value="CNY">¥ 人民币</option>
+          <option value="USD">$ 美元</option>
+          <option value="EUR">€ 欧元</option>
+          <option value="GBP">£ 英镑</option>
+          <option value="JPY">¥ 日元</option>
+          <option value="HKD">HK$ 港币</option>
+          <option value="TWD">NT$ 台币</option>
+        </select>
+      </div>
+      <div id="sub-currency-hint" style="font-size:11px;color:var(--t3);margin-top:6px;display:none;"></div>
     </div>
     <div class="form-g">
       <label class="form-l">计费周期</label>
@@ -739,6 +896,80 @@ textarea.form-i{resize:none;min-height:80px;}
     <div class="btn-row">
       <button class="btn btn-outline" onclick="closeSheet('sheet-card-icon')">完成</button>
       <button class="btn btn-danger" onclick="clearCardIcon()">清除图标</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sheet: Add QR Code -->
+<div class="sheet-overlay" id="sheet-qr">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="qr-sheet-title">添加二维码</div>
+    <div class="form-g">
+      <label class="form-l">名称</label>
+      <input type="text" class="form-i" id="qr-name" placeholder="如：微信收款码">
+    </div>
+    <div class="form-g">
+      <label class="form-l">分类</label>
+      <div class="row-pick" id="qr-cat-pick">
+        <button class="pick on" data-c="payment">收款付款</button>
+        <button class="pick" data-c="transport">交通出行</button>
+        <button class="pick" data-c="medical">医疗社保</button>
+        <button class="pick" data-c="personal">个人身份</button>
+        <button class="pick" data-c="other">其他</button>
+      </div>
+    </div>
+    <div class="form-g">
+      <label class="form-l">二维码图片</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="file" id="qr-file-input" accept="image/*" style="display:none;" onchange="previewQRFile(this)">
+        <button class="btn btn-outline" onclick="$('#qr-file-input').click()" style="white-space:nowrap;padding:10px 14px;font-size:13px;">选择图片</button>
+        <span style="font-size:12px;color:var(--t3);">支持截图/照片</span>
+      </div>
+      <div id="qr-preview" style="margin-top:10px;"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-outline" onclick="closeSheet('sheet-qr')">取消</button>
+      <button class="btn btn-gold" onclick="saveQRCode()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sheet: Set PIN -->
+<div class="sheet-overlay" id="sheet-pin">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">设置密码</div>
+    <div style="text-align:center;padding:10px 0 20px;">
+      <div style="font-size:13px;color:var(--t2);margin-bottom:16px;" id="pin-setup-hint">请输入4位数字密码</div>
+      <div class="pin-dots" style="justify-content:center;" id="pin-setup-dots"><span></span><span></span><span></span><span></span></div>
+    </div>
+    <div class="pin-pad" id="pin-setup-pad">
+      <button class="pk" onclick="pinSetupInput('1')">1</button>
+      <button class="pk" onclick="pinSetupInput('2')">2</button>
+      <button class="pk" onclick="pinSetupInput('3')">3</button>
+      <button class="pk" onclick="pinSetupInput('4')">4</button>
+      <button class="pk" onclick="pinSetupInput('5')">5</button>
+      <button class="pk" onclick="pinSetupInput('6')">6</button>
+      <button class="pk" onclick="pinSetupInput('7')">7</button>
+      <button class="pk" onclick="pinSetupInput('8')">8</button>
+      <button class="pk" onclick="pinSetupInput('9')">9</button>
+      <button class="pk pk-action" onclick="closeSheet('sheet-pin')">取消</button>
+      <button class="pk" onclick="pinSetupInput('0')">0</button>
+      <button class="pk pk-action" onclick="pinSetupDelete()">⌫</button>
+    </div>
+  </div>
+</div>
+
+<!-- QR Code Viewer Modal -->
+<div class="sheet-overlay" id="sheet-qr-view">
+  <div class="sheet" style="text-align:center;">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="qr-view-title">二维码</div>
+    <div id="qr-view-img" style="margin:10px auto 20px;max-width:260px;border-radius:16px;overflow:hidden;background:#fff;"></div>
+    <div class="btn-row">
+      <button class="btn btn-outline" onclick="closeSheet('sheet-qr-view')">关闭</button>
+      <button class="btn btn-gold" onclick="downloadQR()">保存到本地</button>
     </div>
   </div>
 </div>

@@ -4,7 +4,9 @@ const KEYS = {
   accounts: 'subpilot_accounts',
   subscriptions: 'subpilot_subs',
   transactions: 'subpilot_tx',
-  onboarded: 'subpilot_onboarded'
+  onboarded: 'subpilot_onboarded',
+  settings: 'subpilot_settings',
+  qrcodes: 'subpilot_qrcodes'
 };
 
 // ===== Embedded Brand Icons (SVG path data, viewBox 0 0 24 24) =====
@@ -197,7 +199,24 @@ let state = {
   currentSubId: null,
   fetchedAppIcon: null,
   editSubId: null,
-  cardIconPickerId: null
+  cardIconPickerId: null,
+  settings: {
+    lockType: 'none', // 'none', 'biometric', 'pin'
+    pinHash: null,
+    notifications: false,
+    exRates: { USD: 7.25, EUR: 7.85, GBP: 9.20, JPY: 0.048, HKD: 0.93, TWD: 0.22 },
+    defaultCurrency: 'CNY'
+  },
+  qrcodes: [],
+  reportPeriod: 'month',
+  qrSelectedCat: 'all',
+  qrEditingId: null,
+  qrPreviewData: null,
+  qrViewingId: null,
+  pinInputBuffer: '',
+  pinSetupBuffer: '',
+  pinSetupStep: 0,
+  pinSetupFirst: ''
 };
 
 // Card color themes
@@ -293,12 +312,20 @@ function load() {
     state.accounts = JSON.parse(localStorage.getItem(KEYS.accounts) || '[]');
     state.subscriptions = JSON.parse(localStorage.getItem(KEYS.subscriptions) || '[]');
     state.transactions = JSON.parse(localStorage.getItem(KEYS.transactions) || '[]');
+    state.qrcodes = JSON.parse(localStorage.getItem(KEYS.qrcodes) || '[]');
+    // Merge loaded settings with defaults to ensure all keys exist
+    const loaded = JSON.parse(localStorage.getItem(KEYS.settings) || '{}');
+    const defaults = { lockType: 'none', pinHash: null, notifications: false, exRates: { USD: 7.25, EUR: 7.85, GBP: 9.20, JPY: 0.048, HKD: 0.93, TWD: 0.22 }, defaultCurrency: 'CNY' };
+    state.settings = { ...defaults, ...loaded };
+    if (!state.settings.exRates) state.settings.exRates = defaults.exRates;
   } catch(e) { console.error('Load error', e); }
 }
 function save() {
   localStorage.setItem(KEYS.accounts, JSON.stringify(state.accounts));
   localStorage.setItem(KEYS.subscriptions, JSON.stringify(state.subscriptions));
   localStorage.setItem(KEYS.transactions, JSON.stringify(state.transactions));
+  localStorage.setItem(KEYS.settings, JSON.stringify(state.settings));
+  localStorage.setItem(KEYS.qrcodes, JSON.stringify(state.qrcodes));
 }
 
 // ===== Utils =====
@@ -355,6 +382,19 @@ function toast(msg) {
   const t = $('#toast'); t.textContent = msg; t.classList.add('on');
   setTimeout(() => t.classList.remove('on'), 2000);
 }
+
+// ===== Haptic Feedback =====
+function haptic(type) {
+  if (!navigator.vibrate) return;
+  const patterns = { light: 8, medium: 15, heavy: 25, success: [10, 30, 10], error: [20, 50, 20, 50, 20] };
+  navigator.vibrate(patterns[type] || 10);
+}
+
+// Global click haptic - fires on any button/interactive element tap
+document.addEventListener('click', (e) => {
+  const target = e.target.closest('button, .pick, .cat-i, .tbi, .qai, .info-r, .pl, .sc2, .bc, .ai-quick-btn, .ai-action-btn, .color-pick, .type-opt');
+  if (target) haptic('light');
+}, true);
 
 // ===== Brand Icon =====
 function brandIconSvg(brand) {
@@ -423,12 +463,16 @@ function showView(name) {
   $$('.tbi').forEach(t => t.classList.remove('on'));
   const tab = document.querySelector(`.tbi[data-v="${name}"]`);
   if (tab) tab.classList.add('on');
+  // Hide FAB on views that don't need it
+  const fab = $('#fab');
+  if (fab) fab.style.display = (name === 'reports' || name === 'settings' || name === 'subdetail') ? 'none' : 'flex';
   // Reset account detail visibility when navigating
   if (name === 'accounts') {
     const detailEl = $('#acct-detail-section');
     if (detailEl) detailEl.style.display = 'none';
   }
   render();
+  haptic('light');
 }
 
 // ===== Sheets =====
@@ -441,6 +485,7 @@ function fabAction() {
   if (v === 'tx' || v === 'overview') openAddTx();
   else if (v === 'subs') openAddSub();
   else if (v === 'accounts') openAddAccount();
+  else if (v === 'qrcodes') openAddQRCode();
   else openAddTx();
 }
 
@@ -513,6 +558,7 @@ function saveTx() {
   save();
   closeSheet('sheet-tx');
   toast('记账成功');
+  haptic('success');
   render();
 }
 
@@ -535,6 +581,8 @@ function openAddSub() {
   $('#sub-appurl').value = '';
   $('#sub-icon-preview').innerHTML = '';
   $('#sub-price').value = '';
+  $('#sub-currency').value = 'CNY';
+  $('#sub-currency-hint').style.display = 'none';
   $('#sub-nextdate').value = today();
   $('#sub-note').value = '';
   state.selectedCycle = 'month';
@@ -553,6 +601,8 @@ function openEditSub(id) {
   $('#sub-name').value = sub.name;
   $('#sub-appurl').value = sub.appUrl || '';
   $('#sub-price').value = sub.price;
+  $('#sub-currency').value = sub.currency || 'CNY';
+  updateCurrencyHint();
   $('#sub-nextdate').value = sub.nextDate;
   $('#sub-note').value = sub.note || '';
   state.selectedCycle = sub.cycle;
@@ -646,6 +696,7 @@ function saveSub() {
   const nextDate = $('#sub-nextdate').value || today();
   const note = $('#sub-note').value.trim();
   const appUrl = $('#sub-appurl').value.trim();
+  const currency = $('#sub-currency').value || 'CNY';
   const acctBtn = document.querySelector('#sub-acct-pick .pick.on');
   const accountId = acctBtn ? acctBtn.dataset.id : (state.accounts[0]?.id || null);
   
@@ -675,6 +726,7 @@ function saveSub() {
     if (existing) {
       existing.name = name;
       existing.price = price;
+      existing.currency = currency;
       existing.cycle = state.selectedCycle;
       existing.nextDate = nextDate;
       existing.note = note;
@@ -685,7 +737,7 @@ function saveSub() {
     state.editSubId = null;
   } else {
     const sub = {
-      id: genId(), name, price, cycle: state.selectedCycle,
+      id: genId(), name, price, currency, cycle: state.selectedCycle,
       nextDate, note, accountId,
       brand: brand ? { name: brand.name, slug: brand.slug, color: brand.color, cat: brand.cat, iconUrl: brand.iconUrl || null } : null,
       appUrl: appUrl || null,
@@ -697,6 +749,7 @@ function saveSub() {
   save();
   closeSheet('sheet-sub');
   toast(isEdit ? '订阅已更新' : '订阅已添加');
+  haptic('success');
   render();
 }
 
@@ -889,6 +942,7 @@ function saveAccount() {
   save();
   closeSheet('sheet-acct');
   toast('账户已添加');
+  haptic('success');
   render();
 }
 
@@ -1073,16 +1127,17 @@ function processAutoDeductions() {
       if (!existing) {
         const acct = state.accounts.find(a => a.id === sub.accountId);
         const txTime = new Date(sub.nextDate + 'T09:00:00');
+        const cnyPrice = convertToCNY(sub.price, sub.currency || 'CNY');
         const tx = {
-          id: genId(), type: 'expense', amount: sub.price,
+          id: genId(), type: 'expense', amount: cnyPrice,
           category: 'subscription', categoryName: sub.name, categoryIcon: '🔄',
-          note: `${sub.name} 自动续费`, accountId: sub.accountId,
+          note: `${sub.name} 自动续费${sub.currency && sub.currency !== 'CNY' ? ` (${sub.currency} ${sub.price})` : ''}`, accountId: sub.accountId,
           date: sub.nextDate, time: '09:00',
           timestamp: txTime.toISOString(),
           isSubscription: true, subscriptionId: sub.id
         };
         state.transactions.unshift(tx);
-        if (acct) acct.balance -= sub.price;
+        if (acct) acct.balance -= cnyPrice;
         // Advance next date
         sub.nextDate = cycleAdd(sub.nextDate, sub.cycle);
         deducted++;
@@ -1170,11 +1225,17 @@ function renderSubCard(sub) {
   const daysStyle = isSoon ? 'color:var(--red);font-weight:600;' : '';
   const iconHtml = sub.brand ? brandIconSvg(sub.brand) : letterIcon((sub.name[0]||'?').toUpperCase(), 'rgba(255,255,255,0.4)');
   const account = state.accounts.find(a => a.id === sub.accountId);
+  // Currency display
+  const cur = sub.currency || 'CNY';
+  const curSymbols = { CNY: '¥', USD: '$', EUR: '€', GBP: '£', JPY: '¥', HKD: 'HK$', TWD: 'NT$' };
+  const curSym = curSymbols[cur] || '¥';
+  const cnyAmount = convertToCNY(sub.price, cur);
+  const priceDisplay = cur === 'CNY' ? `¥${sub.price}` : `${curSym}${sub.price} ≈ ¥${fmt(Math.round(cnyAmount))}`;
   return `<div class="sc2" data-id="${sub.id}">
     <div class="si">${iconHtml}</div>
     <div class="sif">
       <div class="sn">${sub.name} <span class="badge">订阅</span></div>
-      <div class="sd">¥${sub.price}${cycleToLabel(sub.cycle)} · <span style="${daysStyle}">${daysText}</span></div>
+      <div class="sd">${priceDisplay}${cycleToLabel(sub.cycle)} · <span style="${daysStyle}">${daysText}</span></div>
     </div>
     <div class="ring">
       <svg viewBox="0 0 40 40"><circle class="rb" cx="20" cy="20" r="16"/><circle class="rf" cx="20" cy="20" r="16" stroke="${ringColor}" stroke-dasharray="${circumference.toFixed(1)}" stroke-dashoffset="${offset.toFixed(1)}"/></svg>
@@ -1187,7 +1248,8 @@ function renderSubs() {
   $('#subs-count').textContent = state.subscriptions.length;
   const monthly = state.subscriptions.reduce((s, sub) => {
     const mult = { week: 4.3, month: 1, quarter: 1/3, year: 1/12 }[sub.cycle] || 1;
-    return s + sub.price * mult;
+    const cnyPrice = convertToCNY(sub.price, sub.currency || 'CNY');
+    return s + cnyPrice * mult;
   }, 0);
   const yearly = monthly * 12;
   $('#subs-monthly').textContent = `¥${fmt(Math.round(monthly))}`;
@@ -1247,8 +1309,9 @@ function renderSubDetail() {
         <div class="sdh-nm">${sub.name}</div>
         <div class="sdh-cat">${sub.brand?.cat || '订阅'} · ${acct?.name || '未绑定'}</div>
         <div style="display:flex;align-items:baseline;gap:4px;">
-          <span class="sdh-pr">¥${sub.price}</span>
+          <span class="sdh-pr">${(() => { const c = sub.currency || 'CNY'; const syms = { CNY:'¥', USD:'$', EUR:'€', GBP:'£', JPY:'¥', HKD:'HK$', TWD:'NT$' }; return `${syms[c]||'¥'}${sub.price}`; })()}</span>
           <span style="font-size:14px;color:var(--t2);">${cycleToLabel(sub.cycle)}</span>
+          ${sub.currency && sub.currency !== 'CNY' ? `<span style="font-size:12px;color:var(--gold);margin-left:8px;">≈ ¥${fmt(Math.round(convertToCNY(sub.price, sub.currency)))}</span>` : ''}
         </div>
       </div>
     </div>
@@ -1434,11 +1497,13 @@ function renderAccounts() {
       // Click to toggle detail section (only for active card)
       c.onclick = (e) => {
         if (e.target.closest('.bcl')) return; // icon handled separately
+        if (cs.dataset.animating === '1') return;
         const detailEl = $('#acct-detail-section');
         if (c.classList.contains('on')) {
           // Toggle detail visibility
           const isVisible = detailEl.style.display !== 'none';
           detailEl.style.display = isVisible ? 'none' : 'block';
+          haptic('light');
         }
       };
       // Swipe right to cycle card to back
@@ -1446,6 +1511,7 @@ function renderAccounts() {
       c.addEventListener('touchstart', (e) => {
         if (e.target.closest('.bcl')) return;
         if (!c.classList.contains('on')) return;
+        if (cs.dataset.animating === '1') return;
         startX = e.touches[0].clientX;
         startY = e.touches[0].clientY;
         currentX = 0;
@@ -1469,18 +1535,58 @@ function renderAccounts() {
       c.addEventListener('touchend', () => {
         if (!isDragging) return;
         isDragging = false;
-        c.style.transition = '';
-        if (isSwipe && currentX > 80) {
+        if (isSwipe && currentX > 80 && state.accounts.length > 1) {
           // Swipe right confirmed - cycle card to back
-          c.style.transform = `translateX(${window.innerWidth}px) rotate(15deg)`;
+          haptic('medium');
+          cs.dataset.animating = '1';
+          const allCards = Array.from(cs.querySelectorAll('.bc'));
+          const nextCard = allCards[1]; // card right below current
+
+          // Phase 1: Fly current card off to the right
+          c.style.transition = 'transform .28s ease-in, opacity .28s ease-in';
+          c.style.transform = `translateX(${window.innerWidth + 100}px) rotate(20deg)`;
           c.style.opacity = '0';
+          c.style.zIndex = '20';
+          c.classList.remove('on');
+
+          // Phase 2: Promote next card to active position immediately (CSS transition animates)
+          if (nextCard) {
+            nextCard.classList.remove('off');
+            nextCard.classList.add('on');
+          }
+
+          // Phase 3: After fly-off, move card to back and reset
           setTimeout(() => {
-            state.activeCardIdx = (state.activeCardIdx + 1) % state.accounts.length;
+            // Move DOM element to end of stack
+            cs.appendChild(c);
+            // Reset styles instantly (no transition)
+            c.style.transition = 'none';
+            c.style.transform = '';
+            c.style.opacity = '';
+            c.style.zIndex = '';
+            c.classList.add('off');
+            // Force reflow to commit the reset
+            void c.offsetHeight;
+            // Restore transition for future interactions
+            c.style.transition = '';
+
+            // Reorder data array to match DOM
+            const movedAccount = state.accounts.splice(state.activeCardIdx, 1)[0];
+            state.accounts.push(movedAccount);
+            state.activeCardIdx = 0;
+            save();
+
+            // Update data-idx attributes
+            cs.querySelectorAll('.bc').forEach((card, i) => {
+              card.dataset.idx = i;
+            });
+
             $('#acct-detail-section').style.display = 'none';
-            render();
-          }, 300);
+            delete cs.dataset.animating;
+          }, 280);
         } else {
           // Snap back
+          c.style.transition = 'transform .3s ease, opacity .3s ease';
           c.style.transform = '';
           c.style.opacity = '';
           setTimeout(() => { c.style.transition = ''; }, 500);
@@ -1536,6 +1642,11 @@ function render() {
   renderSubs();
   renderTx();
   renderAccounts();
+  renderReports();
+  renderQRCodes();
+  updateLockStatus();
+  updateNotifStatus();
+  updateExrateStatus();
   if (state.currentView === 'subdetail') renderSubDetail();
 }
 
@@ -1553,19 +1664,21 @@ $$('#tx-fp .pl').forEach(p => p.onclick = () => {
 
 // ===== Data Management =====
 function clearAll() {
-  state.accounts = []; state.subscriptions = []; state.transactions = [];
+  state.accounts = []; state.subscriptions = []; state.transactions = []; state.qrcodes = [];
+  state.settings = { lockType: 'none', pinHash: null, notifications: false, exRates: { USD: 7.25, EUR: 7.85, GBP: 9.20, JPY: 0.048, HKD: 0.93, TWD: 0.22 }, defaultCurrency: 'CNY' };
   localStorage.removeItem(KEYS.accounts); localStorage.removeItem(KEYS.subscriptions); localStorage.removeItem(KEYS.transactions);
-  localStorage.removeItem(KEYS.onboarded);
+  localStorage.removeItem(KEYS.onboarded); localStorage.removeItem(KEYS.settings); localStorage.removeItem(KEYS.qrcodes);
   render();
 }
 function exportData() {
-  const data = { accounts: state.accounts, subscriptions: state.subscriptions, transactions: state.transactions, exportedAt: new Date().toISOString() };
+  const data = { accounts: state.accounts, subscriptions: state.subscriptions, transactions: state.transactions, qrcodes: state.qrcodes, settings: state.settings, exportedAt: new Date().toISOString() };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url; a.download = `subpilot-backup-${today()}.json`; a.click();
   URL.revokeObjectURL(url);
   toast('数据已导出');
+  haptic('success');
 }
 function importDataPrompt() { $('#import-file').click(); }
 $('#import-file').addEventListener('change', e => {
@@ -1577,16 +1690,29 @@ $('#import-file').addEventListener('change', e => {
       if (data.accounts) state.accounts = data.accounts;
       if (data.subscriptions) state.subscriptions = data.subscriptions;
       if (data.transactions) state.transactions = data.transactions;
+      if (data.qrcodes) state.qrcodes = data.qrcodes;
+      if (data.settings) state.settings = { ...state.settings, ...data.settings };
       save(); render(); toast('数据已导入');
+      haptic('success');
     } catch(err) { toast('导入失败，文件格式错误'); }
   };
   reader.readAsText(file);
 });
 
 // ===== Version Management =====
-const APP_VERSION = '1.5.5';
+const APP_VERSION = '1.6.0';
 const APP_BUILD = '2026.08.07';
 const CHANGELOG = [
+  { ver: '1.6.0', date: '2026-08-07', items: [
+    '修复卡面切换动画：划走的卡立刻消失并排到后面，下一张卡平滑升到第一位',
+    '所有按钮添加震动反馈（haptic feedback），关键操作有成功/错误震动',
+    '新增应用锁：支持 Face ID/指纹生物识别、4位数字密码、3选1',
+    '新增订阅到期提醒：浏览器通知API，到期前3天/1天/当天自动提醒',
+    '新增月度/年度报表：收支趋势折线图、分类占比饼图、同比环比分析',
+    '新增汇率换算：支持USD/EUR/GBP/JPY/HKD/TWD自动换算人民币',
+    '新增二维码夹：分类管理常用二维码（收款/交通/医疗/个人），支持查看和保存到本地',
+    '从后台返回时自动锁定并检查到期提醒'
+  ]},
   { ver: '1.5.5', date: '2026-08-07', items: [
     '修复底部导航栏位置，紧贴屏幕底部不再悬空',
     '使用 env(safe-area-inset-bottom) 自动适配不同设备底部安全区',
@@ -1717,6 +1843,12 @@ function init() {
   }
 
   render();
+
+  // Show lock screen on app launch if enabled
+  showLockScreen();
+
+  // Check subscription expiry reminders
+  checkSubscriptionReminders();
 }
 
 // Keyboard: amount input only numbers
@@ -1729,6 +1861,24 @@ $('#sub-price')?.addEventListener('input', function(e) {
 $('#acct-balance')?.addEventListener('input', function(e) {
   this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
 });
+
+// Currency hint for subscription form
+function updateCurrencyHint() {
+  const currency = $('#sub-currency')?.value || 'CNY';
+  const price = parseFloat($('#sub-price')?.value) || 0;
+  const hintEl = $('#sub-currency-hint');
+  if (!hintEl) return;
+  if (currency === 'CNY' || price <= 0) {
+    hintEl.style.display = 'none';
+    return;
+  }
+  const cny = convertToCNY(price, currency);
+  const symbols = { USD: '$', EUR: '€', GBP: '£', JPY: '¥', HKD: 'HK$', TWD: 'NT$' };
+  hintEl.textContent = `${symbols[currency] || ''}${price} ≈ ¥${fmt(Math.round(cny))} 人民币`;
+  hintEl.style.display = 'block';
+}
+$('#sub-currency')?.addEventListener('change', () => { updateCurrencyHint(); haptic('light'); });
+$('#sub-price')?.addEventListener('input', () => updateCurrencyHint());
 
 // ===== AI Smart Bookkeeping =====
 // Category keywords mapping
@@ -2139,6 +2289,7 @@ function confirmAITx() {
   renderAIMessages();
   renderQuickReplies();
   toast('记账成功');
+  haptic('success');
 }
 
 function cancelAITx() {
@@ -2151,5 +2302,697 @@ function cancelAITx() {
   renderAIMessages();
   renderQuickReplies();
 }
+
+// ===== App Lock (Biometric / PIN) =====
+function hashPin(pin) {
+  let h = 0;
+  for (let i = 0; i < pin.length; i++) { h = ((h << 5) - h + pin.charCodeAt(i)) | 0; }
+  return 'h' + h;
+}
+
+function updateLockStatus() {
+  const el = $('#lock-status');
+  if (!el) return;
+  const t = state.settings.lockType;
+  if (t === 'biometric') el.textContent = '生物识别 已开启 ›';
+  else if (t === 'pin') el.textContent = '密码锁 已开启 ›';
+  else el.textContent = '未开启 ›';
+}
+
+function openLockSettings() {
+  const options = [
+    { v: 'none', label: '关闭应用锁' },
+    { v: 'biometric', label: 'Face ID / 指纹' },
+    { v: 'pin', label: '数字密码' }
+  ];
+  const current = state.settings.lockType;
+  let msg = '选择锁定方式：\n\n';
+  options.forEach((o, i) => {
+    msg += `${i + 1}. ${o.label}${o.v === current ? ' (当前)' : ''}\n`;
+  });
+  msg += '\n输入数字选择（1-3）：';
+  const choice = prompt(msg);
+  if (!choice) return;
+  const idx = parseInt(choice) - 1;
+  if (idx < 0 || idx >= options.length) { toast('无效选择'); return; }
+  const selected = options[idx].v;
+
+  if (selected === 'none') {
+    state.settings.lockType = 'none';
+    state.settings.pinHash = null;
+    save();
+    updateLockStatus();
+    toast('应用锁已关闭');
+    haptic('medium');
+  } else if (selected === 'biometric') {
+    if (!window.PublicKeyCredential) {
+      toast('当前设备不支持生物识别，请使用密码锁');
+      return;
+    }
+    state.settings.lockType = 'biometric';
+    save();
+    updateLockStatus();
+    toast('生物识别锁已开启');
+    haptic('success');
+  } else if (selected === 'pin') {
+    state.pinSetupStep = 0;
+    state.pinSetupBuffer = '';
+    state.pinSetupFirst = '';
+    $('#pin-setup-hint').textContent = '请输入4位数字密码';
+    updatePinSetupDots();
+    openSheet('sheet-pin');
+  }
+}
+
+function updatePinSetupDots() {
+  const dots = $$('#pin-setup-dots span');
+  dots.forEach((d, i) => {
+    d.classList.remove('filled', 'error');
+    if (i < state.pinSetupBuffer.length) d.classList.add('filled');
+  });
+}
+
+function pinSetupInput(digit) {
+  haptic('light');
+  if (state.pinSetupBuffer.length >= 4) return;
+  state.pinSetupBuffer += digit;
+  updatePinSetupDots();
+  if (state.pinSetupBuffer.length === 4) {
+    setTimeout(() => {
+      if (state.pinSetupStep === 0) {
+        state.pinSetupFirst = state.pinSetupBuffer;
+        state.pinSetupBuffer = '';
+        state.pinSetupStep = 1;
+        $('#pin-setup-hint').textContent = '请再次输入确认';
+        updatePinSetupDots();
+      } else {
+        if (state.pinSetupBuffer === state.pinSetupFirst) {
+          state.settings.lockType = 'pin';
+          state.settings.pinHash = hashPin(state.pinSetupBuffer);
+          save();
+          updateLockStatus();
+          closeSheet('sheet-pin');
+          toast('密码锁已开启');
+          haptic('success');
+        } else {
+          $('#pin-setup-hint').textContent = '两次密码不一致，请重新输入';
+          haptic('error');
+          $$('#pin-setup-dots span').forEach(d => d.classList.add('error'));
+          setTimeout(() => {
+            state.pinSetupBuffer = '';
+            state.pinSetupStep = 0;
+            state.pinSetupFirst = '';
+            $('#pin-setup-hint').textContent = '请输入4位数字密码';
+            updatePinSetupDots();
+          }, 600);
+        }
+      }
+    }, 150);
+  }
+}
+
+function pinSetupDelete() {
+  haptic('light');
+  state.pinSetupBuffer = state.pinSetupBuffer.slice(0, -1);
+  updatePinSetupDots();
+}
+
+function showLockScreen() {
+  if (state.settings.lockType === 'none') return;
+  const overlay = $('#lock-screen');
+  const pinArea = $('#lock-pin-area');
+  const unlockBtn = $('#lock-unlock-btn');
+  const subtitle = $('#lock-subtitle');
+
+  if (state.settings.lockType === 'biometric') {
+    pinArea.style.display = 'none';
+    unlockBtn.style.display = 'block';
+    subtitle.textContent = '点击下方按钮使用生物识别解锁';
+  } else if (state.settings.lockType === 'pin') {
+    pinArea.style.display = 'block';
+    unlockBtn.style.display = 'none';
+    subtitle.textContent = '请输入密码解锁';
+    state.pinInputBuffer = '';
+    updatePinInputDots();
+  }
+  overlay.classList.add('on');
+}
+
+function hideLockScreen() {
+  $('#lock-screen').classList.remove('on');
+}
+
+async function attemptUnlock() {
+  haptic('medium');
+  if (state.settings.lockType === 'biometric') {
+    try {
+      const cred = await navigator.credentials.get({
+        publicKey: {
+          challenge: new Uint8Array(32),
+          timeout: 60000,
+          userVerification: 'required'
+        }
+      });
+      if (cred) {
+        hideLockScreen();
+        haptic('success');
+      }
+    } catch(e) {
+      toast('生物识别失败，请重试');
+      haptic('error');
+    }
+  }
+}
+
+function updatePinInputDots() {
+  const dots = $$('#pin-dots span');
+  dots.forEach((d, i) => {
+    d.classList.remove('filled', 'error');
+    if (i < state.pinInputBuffer.length) d.classList.add('filled');
+  });
+}
+
+function pinInput(digit) {
+  haptic('light');
+  if (state.pinInputBuffer.length >= 4) return;
+  state.pinInputBuffer += digit;
+  updatePinInputDots();
+  if (state.pinInputBuffer.length === 4) {
+    setTimeout(() => {
+      if (hashPin(state.pinInputBuffer) === state.settings.pinHash) {
+        hideLockScreen();
+        haptic('success');
+      } else {
+        haptic('error');
+        $$('#pin-dots span').forEach(d => d.classList.add('error'));
+        setTimeout(() => {
+          state.pinInputBuffer = '';
+          updatePinInputDots();
+        }, 600);
+      }
+    }, 150);
+  }
+}
+
+function pinDelete() {
+  haptic('light');
+  state.pinInputBuffer = state.pinInputBuffer.slice(0, -1);
+  updatePinInputDots();
+}
+
+function pinCancel() {
+  // Can't cancel lock screen - app stays locked
+  haptic('light');
+}
+
+// Lock on visibility change (return from background)
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    showLockScreen();
+    checkSubscriptionReminders();
+  }
+});
+
+// ===== Subscription Expiry Notifications =====
+function updateNotifStatus() {
+  const el = $('#notif-status');
+  if (!el) return;
+  el.textContent = state.settings.notifications ? '已开启 ›' : '未开启 ›';
+}
+
+async function toggleNotifications() {
+  if (state.settings.notifications) {
+    state.settings.notifications = false;
+    save();
+    updateNotifStatus();
+    toast('到期提醒已关闭');
+    haptic('medium');
+    return;
+  }
+  if (!('Notification' in window)) {
+    toast('当前浏览器不支持通知');
+    return;
+  }
+  const perm = await Notification.requestPermission();
+  if (perm === 'granted') {
+    state.settings.notifications = true;
+    save();
+    updateNotifStatus();
+    toast('到期提醒已开启');
+    haptic('success');
+    checkSubscriptionReminders();
+  } else {
+    toast('通知权限被拒绝，请在浏览器设置中允许');
+  }
+}
+
+function checkSubscriptionReminders() {
+  if (!state.settings.notifications) return;
+  if (Notification.permission !== 'granted') return;
+  const todayStr = today();
+  const remindedKey = 'subpilot_reminded_' + todayStr;
+  if (localStorage.getItem(remindedKey)) return; // Already checked today
+
+  state.subscriptions.forEach(sub => {
+    const days = daysBetween(todayStr, sub.nextDate);
+    if (days === 3 || days === 1 || days === 0) {
+      const title = days === 0 ? '今日到期' : `${days}天后到期`;
+      const body = `「${sub.name}」${title}，金额 ¥${fmt(sub.price)}${sub.autoRenew ? '（自动续费）' : ''}`;
+      new Notification(title, { body, icon: 'icons/icon.svg', tag: sub.id });
+    }
+  });
+  localStorage.setItem(remindedKey, '1');
+}
+
+// ===== Reports =====
+function switchReportPeriod(period) {
+  state.reportPeriod = period;
+  $$('.rp-btn').forEach(b => b.classList.toggle('on', b.dataset.p === period));
+  renderReports();
+  haptic('light');
+}
+
+function renderReports() {
+  if (state.currentView !== 'reports') return;
+  const period = state.reportPeriod;
+  const now = new Date();
+  const y = now.getFullYear(), m = now.getMonth();
+
+  let label, txs;
+  if (period === 'month') {
+    const range = getMonthRange();
+    label = range.label;
+    txs = state.transactions.filter(t => t.date >= range.start && t.date <= range.end);
+    $('#reports-sub').textContent = label;
+  } else {
+    label = `${y}年`;
+    const yStart = `${y}-01-01`;
+    const yEnd = `${y}-12-31`;
+    txs = state.transactions.filter(t => t.date >= yStart && t.date <= yEnd);
+    $('#reports-sub').textContent = label;
+  }
+
+  const income = txs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+  const expense = txs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+  const net = income - expense;
+
+  $('#rep-summary').innerHTML = `
+    <div class="rep-stat"><div class="rep-stat-label">总收入</div><div class="rep-stat-val" style="color:var(--green);">+¥${fmt(Math.round(income))}</div></div>
+    <div class="rep-stat"><div class="rep-stat-label">总支出</div><div class="rep-stat-val" style="color:var(--red);">-¥${fmt(Math.round(expense))}</div></div>
+    <div class="rep-stat"><div class="rep-stat-label">净收支</div><div class="rep-stat-val" style="color:${net >= 0 ? 'var(--green)' : 'var(--red)'};">${net >= 0 ? '+' : ''}¥${fmt(Math.round(net))}</div></div>
+    <div class="rep-stat"><div class="rep-stat-label">笔数</div><div class="rep-stat-val">${txs.length}</div></div>
+  `;
+
+  renderLineChart(txs, period);
+  renderPieChart(txs);
+  renderComparison(period, y, m);
+}
+
+function renderLineChart(txs, period) {
+  const container = $('#rep-line-chart');
+  const now = new Date();
+  const y = now.getFullYear(), m = now.getMonth();
+
+  let buckets = [];
+  if (period === 'month') {
+    // Daily buckets for current month
+    const daysInMonth = new Date(y, m + 1, 0).getDate();
+    for (let d = 1; d <= daysInMonth; d++) {
+      const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const dayTx = txs.filter(t => t.date === ds);
+      buckets.push({
+        label: d % 5 === 0 || d === 1 ? String(d) : '',
+        income: dayTx.filter(t => t.type === 'income').reduce((s,t) => s+t.amount, 0),
+        expense: dayTx.filter(t => t.type === 'expense').reduce((s,t) => s+t.amount, 0)
+      });
+    }
+  } else {
+    // Monthly buckets for current year
+    for (let mo = 0; mo < 12; mo++) {
+      const moStr = `${y}-${String(mo+1).padStart(2,'0')}`;
+      const moTx = txs.filter(t => t.date.startsWith(moStr));
+      buckets.push({
+        label: `${mo+1}月`,
+        income: moTx.filter(t => t.type === 'income').reduce((s,t) => s+t.amount, 0),
+        expense: moTx.filter(t => t.type === 'expense').reduce((s,t) => s+t.amount, 0)
+      });
+    }
+  }
+
+  const maxVal = Math.max(...buckets.map(b => Math.max(b.income, b.expense)), 1);
+  const w = 100 / buckets.length;
+  const chartH = 120;
+
+  let svg = `<svg viewBox="0 0 100 ${chartH}" preserveAspectRatio="none" style="width:100%;height:100%;">`;
+  // Grid lines
+  for (let i = 1; i <= 3; i++) {
+    const gy = chartH - (chartH * i / 4);
+    svg += `<line x1="0" y1="${gy}" x2="100" y2="${gy}" stroke="rgba(255,255,255,0.04)" stroke-width="0.3"/>`;
+  }
+
+  // Expense line (red)
+  let expPoints = buckets.map((b, i) => {
+    const x = i * w + w / 2;
+    const yExp = chartH - (b.expense / maxVal) * (chartH - 10) - 5;
+    return `${x},${yExp}`;
+  }).join(' ');
+  svg += `<polyline points="${expPoints}" fill="none" stroke="rgba(255,92,72,0.8)" stroke-width="0.8" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>`;
+  buckets.forEach((b, i) => {
+    const x = i * w + w / 2;
+    const yExp = chartH - (b.expense / maxVal) * (chartH - 10) - 5;
+    svg += `<circle cx="${x}" cy="${yExp}" r="0.8" fill="rgba(255,92,72,0.8)"/>`;
+  });
+
+  // Income line (green)
+  let incPoints = buckets.map((b, i) => {
+    const x = i * w + w / 2;
+    const yInc = chartH - (b.income / maxVal) * (chartH - 10) - 5;
+    return `${x},${yInc}`;
+  }).join(' ');
+  svg += `<polyline points="${incPoints}" fill="none" stroke="rgba(82,204,130,0.8)" stroke-width="0.8" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>`;
+  buckets.forEach((b, i) => {
+    const x = i * w + w / 2;
+    const yInc = chartH - (b.income / maxVal) * (chartH - 10) - 5;
+    svg += `<circle cx="${x}" cy="${yInc}" r="0.8" fill="rgba(82,204,130,0.8)"/>`;
+  });
+
+  svg += `</svg>`;
+
+  // X-axis labels
+  let labels = '<div style="display:flex;justify-content:space-between;font-size:9px;color:var(--t3);margin-top:4px;">';
+  buckets.forEach((b, i) => {
+    if (b.label) labels += `<span>${b.label}</span>`;
+    else labels += `<span></span>`;
+  });
+  labels += '</div>';
+
+  // Legend
+  let legend = '<div style="display:flex;gap:14px;margin-top:8px;font-size:11px;">';
+  legend += '<span style="color:var(--green);">● 收入</span><span style="color:var(--red);">● 支出</span>';
+  legend += '</div>';
+
+  container.innerHTML = svg + labels + legend;
+}
+
+function renderPieChart(txs) {
+  const container = $('#rep-pie-chart');
+  const expenseByCat = {};
+  txs.filter(t => t.type === 'expense').forEach(t => {
+    const key = t.isSubscription ? '订阅' : (EXPENSE_CATS.find(c => c.id === t.category)?.name || '其他');
+    expenseByCat[key] = (expenseByCat[key] || 0) + t.amount;
+  });
+  const total = Object.values(expenseByCat).reduce((s, v) => s + v, 0);
+  if (total === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--t3);font-size:13px;width:100%;">暂无支出数据</div>';
+    return;
+  }
+  const catColors = { '餐饮':'#d4af7a', '订阅':'rgba(255,255,255,0.15)', '购物':'rgba(255,92,72,0.6)', '交通':'rgba(100,200,255,0.4)', '居家':'rgba(255,159,10,0.5)', '娱乐':'rgba(180,100,255,0.5)', '医疗':'rgba(255,69,58,0.5)', '学习':'rgba(82,204,130,0.5)', '其他':'rgba(255,255,255,0.2)' };
+  let cum = 0;
+  const segments = Object.entries(expenseByCat).sort((a, b) => b[1] - a[1]).map(([name, val]) => {
+    const pct = (val / total) * 100;
+    const start = cum; cum += pct;
+    return { name, val, pct, start, color: catColors[name] || 'rgba(255,255,255,0.2)' };
+  });
+  let conic = 'conic-gradient(';
+  conic += segments.map(s => `${s.color} ${s.start}% ${s.start + s.pct}%`).join(',');
+  conic += ')';
+  container.innerHTML = `
+    <div class="dntc" style="background:${conic};"><span class="dntv">¥${fmt(Math.round(total))}</span></div>
+    <div class="dntl">
+      ${segments.slice(0, 5).map(s => `<div class="dli"><span class="dld" style="background:${s.color};"></span><span class="dln">${s.name}</span><span class="dlv">${s.pct.toFixed(0)}%</span></div>`).join('')}
+    </div>
+  `;
+}
+
+function renderComparison(period, y, m) {
+  const container = $('#rep-compare');
+  let html = '';
+
+  if (period === 'month') {
+    // Month-over-month: compare this month vs last month
+    const thisRange = getMonthRange();
+    const lastMonth = new Date(y, m - 1, 1);
+    const lastRange = getMonthRange(lastMonth.toISOString().slice(0, 10));
+    const thisTx = state.transactions.filter(t => t.date >= thisRange.start && t.date <= thisRange.end);
+    const lastTx = state.transactions.filter(t => t.date >= lastRange.start && t.date <= lastRange.end);
+    const thisExp = thisTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+    const lastExp = lastTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+    const thisInc = thisTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+    const lastInc = lastTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+
+    const expChange = lastExp > 0 ? ((thisExp - lastExp) / lastExp * 100) : 0;
+    const incChange = lastInc > 0 ? ((thisInc - lastInc) / lastInc * 100) : 0;
+
+    html += `<div class="rep-cmp-row"><span class="rep-cmp-label">支出环比上月</span><span class="rep-cmp-val ${expChange <= 0 ? 'up' : 'down'}">${lastExp > 0 ? (expChange >= 0 ? '+' : '') + expChange.toFixed(1) + '%' : '—'}</span></div>`;
+    html += `<div class="rep-cmp-row"><span class="rep-cmp-label">收入环比上月</span><span class="rep-cmp-val ${incChange >= 0 ? 'up' : 'down'}">${lastInc > 0 ? (incChange >= 0 ? '+' : '') + incChange.toFixed(1) + '%' : '—'}</span></div>`;
+    html += `<div class="rep-cmp-row"><span class="rep-cmp-label">上月支出</span><span class="rep-cmp-val">¥${fmt(Math.round(lastExp))}</span></div>`;
+    html += `<div class="rep-cmp-row"><span class="rep-cmp-label">本月支出</span><span class="rep-cmp-val">¥${fmt(Math.round(thisExp))}</span></div>`;
+  } else {
+    // Year-over-year: compare this year vs last year
+    const thisStart = `${y}-01-01`, thisEnd = `${y}-12-31`;
+    const lastStart = `${y-1}-01-01`, lastEnd = `${y-1}-12-31`;
+    const thisTx = state.transactions.filter(t => t.date >= thisStart && t.date <= thisEnd);
+    const lastTx = state.transactions.filter(t => t.date >= lastStart && t.date <= lastEnd);
+    const thisExp = thisTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+    const lastExp = lastTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+    const thisInc = thisTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+    const lastInc = lastTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+
+    const expChange = lastExp > 0 ? ((thisExp - lastExp) / lastExp * 100) : 0;
+    const incChange = lastInc > 0 ? ((thisInc - lastInc) / lastInc * 100) : 0;
+
+    html += `<div class="rep-cmp-row"><span class="rep-cmp-label">支出同比去年</span><span class="rep-cmp-val ${expChange <= 0 ? 'up' : 'down'}">${lastExp > 0 ? (expChange >= 0 ? '+' : '') + expChange.toFixed(1) + '%' : '—'}</span></div>`;
+    html += `<div class="rep-cmp-row"><span class="rep-cmp-label">收入同比去年</span><span class="rep-cmp-val ${incChange >= 0 ? 'up' : 'down'}">${lastInc > 0 ? (incChange >= 0 ? '+' : '') + incChange.toFixed(1) + '%' : '—'}</span></div>`;
+    html += `<div class="rep-cmp-row"><span class="rep-cmp-label">去年总支出</span><span class="rep-cmp-val">¥${fmt(Math.round(lastExp))}</span></div>`;
+    html += `<div class="rep-cmp-row"><span class="rep-cmp-label">今年总支出</span><span class="rep-cmp-val">¥${fmt(Math.round(thisExp))}</span></div>`;
+  }
+
+  container.innerHTML = html;
+}
+
+// ===== Exchange Rate =====
+function updateExrateStatus() {
+  const el = $('#exrate-status');
+  if (!el) return;
+  const rates = state.settings?.exRates || {};
+  const count = Object.keys(rates).filter(k => rates[k] > 0).length;
+  el.textContent = count > 0 ? `${count}种币种 ›` : '设置 ›';
+}
+
+function openExchangeRateSettings() {
+  const rates = state.settings.exRates;
+  const currencyNames = { USD: '美元 USD', EUR: '欧元 EUR', GBP: '英镑 GBP', JPY: '日元 JPY', HKD: '港币 HKD', TWD: '新台币 TWD' };
+  let msg = '汇率设置（兑1人民币）\n\n';
+  msg += '当前汇率：\n';
+  Object.entries(rates).forEach(([k, v]) => {
+    msg += `  ${currencyNames[k] || k}: ${v}\n`;
+  });
+  msg += '\n如需修改，请输入币种代码和汇率\n例如: USD,7.25\n\n输入 "auto" 可尝试自动获取最新汇率\n输入 "reset" 恢复默认';
+
+  const input = prompt(msg);
+  if (!input) return;
+
+  if (input.trim().toLowerCase() === 'auto') {
+    fetchExchangeRates();
+    return;
+  }
+  if (input.trim().toLowerCase() === 'reset') {
+    state.settings.exRates = { USD: 7.25, EUR: 7.85, GBP: 9.20, JPY: 0.048, HKD: 0.93, TWD: 0.22 };
+    save();
+    updateExrateStatus();
+    toast('汇率已重置');
+    haptic('medium');
+    return;
+  }
+
+  const parts = input.split(',').map(s => s.trim());
+  if (parts.length >= 2) {
+    const currency = parts[0].toUpperCase();
+    const rate = parseFloat(parts[1]);
+    if (rate > 0) {
+      state.settings.exRates[currency] = rate;
+      save();
+      updateExrateStatus();
+      toast(`${currency} 汇率已更新为 ${rate}`);
+      haptic('success');
+    } else {
+      toast('汇率格式错误');
+    }
+  } else {
+    toast('请按格式输入：币种,汇率');
+  }
+}
+
+async function fetchExchangeRates() {
+  toast('正在获取汇率...');
+  try {
+    const resp = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+    const data = await resp.json();
+    if (data.rates && data.rates.CNY) {
+      const usdToCny = data.rates.CNY;
+      state.settings.exRates.USD = Math.round(usdToCny * 100) / 100;
+      if (data.rates.EUR) state.settings.exRates.EUR = Math.round(usdToCny / data.rates.EUR * 100) / 100;
+      if (data.rates.GBP) state.settings.exRates.GBP = Math.round(usdToCny / data.rates.GBP * 100) / 100;
+      if (data.rates.JPY) state.settings.exRates.JPY = Math.round(usdToCny / data.rates.JPY * 10000) / 10000;
+      if (data.rates.HKD) state.settings.exRates.HKD = Math.round(usdToCny / data.rates.HKD * 100) / 100;
+      if (data.rates.TWD) state.settings.exRates.TWD = Math.round(usdToCny / data.rates.TWD * 100) / 100;
+      save();
+      updateExrateStatus();
+      toast('汇率已更新');
+      haptic('success');
+    }
+  } catch(e) {
+    toast('获取汇率失败，请手动设置');
+  }
+}
+
+function convertToCNY(amount, currency) {
+  if (!currency || currency === 'CNY') return amount;
+  const rate = state.settings.exRates[currency];
+  if (!rate) return amount;
+  return amount * rate;
+}
+
+// ===== QR Code Folder =====
+const QR_CATEGORIES = {
+  payment: { name: '收款付款', icon: '💳' },
+  transport: { name: '交通出行', icon: '🚇' },
+  medical: { name: '医疗社保', icon: '🏥' },
+  personal: { name: '个人身份', icon: '👤' },
+  other: { name: '其他', icon: '📋' }
+};
+
+function renderQRCodes() {
+  if (state.currentView !== 'qrcodes') return;
+  const cats = $('#qr-cats');
+  const grid = $('#qr-grid');
+
+  // Category tabs
+  let catHtml = `<button class="qr-cat ${state.qrSelectedCat === 'all' ? 'on' : 'off'}" onclick="selectQRCat('all')">全部</button>`;
+  Object.entries(QR_CATEGORIES).forEach(([k, v]) => {
+    catHtml += `<button class="qr-cat ${state.qrSelectedCat === k ? 'on' : 'off'}" onclick="selectQRCat('${k}')">${v.icon} ${v.name}</button>`;
+  });
+  cats.innerHTML = catHtml;
+
+  // QR code grid
+  let filtered = state.qrcodes;
+  if (state.qrSelectedCat !== 'all') {
+    filtered = state.qrcodes.filter(q => q.category === state.qrSelectedCat);
+  }
+
+  $('#qr-sub').textContent = `${state.qrcodes.length}个二维码`;
+
+  let gridHtml = '';
+  filtered.forEach(qr => {
+    const catInfo = QR_CATEGORIES[qr.category] || QR_CATEGORIES.other;
+    gridHtml += `<div class="qr-card" onclick="viewQRCode('${qr.id}')">
+      <div class="qr-card-img"><img src="${qr.image}" alt="${qr.name}"></div>
+      <div class="qr-card-name">${qr.name}</div>
+      <div style="font-size:10px;color:var(--t3);">${catInfo.icon} ${catInfo.name}</div>
+    </div>`;
+  });
+  // Add button
+  gridHtml += `<div class="qr-add-card" onclick="openAddQRCode()">
+    <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    <span>添加二维码</span>
+  </div>`;
+  grid.innerHTML = gridHtml;
+}
+
+function selectQRCat(cat) {
+  state.qrSelectedCat = cat;
+  renderQRCodes();
+  haptic('light');
+}
+
+function openAddQRCode() {
+  state.qrEditingId = null;
+  state.qrPreviewData = null;
+  $('#qr-sheet-title').textContent = '添加二维码';
+  $('#qr-name').value = '';
+  $('#qr-preview').innerHTML = '';
+  $$('#qr-cat-pick .pick').forEach((b, i) => {
+    b.classList.toggle('on', i === 0);
+  });
+  state.qrSelectedCat = 'all'; // Reset filter
+  openSheet('sheet-qr');
+}
+
+$$('#qr-cat-pick .pick').forEach(b => {
+  b.onclick = () => {
+    $$('#qr-cat-pick .pick').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    haptic('light');
+  };
+});
+
+function previewQRFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 2 * 1024 * 1024) {
+    toast('图片不能超过2MB');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    state.qrPreviewData = e.target.result;
+    $('#qr-preview').innerHTML = `<img src="${e.target.result}" style="width:120px;height:120px;border-radius:12px;object-fit:cover;">`;
+  };
+  reader.readAsDataURL(file);
+}
+
+function saveQRCode() {
+  const name = $('#qr-name').value.trim();
+  if (!name) { toast('请输入名称'); return; }
+  if (!state.qrPreviewData) { toast('请选择二维码图片'); return; }
+  const catBtn = document.querySelector('#qr-cat-pick .pick.on');
+  const category = catBtn ? catBtn.dataset.c : 'other';
+
+  if (state.qrEditingId) {
+    const qr = state.qrcodes.find(q => q.id === state.qrEditingId);
+    if (qr) {
+      qr.name = name;
+      qr.category = category;
+      qr.image = state.qrPreviewData;
+    }
+    state.qrEditingId = null;
+  } else {
+    state.qrcodes.push({
+      id: genId(),
+      name,
+      category,
+      image: state.qrPreviewData,
+      createdAt: new Date().toISOString()
+    });
+  }
+  save();
+  closeSheet('sheet-qr');
+  toast('二维码已保存');
+  haptic('success');
+  renderQRCodes();
+}
+
+function viewQRCode(id) {
+  const qr = state.qrcodes.find(q => q.id === id);
+  if (!qr) return;
+  state.qrViewingId = id;
+  $('#qr-view-title').textContent = qr.name;
+  $('#qr-view-img').innerHTML = `<img src="${qr.image}" style="width:100%;display:block;">`;
+  openSheet('sheet-qr-view');
+  haptic('light');
+}
+
+function downloadQR() {
+  const qr = state.qrcodes.find(q => q.id === state.qrViewingId);
+  if (!qr) return;
+  const link = document.createElement('a');
+  link.download = `${qr.name}.png`;
+  link.href = qr.image;
+  link.click();
+  haptic('success');
+  toast('已保存到本地');
+}
+
+// ===== Update render() to include new views =====
 
 init();
