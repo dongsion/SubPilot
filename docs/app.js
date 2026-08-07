@@ -1733,9 +1733,14 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '1.7.1';
+const APP_VERSION = '1.7.2';
 const APP_BUILD = '2026.08.07';
 const CHANGELOG = [
+  { ver: '1.7.2', date: '2026-08-07', items: [
+    '登录改为邮箱+密码方式，无需收邮件验证码，开箱即用',
+    '注册/登录双Tab切换，密码可见切换',
+    '支持忘记密码重置（邮件重置链接）'
+  ]},
   { ver: '1.7.1', date: '2026-08-07', items: [
     '云同步开箱即用：内置公共Supabase云，无需配置直接登录',
     '所有用户打开App即可使用邮箱验证码登录和数据同步',
@@ -3339,13 +3344,7 @@ function openCloudAuth() {
   if (!state.supabaseClient) {
     initSupabase();
   }
-  // Show login sheet
-  $('#auth-email').value = state.authEmail || '';
-  $('#auth-email-step').style.display = 'block';
-  $('#auth-code-step').style.display = 'none';
-  $('#auth-title').textContent = '登录 / 注册';
-  openSheet('sheet-auth');
-  haptic('light');
+  openAuthSheet();
 }
 
 function openCloudConfig() {
@@ -3390,79 +3389,194 @@ function resetCloudConfig() {
   closeSheet('sheet-cloud-config');
 }
 
-async function sendAuthCode() {
-  const email = $('#auth-email').value.trim();
-  if (!email || !email.includes('@')) {
-    toast('请输入有效邮箱');
-    return;
-  }
-  if (!state.supabaseClient) {
-    toast('云服务未初始化，请先配置');
-    return;
-  }
-  state.authEmail = email;
-  try {
-    const { error } = await state.supabaseClient.auth.signInWithOtp({
-      email,
-      options: { shouldCreateUser: true }
-    });
-    if (error) {
-      toast(error.message || '发送失败');
-      haptic('error');
-      return;
-    }
-    toast('验证码已发送，请查收邮箱');
-    haptic('success');
-    $('#auth-email-display').textContent = email;
-    $('#auth-email-step').style.display = 'none';
-    $('#auth-code-step').style.display = 'block';
-    $('#auth-code').value = '';
-    $('#auth-code').focus();
-  } catch(e) {
-    toast('发送失败：' + (e.message || '网络错误'));
-    haptic('error');
-  }
-}
+let authMode = 'login'; // 'login' or 'signup'
 
-function authBackToEmail() {
-  $('#auth-email-step').style.display = 'block';
-  $('#auth-code-step').style.display = 'none';
+function switchAuthTab(mode) {
+  authMode = mode;
+  const loginTab = $('#auth-tab-login');
+  const signupTab = $('#auth-tab-signup');
+  const confirmWrap = $('#auth-confirm-wrap');
+  const submitBtn = $('#auth-submit-btn');
+  const titleEl = $('#auth-title');
+  const msgEl = $('#auth-msg');
+
+  if (mode === 'login') {
+    loginTab.style.background = 'var(--gold)';
+    loginTab.style.color = '#000';
+    signupTab.style.background = 'transparent';
+    signupTab.style.color = 'var(--t2)';
+    confirmWrap.style.display = 'none';
+    submitBtn.textContent = '登录';
+    titleEl.textContent = '登录';
+    $('#auth-password').setAttribute('autocomplete', 'current-password');
+  } else {
+    signupTab.style.background = 'var(--gold)';
+    signupTab.style.color = '#000';
+    loginTab.style.background = 'transparent';
+    loginTab.style.color = 'var(--t2)';
+    confirmWrap.style.display = 'block';
+    submitBtn.textContent = '注册';
+    titleEl.textContent = '注册';
+    $('#auth-password').setAttribute('autocomplete', 'new-password');
+  }
+  if (msgEl) msgEl.textContent = '';
   haptic('light');
 }
 
-async function verifyAuthCode() {
-  const email = state.authEmail;
-  const token = $('#auth-code').value.trim();
-  if (!token || token.length < 6) {
-    toast('请输入6位验证码');
+function togglePwdVisibility() {
+  const pwd = $('#auth-password');
+  const btn = pwd.parentElement.querySelector('button');
+  if (pwd.type === 'password') {
+    pwd.type = 'text';
+    btn.textContent = '隐藏';
+  } else {
+    pwd.type = 'password';
+    btn.textContent = '显示';
+  }
+}
+
+function setAuthMsg(text, isError) {
+  const msgEl = $('#auth-msg');
+  if (!msgEl) return;
+  msgEl.textContent = text;
+  msgEl.style.color = isError ? 'var(--red)' : 'var(--green)';
+}
+
+async function submitAuth() {
+  const email = $('#auth-email').value.trim();
+  const password = $('#auth-password').value;
+  const password2 = $('#auth-password2')?.value || '';
+
+  if (!email || !email.includes('@')) {
+    setAuthMsg('请输入有效的邮箱地址', true);
+    haptic('error');
     return;
   }
+  if (!password || password.length < 6) {
+    setAuthMsg('密码至少6位', true);
+    haptic('error');
+    return;
+  }
+
   if (!state.supabaseClient) {
-    toast('云服务未初始化');
-    return;
-  }
-  try {
-    const { data, error } = await state.supabaseClient.auth.verifyOtp({
-      email,
-      token,
-      type: 'email'
-    });
-    if (error) {
-      toast(error.message || '验证失败');
-      haptic('error');
+    initSupabase();
+    if (!state.supabaseClient) {
+      setAuthMsg('云服务未初始化，请刷新重试', true);
       return;
     }
-    if (data.user) {
-      state.cloudUser = data.user;
-      toast('登录成功');
-      haptic('success');
-      closeSheet('sheet-auth');
-      updateCloudStatus();
-      // Sync after login
-      setTimeout(() => syncToCloud(), 500);
+  }
+
+  const btn = $('#auth-submit-btn');
+  btn.disabled = true;
+  btn.style.opacity = '0.6';
+
+  try {
+    let data, error;
+    if (authMode === 'signup') {
+      if (password !== password2) {
+        setAuthMsg('两次密码不一致', true);
+        btn.disabled = false; btn.style.opacity = '';
+        haptic('error');
+        return;
+      }
+      // Sign up with email+password (no email confirmation needed)
+      const res = await state.supabaseClient.auth.signUp({
+        email, password,
+        options: { emailRedirectTo: undefined }
+      });
+      data = res.data; error = res.error;
+      if (!error && data.user) {
+        // If email confirmation is enabled, data.user will exist but session may be null
+        if (data.session) {
+          state.cloudUser = data.user;
+          setAuthMsg('注册成功！正在同步数据...', false);
+          haptic('success');
+          setTimeout(() => {
+            closeSheet('sheet-auth');
+            btn.disabled = false; btn.style.opacity = '';
+            updateCloudStatus();
+            syncToCloud();
+          }, 800);
+        } else {
+          setAuthMsg('注册成功！请直接登录', false);
+          switchAuthTab('login');
+          btn.disabled = false; btn.style.opacity = '';
+          haptic('success');
+        }
+        return;
+      }
+    } else {
+      // Sign in
+      const res = await state.supabaseClient.auth.signInWithPassword({ email, password });
+      data = res.data; error = res.error;
+      if (!error && data.user) {
+        state.cloudUser = data.user;
+        state.authEmail = email;
+        setAuthMsg('登录成功！正在同步...', false);
+        haptic('success');
+        setTimeout(() => {
+          closeSheet('sheet-auth');
+          btn.disabled = false; btn.style.opacity = '';
+          updateCloudStatus();
+          syncToCloud();
+        }, 800);
+        return;
+      }
+    }
+
+    if (error) {
+      let msg = error.message || '操作失败';
+      // Translate common errors to Chinese
+      if (msg.includes('Invalid login')) msg = '邮箱或密码错误';
+      else if (msg.includes('already registered')) msg = '该邮箱已注册，请直接登录';
+      else if (msg.includes('Password should be')) msg = '密码至少6位';
+      else if (msg.includes('rate limit')) msg = '操作过于频繁，请稍后再试';
+      else if (msg.includes('Email not confirmed')) {
+        msg = '请先登录后验证邮箱，或关闭邮箱确认设置';
+      }
+      setAuthMsg(msg, true);
+      haptic('error');
     }
   } catch(e) {
-    toast('验证失败：' + (e.message || '网络错误'));
+    setAuthMsg('网络错误，请检查网络连接', true);
+    haptic('error');
+  }
+  btn.disabled = false;
+  btn.style.opacity = '';
+}
+
+// Open auth sheet - reset state
+function openAuthSheet() {
+  authMode = 'login';
+  $('#auth-email').value = state.authEmail || '';
+  $('#auth-password').value = '';
+  $('#auth-password2').value = '';
+  switchAuthTab('login');
+  setAuthMsg('', true);
+  openSheet('sheet-auth');
+  haptic('light');
+}
+
+async function forgotPassword() {
+  const email = $('#auth-email').value.trim();
+  if (!email || !email.includes('@')) {
+    setAuthMsg('请先输入注册邮箱', true);
+    return;
+  }
+  if (!state.supabaseClient) initSupabase();
+  try {
+    const { error } = await state.supabaseClient.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + window.location.pathname
+    });
+    if (error) {
+      setAuthMsg(error.message || '发送失败', true);
+      haptic('error');
+    } else {
+      setAuthMsg('重置链接已发送到邮箱，请查收', false);
+      haptic('success');
+    }
+  } catch(e) {
+    setAuthMsg('发送失败，请检查网络', true);
     haptic('error');
   }
 }

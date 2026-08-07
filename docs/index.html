@@ -614,14 +614,14 @@ textarea.form-i{resize:none;min-height:80px;}
       <div class="info-r" onclick="if(confirm('确定清除所有数据？此操作不可撤销。')){clearAll();toast('数据已清除');}"><span class="info-l">清除所有数据</span><span class="info-v" style="color:var(--red);">›</span></div>
     </div>
     <div class="info-g">
-      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v1.7.1 ›</span></div>
+      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v1.7.2 ›</span></div>
       <div class="info-r" onclick="showChangelog()"><span class="info-l">更新日志</span><span class="info-v" style="color:var(--gold);">查看 ›</span></div>
       <div class="info-r" onclick="checkUpdate()"><span class="info-l">检查更新</span><span class="info-v" style="color:var(--gold);" id="update-status">›</span></div>
       <div class="info-r"><span class="info-l">数据存储</span><span class="info-v" style="color:var(--t3);">仅本地浏览器</span></div>
     </div>
     <div style="text-align:center;padding:40px 20px;color:var(--t3);font-size:12px;">
       <div style="margin-bottom:8px;font-size:20px;letter-spacing:1px;">SubPilot</div>
-      <div style="margin-bottom:4px;">订阅管家 · v1.7.1 (Build 2026.08.07)</div>
+      <div style="margin-bottom:4px;">订阅管家 · v1.7.2 (Build 2026.08.07)</div>
       <div>所有数据默认仅保存在本地，开启云同步后加密上传至 Supabase</div>
     </div>
     <input type="file" id="import-file" accept=".json" style="display:none;">
@@ -1081,31 +1081,38 @@ textarea.form-i{resize:none;min-height:80px;}
 <div class="sheet-overlay" id="sheet-auth">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-title" id="auth-title">登录 / 注册</div>
-    <div style="text-align:center;padding:6px 0 16px;color:var(--t2);font-size:13px;" id="auth-subtitle">输入邮箱，通过验证码登录</div>
-    <div id="auth-email-step">
+    <div class="sheet-title" id="auth-title">登录</div>
+    <div style="display:flex;gap:0;margin-bottom:16px;background:var(--card2);border-radius:10px;padding:3px;">
+      <button id="auth-tab-login" class="auth-tab on" onclick="switchAuthTab('login')" style="flex:1;padding:8px;border-radius:8px;border:none;background:var(--gold);color:#000;font-size:13px;font-weight:600;transition:all .2s;">登录</button>
+      <button id="auth-tab-signup" class="auth-tab" onclick="switchAuthTab('signup')" style="flex:1;padding:8px;border-radius:8px;border:none;background:transparent;color:var(--t2);font-size:13px;font-weight:600;transition:all .2s;">注册</button>
+    </div>
+    <div id="auth-form">
       <div class="form-g">
         <label class="form-l">邮箱地址</label>
         <input type="email" class="form-i" id="auth-email" placeholder="your@email.com" autocomplete="email">
       </div>
+      <div class="form-g">
+        <label class="form-l">密码</label>
+        <div style="position:relative;">
+          <input type="password" class="form-i" id="auth-password" placeholder="至少6位" autocomplete="current-password" style="padding-right:50px;">
+          <button type="button" onclick="togglePwdVisibility()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--t3);font-size:12px;padding:4px;">显示</button>
+        </div>
+      </div>
+      <div id="auth-confirm-wrap" class="form-g" style="display:none;">
+        <label class="form-l">确认密码</label>
+        <input type="password" class="form-i" id="auth-password2" placeholder="再次输入密码" autocomplete="new-password">
+      </div>
+      <div id="auth-msg" style="font-size:12px;color:var(--red);text-align:center;min-height:18px;margin-bottom:8px;"></div>
+      <div style="text-align:right;margin-bottom:10px;">
+        <button type="button" onclick="forgotPassword()" style="background:none;border:none;color:var(--gold);font-size:12px;padding:4px 8px;">忘记密码？</button>
+      </div>
       <div class="btn-row">
         <button class="btn btn-outline" onclick="closeSheet('sheet-auth')">取消</button>
-        <button class="btn btn-gold" onclick="sendAuthCode()">发送验证码</button>
-      </div>
-    </div>
-    <div id="auth-code-step" style="display:none;">
-      <div class="form-g">
-        <label class="form-l">验证码</label>
-        <input type="text" class="form-i" id="auth-code" placeholder="请输入6位验证码" inputmode="numeric" maxlength="6">
-      </div>
-      <div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:14px;">验证码已发送至 <span id="auth-email-display" style="color:var(--t2);"></span></div>
-      <div class="btn-row">
-        <button class="btn btn-outline" onclick="authBackToEmail()">返回</button>
-        <button class="btn btn-gold" onclick="verifyAuthCode()">验证登录</button>
+        <button class="btn btn-gold" id="auth-submit-btn" onclick="submitAuth()">登录</button>
       </div>
     </div>
     <div style="text-align:center;padding-top:12px;font-size:11px;color:var(--t3);line-height:1.5;">
-      首次输入邮箱将自动注册账号<br>数据通过 Supabase 公共云加密同步，每个用户仅能访问自己的数据
+      密码仅用于身份验证，不会上传到云端明文存储<br>数据通过 Supabase 公共云加密同步，每个用户仅能访问自己的数据
     </div>
   </div>
 </div>
