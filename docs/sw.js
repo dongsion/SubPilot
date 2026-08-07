@@ -1,4 +1,4 @@
-const CACHE_NAME = 'subpilot-v1.7.0';
+const CACHE_NAME = 'subpilot-v1.7.1';
 const ASSETS = ['./', './index.html', './app.js', './manifest.json', './icons/icon.svg'];
 
 self.addEventListener('install', e => {
@@ -15,9 +15,8 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
-  // Don't cache Supabase API calls
   const url = new URL(e.request.url);
-  if (url.hostname.includes('supabase')) return;
+  if (url.hostname.includes('supabase') || url.hostname.includes('jsdelivr')) return;
   e.respondWith(
     caches.match(e.request).then(cached => cached || fetch(e.request).then(res => {
       const copy = res.clone();

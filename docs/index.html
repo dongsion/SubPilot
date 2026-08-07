@@ -614,14 +614,14 @@ textarea.form-i{resize:none;min-height:80px;}
       <div class="info-r" onclick="if(confirm('确定清除所有数据？此操作不可撤销。')){clearAll();toast('数据已清除');}"><span class="info-l">清除所有数据</span><span class="info-v" style="color:var(--red);">›</span></div>
     </div>
     <div class="info-g">
-      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v1.7.0 ›</span></div>
+      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v1.7.1 ›</span></div>
       <div class="info-r" onclick="showChangelog()"><span class="info-l">更新日志</span><span class="info-v" style="color:var(--gold);">查看 ›</span></div>
       <div class="info-r" onclick="checkUpdate()"><span class="info-l">检查更新</span><span class="info-v" style="color:var(--gold);" id="update-status">›</span></div>
       <div class="info-r"><span class="info-l">数据存储</span><span class="info-v" style="color:var(--t3);">仅本地浏览器</span></div>
     </div>
     <div style="text-align:center;padding:40px 20px;color:var(--t3);font-size:12px;">
       <div style="margin-bottom:8px;font-size:20px;letter-spacing:1px;">SubPilot</div>
-      <div style="margin-bottom:4px;">订阅管家 · v1.7.0 (Build 2026.08.07)</div>
+      <div style="margin-bottom:4px;">订阅管家 · v1.7.1 (Build 2026.08.07)</div>
       <div>所有数据默认仅保存在本地，开启云同步后加密上传至 Supabase</div>
     </div>
     <input type="file" id="import-file" accept=".json" style="display:none;">
@@ -1105,7 +1105,7 @@ textarea.form-i{resize:none;min-height:80px;}
       </div>
     </div>
     <div style="text-align:center;padding-top:12px;font-size:11px;color:var(--t3);line-height:1.5;">
-      首次输入邮箱将自动注册账号<br>数据通过 Supabase 云端加密同步
+      首次输入邮箱将自动注册账号<br>数据通过 Supabase 公共云加密同步，每个用户仅能访问自己的数据
     </div>
   </div>
 </div>
@@ -1114,21 +1114,21 @@ textarea.form-i{resize:none;min-height:80px;}
 <div class="sheet-overlay" id="sheet-cloud-config">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-title">云同步配置</div>
+    <div class="sheet-title">云服务配置</div>
     <div style="font-size:12px;color:var(--t2);padding:6px 0 14px;line-height:1.6;">
-      默认使用公共云服务。如需使用自己的 Supabase 项目，在此填写项目信息。配置方法参见 <span style="color:var(--gold);" onclick="window.open('https://github.com/dongsion/SubPilot#%E4%BA%91%E5%90%8C%E6%AD%A5%E9%83%A8%E7%BD%B2','_blank')">部署指南</span>。
+      默认使用公共云服务，开箱即用。如需使用自己的 Supabase 项目，在此填写项目信息。配置方法参见 <span style="color:var(--gold);cursor:pointer;" onclick="window.open('https://github.com/dongsion/SubPilot#%E4%BA%91%E5%90%8C%E6%AD%A5%E9%83%A8%E7%BD%B2','_blank')">部署指南</span>。
     </div>
     <div class="form-g">
       <label class="form-l">Supabase URL</label>
-      <input type="url" class="form-i" id="cloud-url" placeholder="https://xxxx.supabase.co">
+      <input type="url" class="form-i" id="cloud-url" placeholder="留空则使用公共云">
     </div>
     <div class="form-g">
       <label class="form-l">Anon Key</label>
-      <input type="text" class="form-i" id="cloud-key" placeholder="eyJhbGciOi...">
+      <input type="text" class="form-i" id="cloud-key" placeholder="留空则使用公共云">
     </div>
     <div class="btn-row">
       <button class="btn btn-outline" onclick="closeSheet('sheet-cloud-config')">取消</button>
-      <button class="btn btn-gold" onclick="saveCloudConfig()">保存配置</button>
+      <button class="btn btn-gold" onclick="saveCloudConfig()">保存</button>
     </div>
     <div style="padding-top:10px;"><button class="btn btn-outline" style="width:100%;" onclick="resetCloudConfig()">恢复默认公共云</button></div>
   </div>

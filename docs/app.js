@@ -1733,9 +1733,14 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '1.7.0';
+const APP_VERSION = '1.7.1';
 const APP_BUILD = '2026.08.07';
 const CHANGELOG = [
+  { ver: '1.7.1', date: '2026-08-07', items: [
+    '云同步开箱即用：内置公共Supabase云，无需配置直接登录',
+    '所有用户打开App即可使用邮箱验证码登录和数据同步',
+    '支持切换到自定义Supabase项目'
+  ]},
   { ver: '1.7.0', date: '2026-08-07', items: [
     '新增云同步功能：基于Supabase，支持邮箱验证码登录/注册',
     '多设备数据同步：Last-Write-Wins策略，自动/手动同步',
@@ -3233,16 +3238,19 @@ function downloadInvoice() {
 // (handled by delegated click on .pick elements)
 
 // ===== Cloud Sync (Supabase) =====
+const PUBLIC_SUPABASE_URL = 'https://cicauycbflanpqcrfakd.supabase.co';
+const PUBLIC_SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNpY2F1eWNiZmxhbnBxY3JmYWtkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwOTA4NzcsImV4cCI6MjEwMTY2Njg3N30.kegH6ESniP0ouFtio5EHw0XDOHxJFCgtzx-dELjCx7c';
 const CLOUD_DATA_TYPES = ['accounts', 'subscriptions', 'transactions', 'qrcodes', 'invoices', 'settings'];
 
 function getSupabaseConfig() {
   try {
-    const saved = JSON.parse(localStorage.getItem(KEYS.cloudConfig) || '{}');
-    return {
-      url: saved.url || '',
-      key: saved.key || ''
-    };
-  } catch(e) { return { url: '', key: '' }; }
+    const saved = JSON.parse(localStorage.getItem(KEYS.cloudConfig) || 'null');
+    if (saved && saved.url && saved.key) {
+      return { url: saved.url, key: saved.key, custom: true };
+    }
+  } catch(e) {}
+  // Default public cloud
+  return { url: PUBLIC_SUPABASE_URL, key: PUBLIC_SUPABASE_KEY, custom: false };
 }
 
 function initSupabase() {
@@ -3296,34 +3304,25 @@ function updateCloudStatus() {
   if (!el) return;
   const cfg = getSupabaseConfig();
 
-  if (cfg.url && cfg.key) {
+  if (cfg.custom) {
     if (cfgEl) cfgEl.textContent = '自定义 ›';
   } else {
-    if (cfgEl) cfgEl.textContent = '未配置 ›';
+    if (cfgEl) cfgEl.textContent = '公共云 ›';
   }
 
   if (state.cloudUser) {
     const email = state.cloudUser.email || '';
     const shortEmail = email.length > 18 ? email.slice(0, 15) + '...' : email;
-    el.textContent = `${shortEmail} ${state.cloudLastSync ? '· 已同步' : ''} ›`;
+    const syncText = state.cloudLastSync ? ' · 已同步' : '';
+    el.textContent = `${shortEmail}${syncText} ›`;
     el.style.color = 'var(--green)';
-  } else if (cfg.url && cfg.key) {
+  } else {
     el.textContent = '点此登录 ›';
     el.style.color = 'var(--gold)';
-  } else {
-    el.textContent = '未配置 ›';
-    el.style.color = 'var(--t3)';
   }
 }
 
 function openCloudAuth() {
-  const cfg = getSupabaseConfig();
-  if (!cfg.url || !cfg.key) {
-    if (confirm('云同步需要先配置 Supabase 项目。是否打开配置页面？\n\n（配置一次后即可使用邮箱验证码登录和数据同步）')) {
-      openCloudConfig();
-    }
-    return;
-  }
   if (state.cloudUser) {
     // Already logged in - show options
     const action = confirm(`已登录: ${state.cloudUser.email}\n\n确定=立即同步\n取消=退出登录`);
@@ -3335,6 +3334,10 @@ function openCloudAuth() {
       }
     }
     return;
+  }
+  // Ensure Supabase is initialized with default config
+  if (!state.supabaseClient) {
+    initSupabase();
   }
   // Show login sheet
   $('#auth-email').value = state.authEmail || '';
@@ -3358,29 +3361,33 @@ function saveCloudConfig() {
   const key = $('#cloud-key').value.trim();
   if (url && key) {
     localStorage.setItem(KEYS.cloudConfig, JSON.stringify({ url, key }));
-    toast('配置已保存');
-    haptic('success');
-    closeSheet('sheet-cloud-config');
-    initSupabase();
-    checkCloudSession().then(() => {
-      updateCloudStatus();
-      render();
-    });
+    toast('已切换到自定义云');
   } else {
-    toast('请填写完整的URL和Key');
+    localStorage.removeItem(KEYS.cloudConfig);
+    toast('已使用公共云');
   }
+  haptic('success');
+  closeSheet('sheet-cloud-config');
+  state.cloudUser = null;
+  state.cloudLastSync = null;
+  initSupabase();
+  checkCloudSession().then(() => {
+    updateCloudStatus();
+    render();
+  });
 }
 
 function resetCloudConfig() {
   localStorage.removeItem(KEYS.cloudConfig);
   $('#cloud-url').value = '';
   $('#cloud-key').value = '';
-  state.supabaseClient = null;
-  state.cloudEnabled = false;
   state.cloudUser = null;
-  toast('已恢复未配置状态');
+  state.cloudLastSync = null;
+  initSupabase();
+  toast('已恢复公共云');
   haptic('medium');
   updateCloudStatus();
+  closeSheet('sheet-cloud-config');
 }
 
 async function sendAuthCode() {
