@@ -1267,16 +1267,38 @@ function openAIChat() {
   overlay.classList.add('on');
   renderAIMessages();
   renderQuickReplies();
-  setTimeout(() => $('#ai-input').focus(), 300);
+  // Use visualViewport to handle keyboard on mobile
+  if (window.visualViewport) {
+    const onResize = () => {
+      overlay.style.height = window.visualViewport.height + 'px';
+      // Scroll messages to bottom when keyboard appears
+      const container = $('#ai-messages');
+      if (container) container.scrollTop = container.scrollHeight;
+    };
+    window.visualViewport.removeEventListener('resize', onResize);
+    window.visualViewport.addEventListener('resize', onResize);
+    onResize();
+  }
+  setTimeout(() => {
+    const input = $('#ai-input');
+    if (input) input.focus({ preventScroll: true });
+  }, 300);
   // Auto-grow textarea
-  $('#ai-input').addEventListener('input', function() {
-    this.style.height = 'auto';
-    this.style.height = Math.min(this.scrollHeight, 100) + 'px';
-  });
+  const aiInput = $('#ai-input');
+  if (aiInput && !aiInput._autoGrowBound) {
+    aiInput._autoGrowBound = true;
+    aiInput.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+    });
+  }
 }
 
 function closeAIChat() {
   $('#ai-chat').classList.remove('on');
+  if (window.visualViewport) {
+    $('#ai-chat').style.height = '';
+  }
 }
 
 function renderAIMessages() {
