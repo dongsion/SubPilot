@@ -263,7 +263,7 @@ input { font-family:inherit; }
 .tbi.on svg{stroke:var(--gold);}
 
 /* FAB */
-.fab { position:fixed; bottom:86px; right:calc(50% - 215px + 20px); width:54px; height:54px; border-radius:50%; background:var(--gold); color:#000; border:none; font-size:28px; box-shadow:0 8px 28px var(--gold-glow),0 0 0 5px rgba(212,175,122,0.06); z-index:90; display:flex; align-items:center; justify-content:center; font-weight:300; transition:transform .2s; }
+.fab { position:fixed; bottom:120px; right:calc(50% - 215px + 20px); width:54px; height:54px; border-radius:50%; background:var(--gold); color:#000; border:none; font-size:28px; box-shadow:0 8px 28px var(--gold-glow),0 0 0 5px rgba(212,175,122,0.06); z-index:90; display:flex; align-items:center; justify-content:center; font-weight:300; transition:transform .2s; }
 .fab:active{transform:scale(.9);}
 @media (max-width:430px){ .fab{right:20px;} }
 
@@ -517,14 +517,14 @@ textarea.form-i{resize:none;min-height:80px;}
       <div class="info-r" onclick="if(confirm('确定清除所有数据？此操作不可撤销。')){clearAll();toast('数据已清除');}"><span class="info-l">清除所有数据</span><span class="info-v" style="color:var(--red);">›</span></div>
     </div>
     <div class="info-g">
-      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v1.5.0 ›</span></div>
+      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v1.5.1 ›</span></div>
       <div class="info-r" onclick="showChangelog()"><span class="info-l">更新日志</span><span class="info-v" style="color:var(--gold);">查看 ›</span></div>
       <div class="info-r" onclick="checkUpdate()"><span class="info-l">检查更新</span><span class="info-v" style="color:var(--gold);" id="update-status">›</span></div>
       <div class="info-r"><span class="info-l">数据存储</span><span class="info-v" style="color:var(--t3);">仅本地浏览器</span></div>
     </div>
     <div style="text-align:center;padding:40px 20px;color:var(--t3);font-size:12px;">
       <div style="margin-bottom:8px;font-size:20px;letter-spacing:1px;">SubPilot</div>
-      <div style="margin-bottom:4px;">订阅管家 · v1.5.0 (Build 2026.08.07)</div>
+      <div style="margin-bottom:4px;">订阅管家 · v1.5.1 (Build 2026.08.07)</div>
       <div>所有数据仅保存在本地，隐私安全</div>
     </div>
     <input type="file" id="import-file" accept=".json" style="display:none;">

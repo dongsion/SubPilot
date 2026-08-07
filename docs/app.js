@@ -1524,9 +1524,12 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '1.5.0';
+const APP_VERSION = '1.5.1';
 const APP_BUILD = '2026.08.07';
 const CHANGELOG = [
+  { ver: '1.5.1', date: '2026-08-07', items: [
+    '添加按钮上移，避免与底部导航栏重叠'
+  ]},
   { ver: '1.5.0', date: '2026-08-07', items: [
     '调换流水和账户页面在底部导航栏的位置',
     'AI记账按钮从悬浮移至底部导航栏中间',
