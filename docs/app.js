@@ -855,45 +855,7 @@ function init() {
   load();
   updateClock();
 
-  // First-time demo data
-  let isFirstTime = !localStorage.getItem(KEYS.onboarded);
-  if (isFirstTime) {
-    const now = new Date();
-    // Demo accounts
-    state.accounts = [
-      { id: genId(), name: '招商银行', type: 'bank', balance: 12459, cardNumber: '8821', colorClass: 'dark1', createdAt: now.toISOString() },
-      { id: genId(), name: '支付宝', type: 'alipay', balance: 3124, cardNumber: '', colorClass: 'dark2', createdAt: now.toISOString() },
-      { id: genId(), name: '微信零钱', type: 'wechat', balance: 508, cardNumber: '', colorClass: 'dark3', createdAt: now.toISOString() }
-    ];
-    const cmbId = state.accounts[0].id, aliId = state.accounts[1].id, wxId = state.accounts[2].id;
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0,10);
-    // Demo subscriptions - iCloud+ nextDate is 3 days ago so it auto-deducts this month
-    state.subscriptions = [
-      { id: genId(), name: 'Spotify', price: 68, cycle: 'month', nextDate: addDays(today(), 4), note: '', accountId: aliId, brand: BRANDS['spotify'], autoRenew: true, createdAt: now.toISOString() },
-      { id: genId(), name: 'Netflix', price: 78, cycle: 'month', nextDate: addDays(today(), 24), note: '', accountId: aliId, brand: BRANDS['netflix'], autoRenew: true, createdAt: now.toISOString() },
-      { id: genId(), name: 'Notion', price: 96, cycle: 'year', nextDate: addDays(today(), 250), note: '个人Pro版', accountId: aliId, brand: BRANDS['notion'], autoRenew: true, createdAt: now.toISOString() },
-      { id: genId(), name: 'iCloud+', price: 21, cycle: 'month', nextDate: addDays(today(), -3), note: '200GB', accountId: cmbId, brand: BRANDS['icloud'], autoRenew: true, createdAt: now.toISOString() }
-    ];
-    // Demo transactions
-    const txs = [];
-    txs.push({ id: genId(), type: 'income', amount: 15680, category: 'salary', categoryName: '工资', categoryIcon: '💰', note: '月薪到账', accountId: cmbId, date: today(), time: '10:02', timestamp: new Date().toISOString(), isSubscription: false });
-    const expenses = [
-      { days: 0, cat: 'food', name: '午餐·牛肉面', amt: 32, acct: wxId, icon: '🍜' },
-      { days: 1, cat: 'shopping', name: '淘宝购物', amt: 258, acct: cmbId, icon: '🛒' },
-      { days: 1, cat: 'transport', name: '地铁通勤', amt: 8, acct: wxId, icon: '🚇' },
-      { days: 3, cat: 'food', name: '晚餐·火锅', amt: 186, acct: aliId, icon: '🍜' },
-      { days: 5, cat: 'entertainment', name: '电影票', amt: 68, acct: wxId, icon: '🎮' },
-    ];
-    expenses.forEach(e => {
-      const d = addDays(today(), -e.days);
-      txs.push({ id: genId(), type: 'expense', amount: e.amt, category: e.cat, categoryName: e.name, categoryIcon: e.icon, note: '', accountId: e.acct, date: d, time: '12:30', timestamp: new Date(d+'T12:30:00').toISOString(), isSubscription: false });
-    });
-    state.transactions = txs;
-    save();
-    localStorage.setItem(KEYS.onboarded, '1');
-  }
-
-  // Process auto-deductions after data is loaded/created
+  // Process auto-deductions after data is loaded
   processAutoDeductions();
 
   // Register SW
