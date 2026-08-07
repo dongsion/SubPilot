@@ -194,7 +194,8 @@ let state = {
   selectedCycle: 'month',
   selectedAcctType: 'bank',
   selectedCardColor: 'gold',
-  currentSubId: null
+  currentSubId: null,
+  fetchedAppIcon: null
 };
 
 // Card color themes
@@ -356,6 +357,10 @@ function toast(msg) {
 // ===== Brand Icon =====
 function brandIconSvg(brand) {
   if (!brand) return letterIcon('?', '#d4af7a');
+  // If brand has an iconUrl (from App Store), use it
+  if (brand.iconUrl) {
+    return `<div style="width:100%;height:100%;border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#fff;"><img src="${brand.iconUrl}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.parentNode.innerHTML='${letterIcon((brand.name[0]||'?').toUpperCase(), '#d4af7a').replace(/'/g, '&#39;').replace(/"/g, '&quot;')}';" /></div>`;
+  }
   const bi = BRAND_ICONS[brand.slug];
   if (bi && bi.p) {
     // Real brand icon on colored background
@@ -518,10 +523,13 @@ $$('#tx-type .type-opt').forEach(b => {
 // ===== Add Subscription =====
 function openAddSub() {
   $('#sub-name').value = '';
+  $('#sub-appurl').value = '';
+  $('#sub-icon-preview').innerHTML = '';
   $('#sub-price').value = '';
   $('#sub-nextdate').value = today();
   $('#sub-note').value = '';
   state.selectedCycle = 'month';
+  state.fetchedAppIcon = null; // Reset fetched icon
   $$('#sub-cycle-pick .pick').forEach(p => p.classList.toggle('on', p.dataset.c === 'month'));
   renderSubAcctPick();
   renderSubSuggest();
@@ -554,13 +562,35 @@ function saveSub() {
   if (!price || price <= 0) { toast('请输入金额'); return; }
   const nextDate = $('#sub-nextdate').value || today();
   const note = $('#sub-note').value.trim();
+  const appUrl = $('#sub-appurl').value.trim();
   const acctBtn = document.querySelector('#sub-acct-pick .pick.on');
   const accountId = acctBtn ? acctBtn.dataset.id : (state.accounts[0]?.id || null);
-  const brand = matchBrand(name);
+  
+  // First try to match brand from built-in database
+  let brand = matchBrand(name);
+  
+  // If no built-in match but we have a fetched App Store icon, use that
+  if (!brand && state.fetchedAppIcon) {
+    brand = {
+      name: state.fetchedAppIcon.name || name,
+      slug: 'appstore_' + genId().slice(0, 6),
+      cat: '订阅',
+      iconUrl: state.fetchedAppIcon.iconUrl
+    };
+  }
+  // If built-in brand exists but we also have a fetched icon, prefer the fetched icon URL
+  if (brand && state.fetchedAppIcon) {
+    brand.iconUrl = state.fetchedAppIcon.iconUrl;
+    if (state.fetchedAppIcon.name && !BRAND_ICONS[brand.slug]) {
+      brand.name = state.fetchedAppIcon.name;
+    }
+  }
+  
   const sub = {
     id: genId(), name, price, cycle: state.selectedCycle,
     nextDate, note, accountId,
-    brand: brand ? { name: brand.name, slug: brand.slug, color: brand.color, cat: brand.cat } : null,
+    brand: brand ? { name: brand.name, slug: brand.slug, color: brand.color, cat: brand.cat, iconUrl: brand.iconUrl || null } : null,
+    appUrl: appUrl || null,
     autoRenew: true,
     createdAt: new Date().toISOString()
   };
@@ -569,6 +599,115 @@ function saveSub() {
   closeSheet('sheet-sub');
   toast('订阅已添加');
   render();
+}
+
+// ===== App Store Icon Fetch =====
+async function fetchAppIcon() {
+  const urlInput = $('#sub-appurl');
+  const url = urlInput.value.trim();
+  const previewEl = $('#sub-icon-preview');
+  const btn = $('#sub-fetch-btn');
+  
+  if (!url) {
+    toast('请先粘贴App Store链接');
+    return;
+  }
+  
+  // Extract app ID from various App Store URL formats
+  let appId = null;
+  // Format: https://apps.apple.com/app/id1234567890
+  const idMatch = url.match(/id(\d+)/);
+  if (idMatch) appId = idMatch[1];
+  
+  if (!appId) {
+    // Try searching by app name from URL or name field
+    const appName = $('#sub-name').value.trim() || extractAppNameFromUrl(url);
+    if (appName) {
+      previewEl.innerHTML = '<div style="font-size:12px;color:var(--t3);padding:8px;">正在搜索应用...</div>';
+      btn.disabled = true;
+      btn.textContent = '搜索中...';
+      try {
+        const result = await searchAppByName(appName);
+        if (result) {
+          appId = result.trackId;
+        }
+      } catch(e) {}
+      btn.disabled = false;
+      btn.textContent = '获取图标';
+    }
+  }
+  
+  if (!appId) {
+    previewEl.innerHTML = '<div style="font-size:12px;color:var(--red);padding:8px;">未找到应用，请检查链接是否正确</div>';
+    toast('无法识别链接');
+    return;
+  }
+  
+  previewEl.innerHTML = '<div style="font-size:12px;color:var(--t3);padding:8px;">正在获取图标...</div>';
+  btn.disabled = true;
+  btn.textContent = '获取中...';
+  
+  try {
+    const resp = await fetch(`https://itunes.apple.com/lookup?id=${appId}&country=cn`);
+    if (!resp.ok) throw new Error('network');
+    const data = await resp.json();
+    
+    if (data.results && data.results.length > 0) {
+      const app = data.results[0];
+      const iconUrl = app.artworkUrl512 || app.artworkUrl100 || app.artworkUrl60;
+      const appName = app.trackName;
+      const primaryGenre = app.primaryGenreName || '应用';
+      
+      if (iconUrl) {
+        state.fetchedAppIcon = { iconUrl, name: appName, appId };
+        // Auto-fill name if empty
+        if (!$('#sub-name').value.trim()) {
+          $('#sub-name').value = appName;
+        }
+        previewEl.innerHTML = `
+          <div style="display:flex;align-items:center;gap:12px;padding:10px;background:rgba(255,255,255,0.04);border-radius:12px;border:1px solid var(--border);">
+            <img src="${iconUrl}" style="width:48px;height:48px;border-radius:12px;object-fit:cover;" onerror="this.style.opacity=0.3;" />
+            <div style="flex:1;">
+              <div style="font-size:14px;font-weight:600;color:var(--t1);">${appName}</div>
+              <div style="font-size:11px;color:var(--t3);margin-top:2px;">${primaryGenre} · 图标已获取 ✓</div>
+            </div>
+          </div>
+        `;
+        toast('图标获取成功');
+      } else {
+        throw new Error('no icon');
+      }
+    } else {
+      throw new Error('not found');
+    }
+  } catch(e) {
+    previewEl.innerHTML = '<div style="font-size:12px;color:var(--red);padding:8px;">获取失败，请检查链接或网络</div>';
+    toast('获取失败');
+  }
+  
+  btn.disabled = false;
+  btn.textContent = '获取图标';
+}
+
+function extractAppNameFromUrl(url) {
+  // Try to extract app name from URL like /app/app-name/id123
+  const match = url.match(/\/app\/([^/]+)\//);
+  if (match) {
+    return decodeURIComponent(match[1].replace(/-/g, ' '));
+  }
+  return null;
+}
+
+async function searchAppByName(name) {
+  try {
+    const resp = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(name)}&country=cn&entity=software&limit=1`);
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    if (data.results && data.results.length > 0) {
+      return data.results[0];
+    }
+  } catch(e) {}
+  return null;
 }
 
 $$('#sub-cycle-pick .pick').forEach(p => p.onclick = () => {
@@ -841,7 +980,7 @@ function renderSubDetail() {
   const startDate = sub.createdAt ? new Date(sub.createdAt).toLocaleDateString('zh-CN') : '未知';
   const iconHtml = sub.brand ? brandIconSvg(sub.brand) : letterIcon((sub.name[0]||'?').toUpperCase(), 'rgba(255,255,255,0.4)');
   const bi = sub.brand ? BRAND_ICONS[sub.brand.slug] : null;
-  const brandColor = bi ? bi.bg : 'rgba(255,255,255,0.1)';
+  const brandColor = bi ? bi.bg : (sub.brand?.iconUrl ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.1)');
   const heroBg = sub.brand ? `background:linear-gradient(150deg,${brandColor}22,${brandColor}08);border:1px solid ${brandColor}15;` : '';
 
   $('#subdetail-body').innerHTML = `
