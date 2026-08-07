@@ -1394,9 +1394,13 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '1.4.2';
+const APP_VERSION = '1.4.3';
 const APP_BUILD = '2026.08.07';
 const CHANGELOG = [
+  { ver: '1.4.3', date: '2026-08-07', items: [
+    '移除顶部模拟状态栏（信号/WiFi/时间），使用系统原生状态栏',
+    '适配刘海屏安全区域'
+  ]},
   { ver: '1.4.2', date: '2026-08-07', items: [
     '修复触摸滑动导致整个页面移动的问题',
     '锁定页面框架，仅内容区域可滚动',
@@ -1481,17 +1485,9 @@ async function checkUpdate() {
   }
 }
 
-// ===== Clock =====
-function updateClock() {
-  const d = new Date();
-  $('#clock').textContent = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-}
-setInterval(updateClock, 30000);
-
 // ===== Init =====
 function init() {
   load();
-  updateClock();
 
   // Process auto-deductions after data is loaded
   processAutoDeductions();

@@ -32,22 +32,12 @@
 }
 * { margin:0; padding:0; box-sizing:border-box; -webkit-font-smoothing:antialiased; -webkit-tap-highlight-color:transparent; }
 html, body { background:#000; color:var(--t1); font-family:var(--font-sans); overscroll-behavior:none; height:100%; overflow:hidden; }
-body { max-width:430px; margin:0 auto; position:fixed; top:0; left:0; right:0; width:100%; height:100dvh; overflow:hidden; touch-action:none; }
+body { max-width:430px; margin:0 auto; position:fixed; top:0; left:0; right:0; width:100%; height:100dvh; overflow:hidden; touch-action:none; padding-top:env(safe-area-inset-top, 0px); }
 button { font-family:inherit; cursor:pointer; }
 input { font-family:inherit; }
 
-/* Status bar */
-.status-bar { display:flex; justify-content:space-between; align-items:center; padding:14px 24px 6px; font-size:14px; font-weight:600; position:sticky; top:0; z-index:50; background:rgba(0,0,0,0.85); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); }
-.sb-r { display:flex; gap:5px; align-items:center; font-size:10px; }
-.sig { display:flex; align-items:flex-end; gap:2px; height:10px; }
-.sig span { width:3px; background:#fff; border-radius:1px; }
-.sig span:nth-child(1){height:3px;} .sig span:nth-child(2){height:5px;} .sig span:nth-child(3){height:7px;} .sig span:nth-child(4){height:10px;}
-.bat { width:22px; height:11px; border:1.3px solid rgba(255,255,255,0.35); border-radius:3px; padding:1.3px; position:relative; }
-.bat::after{content:'';position:absolute;right:-3px;top:2px;width:2px;height:4px;background:rgba(255,255,255,0.35);border-radius:0 1px 1px 0;}
-.bat i{display:block;width:80%;height:100%;background:#fff;border-radius:1px;}
-
 /* Views */
-.view { display:none; flex-direction:column; height:calc(100dvh - 44px); padding-bottom:90px; overflow:hidden; }
+.view { display:none; flex-direction:column; height:100dvh; padding-bottom:90px; overflow:hidden; }
 .view.active { display:flex; }
 
 /* Scroll content */
@@ -402,16 +392,6 @@ textarea.form-i{resize:none;min-height:80px;}
 </head>
 <body>
 
-<!-- Status bar -->
-<div class="status-bar">
-  <span id="clock">9:41</span>
-  <div class="sb-r">
-    <div class="sig"><span></span><span></span><span></span><span></span></div>
-    <svg width="14" height="10" viewBox="0 0 15 11"><path d="M7.5 2C9.5 2 11.3 2.8 12.6 4.1L14 2.7C12.4 1 10.1 0 7.5 0S2.6 1 1 2.7L2.4 4.1C3.7 2.8 5.5 2 7.5 2Z" fill="white"/><path d="M7.5 6C8.6 6 9.6 6.4 10.4 7.1L11.8 5.7C10.7 4.6 9.2 4 7.5 4C5.8 4 4.3 4.6 3.2 5.7L4.6 7.1C5.4 6.4 6.4 6 7.5 6Z" fill="white"/><circle cx="7.5" cy="9" r="1.5" fill="white"/></svg>
-    <div class="bat"><i></i></div>
-  </div>
-</div>
-
 <!-- View: Overview -->
 <div class="view active" id="view-overview">
   <div class="content">
@@ -533,14 +513,14 @@ textarea.form-i{resize:none;min-height:80px;}
       <div class="info-r" onclick="if(confirm('确定清除所有数据？此操作不可撤销。')){clearAll();toast('数据已清除');}"><span class="info-l">清除所有数据</span><span class="info-v" style="color:var(--red);">›</span></div>
     </div>
     <div class="info-g">
-      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v1.4.2 ›</span></div>
+      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v1.4.3 ›</span></div>
       <div class="info-r" onclick="showChangelog()"><span class="info-l">更新日志</span><span class="info-v" style="color:var(--gold);">查看 ›</span></div>
       <div class="info-r" onclick="checkUpdate()"><span class="info-l">检查更新</span><span class="info-v" style="color:var(--gold);" id="update-status">›</span></div>
       <div class="info-r"><span class="info-l">数据存储</span><span class="info-v" style="color:var(--t3);">仅本地浏览器</span></div>
     </div>
     <div style="text-align:center;padding:40px 20px;color:var(--t3);font-size:12px;">
       <div style="margin-bottom:8px;font-size:20px;letter-spacing:1px;">SubPilot</div>
-      <div style="margin-bottom:4px;">订阅管家 · v1.4.2 (Build 2026.08.07)</div>
+      <div style="margin-bottom:4px;">订阅管家 · v1.4.3 (Build 2026.08.07)</div>
       <div>所有数据仅保存在本地，隐私安全</div>
     </div>
     <input type="file" id="import-file" accept=".json" style="display:none;">
