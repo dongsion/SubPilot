@@ -1524,9 +1524,13 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '1.5.1';
+const APP_VERSION = '1.5.2';
 const APP_BUILD = '2026.08.07';
 const CHANGELOG = [
+  { ver: '1.5.2', date: '2026-08-07', items: [
+    '增大卡面高度，修复底部文字（可用余额/品牌名）被遮挡的问题',
+    '优化卡面内部间距，确保所有信息完整显示'
+  ]},
   { ver: '1.5.1', date: '2026-08-07', items: [
     '添加按钮上移，避免与底部导航栏重叠'
   ]},
