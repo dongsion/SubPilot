@@ -1265,9 +1265,15 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '1.2.0';
+const APP_VERSION = '1.3.0';
 const APP_BUILD = '2026.08.07';
 const CHANGELOG = [
+  { ver: '1.3.0', date: '2026-08-07', items: [
+    '新增 App Store 链接获取应用图标功能',
+    '通过 iTunes API 自动获取高清应用图标和应用名称',
+    '优化 AI 对话框全机型安全区域适配',
+    '设置页新增版本号、更新日志和检查更新功能'
+  ]},
   { ver: '1.2.0', date: '2026-08-07', items: [
     '新增 AI 智能记账功能，一句话自动记账',
     '新增自定义卡面颜色，8种高级配色主题',
