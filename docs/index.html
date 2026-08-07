@@ -407,10 +407,10 @@ textarea.form-i{resize:none;min-height:80px;}
 .lock-subtitle.error { color:var(--red); }
 .lock-wheels-wrap { position:relative; width:100%; margin-bottom:24px; }
 .lock-wheel-highlight { position:absolute; top:50%; left:0; right:0; height:44px; transform:translateY(-50%); background:var(--gold-bg); border-top:1px solid var(--gold-bd); border-bottom:1px solid var(--gold-bd); border-radius:10px; pointer-events:none; z-index:0; }
-.lock-wheels { display:flex; justify-content:center; gap:8px; position:relative; z-index:1; height:180px; overflow:hidden; mask-image:linear-gradient(to bottom, transparent 0%, #000 30%, #000 70%, transparent 100%); -webkit-mask-image:linear-gradient(to bottom, transparent 0%, #000 30%, #000 70%, transparent 100%); }
-.lock-wheel { width:56px; height:180px; overflow-y:scroll; scroll-snap-type:y mandatory; scrollbar-width:none; -ms-overflow-style:none; perspective:1000px; }
+.lock-wheels { display:flex; justify-content:center; gap:8px; position:relative; z-index:1; height:180px; overflow:hidden; mask-image:linear-gradient(to bottom, transparent 0%, #000 28%, #000 72%, transparent 100%); -webkit-mask-image:linear-gradient(to bottom, transparent 0%, #000 28%, #000 72%, transparent 100%); }
+.lock-wheel { width:56px; height:180px; overflow-y:scroll; scroll-snap-type:y mandatory; scrollbar-width:none; -ms-overflow-style:none; padding:68px 0; }
 .lock-wheel::-webkit-scrollbar { display:none; }
-.lock-wheel-item { height:44px; display:flex; align-items:center; justify-content:center; scroll-snap-align:center; font-size:22px; font-weight:600; font-family:var(--font-mono); color:var(--t3); transition:color .2s, transform .2s; }
+.lock-wheel-item { height:44px; display:flex; align-items:center; justify-content:center; scroll-snap-align:center; scroll-snap-stop:always; font-size:22px; font-weight:600; font-family:var(--font-mono); color:var(--t3); transition:color .15s, font-size .15s; }
 .lock-wheel-item.active { color:var(--gold); font-size:26px; }
 .lock-confirm-btn { width:100%; padding:15px; border-radius:16px; background:var(--gold); color:#000; border:none; font-size:16px; font-weight:700; font-family:inherit; transition:transform .15s; }
 .lock-confirm-btn:active { transform:scale(.96); }
@@ -616,14 +616,14 @@ textarea.form-i{resize:none;min-height:80px;}
       <div class="info-r" onclick="if(confirm('确定清除所有数据？此操作不可撤销。')){clearAll();toast('数据已清除');}"><span class="info-l">清除所有数据</span><span class="info-v" style="color:var(--red);">›</span></div>
     </div>
     <div class="info-g">
-      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v1.7.5 ›</span></div>
+      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v1.7.6 ›</span></div>
       <div class="info-r" onclick="showChangelog()"><span class="info-l">更新日志</span><span class="info-v" style="color:var(--gold);">查看 ›</span></div>
       <div class="info-r" onclick="checkUpdate()"><span class="info-l">检查更新</span><span class="info-v" style="color:var(--gold);" id="update-status">›</span></div>
       <div class="info-r"><span class="info-l">数据存储</span><span class="info-v" style="color:var(--t3);">仅本地浏览器</span></div>
     </div>
     <div style="text-align:center;padding:40px 20px;color:var(--t3);font-size:12px;">
       <div style="margin-bottom:8px;font-size:20px;letter-spacing:1px;">SubPilot</div>
-      <div style="margin-bottom:4px;">订阅管家 · v1.7.5 (Build 2026.08.07)</div>
+      <div style="margin-bottom:4px;">订阅管家 · v1.7.6 (Build 2026.08.07)</div>
       <div>所有数据默认仅保存在本地，开启云同步后加密上传至 Supabase</div>
     </div>
     <input type="file" id="import-file" accept=".json" style="display:none;">

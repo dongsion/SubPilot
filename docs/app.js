@@ -1728,9 +1728,13 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '1.7.5';
+const APP_VERSION = '1.7.6';
 const APP_BUILD = '2026.08.07';
 const CHANGELOG = [
+  { ver: '1.7.6', date: '2026-08-07', items: [
+    '修复密码滚轮对不准问题：改用CSS padding居中，DOM插入后设置初始位置',
+    '优化滚动吸附：增加scroll-snap-stop防止跳过数字，改进高亮判定'
+  ]},
   { ver: '1.7.5', date: '2026-08-07', items: [
     '新增应用密码：4位数字密码锁，iOS风格滚动转盘输入',
     '设置中开启密码后，每次打开App需滚动输入密码解锁',
@@ -2395,7 +2399,6 @@ document.addEventListener('visibilitychange', () => {
 
 // ===== App Lock (Scroll Wheel Password) =====
 const WHEEL_ITEM_H = 44;
-const WHEEL_PAD = 2; // padding items top/bottom
 
 function hashPassword(pwd) {
   let h = 5381;
@@ -2409,22 +2412,17 @@ function updateLockStatus() {
   el.textContent = state.settings.appPassword ? '已开启 ›' : '未开启 ›';
 }
 
-// Build a single wheel column with digits 0-9
+// Build a single wheel column with digits 0-9 (CSS padding handles centering)
 function buildWheel(initialDigit) {
   const wheel = document.createElement('div');
   wheel.className = 'lock-wheel';
-  for (let i = 0; i < WHEEL_PAD; i++) wheel.appendChild(makeWheelItem(''));
   for (let d = 0; d <= 9; d++) wheel.appendChild(makeWheelItem(String(d)));
-  for (let i = 0; i < WHEEL_PAD; i++) wheel.appendChild(makeWheelItem(''));
-  // Set initial scroll position
-  const targetIdx = WHEEL_PAD + (initialDigit || 0);
-  wheel.scrollTop = targetIdx * WHEEL_ITEM_H;
-  // Snap + highlight on scroll
+  wheel._initialDigit = initialDigit || 0;
   let snapTimer = null;
   wheel.addEventListener('scroll', () => {
     updateWheelHighlight(wheel);
     clearTimeout(snapTimer);
-    snapTimer = setTimeout(() => snapWheel(wheel), 80);
+    snapTimer = setTimeout(() => snapWheel(wheel), 120);
   }, { passive: true });
   return wheel;
 }
@@ -2442,7 +2440,7 @@ function updateWheelHighlight(wheel) {
   items.forEach(item => {
     const itemCenter = item.offsetTop + item.offsetHeight / 2;
     const dist = Math.abs(center - itemCenter);
-    if (dist < WHEEL_ITEM_H * 0.6) {
+    if (dist < WHEEL_ITEM_H * 0.55) {
       item.classList.add('active');
     } else {
       item.classList.remove('active');
@@ -2452,11 +2450,13 @@ function updateWheelHighlight(wheel) {
 
 function snapWheel(wheel) {
   const nearest = Math.round(wheel.scrollTop / WHEEL_ITEM_H) * WHEEL_ITEM_H;
-  wheel.scrollTo({ top: nearest, behavior: 'smooth' });
+  if (Math.abs(wheel.scrollTop - nearest) > 1) {
+    wheel.scrollTo({ top: nearest, behavior: 'smooth' });
+  }
 }
 
 function getWheelDigit(wheel) {
-  const idx = Math.round(wheel.scrollTop / WHEEL_ITEM_H) - WHEEL_PAD;
+  const idx = Math.round(wheel.scrollTop / WHEEL_ITEM_H);
   return ((idx % 10) + 10) % 10;
 }
 
@@ -2471,8 +2471,11 @@ function resetWheels() {
   for (let i = 0; i < 4; i++) {
     container.appendChild(buildWheel(0));
   }
-  // Trigger initial highlight
-  $$('#lock-wheels .lock-wheel').forEach(updateWheelHighlight);
+  // Set initial scroll positions AFTER DOM insertion so clientHeight is correct
+  $$('#lock-wheels .lock-wheel').forEach(wheel => {
+    wheel.scrollTop = (wheel._initialDigit || 0) * WHEEL_ITEM_H;
+    updateWheelHighlight(wheel);
+  });
 }
 
 // Lock screen mode: 'unlock' | 'set' | 'confirm' | 'remove'
