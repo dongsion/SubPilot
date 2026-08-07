@@ -422,10 +422,9 @@ function saveAccount() {
   if (!name) { toast('请输入账户名称'); return; }
   const balance = parseFloat($('#acct-balance').value) || 0;
   const cardNumber = $('#acct-num').value.trim();
-  const colorClass = CARD_COLORS[state.accounts.length % CARD_COLORS.length];
   const acct = {
     id: genId(), name, type: state.selectedAcctType, balance,
-    cardNumber, colorClass, createdAt: new Date().toISOString()
+    cardNumber, createdAt: new Date().toISOString()
   };
   state.accounts.push(acct);
   save();
@@ -725,18 +724,33 @@ function renderAccounts() {
   } else {
     cs.innerHTML = state.accounts.map((a, i) => {
       const isOn = i === state.activeCardIdx;
-      const cardLogo = { bank: '招', alipay: '支', wechat: '微', other: '●' }[a.type] || a.name[0];
+      const typeClass = 'type-' + a.type;
+      // 品牌logo用SVG图标更专业
+      const logoSvg = {
+        bank: `<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2L2 7v2h20V7L12 2zm-8 9v7h2v-7h3v7h2v-7h2v7h2v-7h3v7h2v-7H4z"/></svg>`,
+        alipay: `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M18.5 3H5.5C4.1 3 3 4.1 3 5.5v13C3 19.9 4.1 21 5.5 21h13c1.4 0 2.5-1.1 2.5-2.5V5.5C21 4.1 19.9 3 18.5 3zm-3.7 12.8c-.9-.3-2.2-.9-3.6-1.8-.8 1-1.8 1.8-3.2 1.8-2 0-3.3-1.5-3.2-3 0-1.3 1-2.5 3-2.5.8 0 1.8.3 2.8.7.4-.7.7-1.5.9-2.3H6.3V7.5h4.3v-1h-5V5.7h5v-1h1.7v1h5v.8h-5v1h4.2l-.3.7c-.4 1.3-1 2.4-1.7 3.4 1.2.5 2.4.9 3.3 1.2l-.5 1.3c-.8-.2-2-.5-3.2-1-.9.8-1.9 1.4-3 1.8l.5-1.3zm-5.7-1c-1.3 0-2 .8-2 1.6s.7 1.4 1.8 1.4c1 0 2-.7 2.8-1.8-1-.7-1.9-1.2-2.6-1.2z"/></svg>`,
+        wechat: `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M8.7 3C4.5 3 1 5.9 1 9.5c0 2 1.1 3.7 2.9 4.9l-.7 2.2 2.6-1.3c.9.2 1.8.4 2.8.4h.7c-.1-.4-.2-.8-.2-1.3 0-3.2 3.1-5.8 7-5.8h.5C15.9 5.3 12.6 3 8.7 3zM6.3 7.8c.5 0 .9.4.9.9s-.4.9-.9.9-.9-.4-.9-.9.4-.9.9-.9zm4.8 0c.5 0 .9.4.9.9s-.4.9-.9.9-.9-.4-.9-.9.4-.9.9-.9zm5.2 2.2c-3.3 0-6 2.3-6 5.2 0 2.9 2.7 5.2 6 5.2.7 0 1.4-.1 2.1-.3l2 1-.5-1.7c1.5-1 2.4-2.5 2.4-4.2 0-2.9-2.7-5.2-6-5.2zm-2 3.3c.4 0 .7.3.7.7s-.3.7-.7.7-.7-.3-.7-.7.3-.7.7-.7zm3.9 0c.4 0 .7.3.7.7s-.3.7-.7.7-.7-.3-.7-.7.3-.7.7-.7z"/></svg>`,
+        other: `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 10h4.5a1.5 1.5 0 010 3H9"/></svg>`
+      }[a.type] || a.name[0];
       const cardType = { bank: '储蓄卡', alipay: '支付宝', wechat: '微信零钱', other: '钱包' }[a.type] || '账户';
-      const cardBrand = { bank: 'UnionPay', alipay: 'Alipay', wechat: 'WeChat', other: '' }[a.type] || '';
-      return `<div class="bc ${a.colorClass} ${isOn?'on':'off'}" data-idx="${i}">
-        <div class="holo"><svg viewBox="0 0 24 28"><path d="M8 6c5.5 0 10 4.5 10 10M12 6c3.3 0 6 2.7 6 6M4 6c7.7 0 14 6.3 14 14M8 10c3.3 0 6 2.7 6 6M12 14c1.1 0 2 .9 2 2"/></svg></div>
+      const cardBrand = { bank: 'UnionPay', alipay: 'Alipay', wechat: 'WeChat Pay', other: 'Wallet' }[a.type] || '';
+      // 非银行卡不显示NFC图标
+      const holoSvg = a.type === 'bank'
+        ? `<div class="holo"><svg viewBox="0 0 24 28"><path d="M8 6c5.5 0 10 4.5 10 10M12 6c3.3 0 6 2.7 6 6M4 6c7.7 0 14 6.3 14 14M8 10c3.3 0 6 2.7 6 6M12 14c1.1 0 2 .9 2 2"/></svg></div>`
+        : '';
+      // 卡号/标识文字
+      const cardIdent = a.cardNumber
+        ? '•••• •••• •••• ' + a.cardNumber
+        : { bank: 'BANK CARD', alipay: 'ALIPAY WALLET', wechat: 'WECHAT WALLET', other: 'DIGITAL WALLET' }[a.type] || '';
+      return `<div class="bc ${typeClass} ${isOn?'on':'off'}" data-idx="${i}">
+        ${holoSvg}
         <div class="bct">
           <div class="bcti"><div class="bcn">${a.name}</div><div class="bcty">${cardType}${a.cardNumber ? ' · 尾号'+a.cardNumber : ''}</div></div>
-          <div class="bcl">${cardLogo}</div>
+          <div class="bcl">${logoSvg}</div>
         </div>
         <div style="flex:1;"></div>
         ${a.type === 'bank' ? '<div class="chip"></div>' : ''}
-        <div class="bcnm">${a.cardNumber ? '•••• •••• •••• ' + a.cardNumber : (a.type === 'alipay' ? '余额宝' : a.type === 'wechat' ? '零钱' : '余额')}</div>
+        <div class="bcnm">${cardIdent}</div>
         <div class="bcb">
           <div><div class="bcbl">可用余额</div><div class="bcv">¥${fmt(Math.round(a.balance))}</div></div>
           <div class="bcbn">${cardBrand}</div>

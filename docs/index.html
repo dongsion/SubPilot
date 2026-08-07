@@ -106,39 +106,102 @@ input { font-family:inherit; }
 .rf{fill:none;stroke-width:3;stroke-linecap:round;}
 .rt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;font-family:var(--font-mono);}
 
-/* Bank cards - 金属深空风格 */
+/* Bank cards - 差异化卡面设计 */
 .cards { position:relative; margin-bottom:24px; }
-.bc { border-radius:20px; padding:26px 24px; height:180px; position:relative; overflow:hidden; margin-bottom:-120px; transition:all .5s cubic-bezier(.34,1.56,.64,1); box-shadow:0 20px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06); cursor:pointer; }
+.bc { border-radius:20px; padding:26px 24px; height:180px; position:relative; overflow:hidden; margin-bottom:-120px; transition:all .5s cubic-bezier(.34,1.56,.64,1); box-shadow:0 20px 60px rgba(0,0,0,0.5); cursor:pointer; }
 .bc:last-child{margin-bottom:0;}
 .bc.on{margin-bottom:16px;z-index:10;}
-.bc.off{transform:scale(0.92) translateY(-18px);opacity:0.4;z-index:5;filter:blur(0.5px);}
-.bc.off:nth-child(2){transform:scale(0.96) translateY(-10px);opacity:0.65;z-index:6;}
-/* 金属拉丝纹理 */
-.bc::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent,transparent 2px,rgba(255,255,255,0.012) 2px,rgba(255,255,255,0.012) 4px);pointer-events:none;z-index:0;}
-/* 顶部金色高光条 */
-.bc::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,122,0.35),transparent);z-index:1;}
-/* 4种微妙色调区分 */
-.bc.dark1{background:linear-gradient(145deg,#1c1c1e 0%,#0d0d0d 100%);border:1px solid rgba(255,255,255,0.06);}
-.bc.dark2{background:linear-gradient(145deg,#1a1a1c 0%,#0c0c0e 100%);border:1px solid rgba(212,175,122,0.08);}
-.bc.dark3{background:linear-gradient(145deg,#1b1b1d 0%,#0b0b0d 100%);border:1px solid rgba(255,255,255,0.05);}
-.bc.dark4{background:linear-gradient(145deg,#1d1d1f 0%,#0e0e10 100%);border:1px solid rgba(255,255,255,0.07);}
-/* 银色芯片 */
-.chip { width:42px; height:32px; border-radius:6px; background:linear-gradient(135deg,#c8c8c8 0%,#909090 40%,#d0d0d0 60%,#888 100%); position:relative; margin-bottom:14px; z-index:2; box-shadow:0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.3); overflow:hidden; }
-.chip::before{content:'';position:absolute;inset:5px;border:1px solid rgba(0,0,0,0.15);border-radius:3px;}
-.chip::after{content:'';position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(0,0,0,0.12);box-shadow:0 6px 0 rgba(0,0,0,0.1),0 -6px 0 rgba(0,0,0,0.1);}
-/* Contactless标识 */
-.holo { position:absolute; top:24px; right:24px; width:32px; height:28px; z-index:2; opacity:0.5; }
-.holo svg{width:32px;height:28px;fill:none;stroke:rgba(255,255,255,0.4);stroke-width:1.5;stroke-linecap:round;}
+.bc.off{transform:scale(0.92) translateY(-18px);opacity:0.35;z-index:5;filter:blur(0.5px);}
+.bc.off:nth-child(2){transform:scale(0.96) translateY(-10px);opacity:0.6;z-index:6;}
+
+/* === 通用元素 === */
+.holo { position:absolute; top:24px; right:24px; width:32px; height:28px; z-index:2; opacity:0.4; }
+.holo svg{width:32px;height:28px;fill:none;stroke:rgba(255,255,255,0.5);stroke-width:1.5;stroke-linecap:round;}
 .bct { display:flex; justify-content:space-between; align-items:flex-start; position:relative; z-index:2; margin-bottom:auto; }
 .bcti { display:flex; flex-direction:column; gap:4px; }
-.bcn { font-size:15px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--gold); opacity:0.9; }
-.bcty { font-size:11px; color:rgba(255,255,255,0.35); font-weight:500; letter-spacing:1px; text-transform:uppercase; }
-.bcl { width:36px; height:36px; border-radius:10px; background:rgba(255,255,255,0.04); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; color:var(--gold); border:1px solid rgba(212,175,122,0.15); opacity:0.8; }
-.bcnm { font-size:14px; letter-spacing:5px; font-family:var(--font-mono); color:rgba(255,255,255,0.45); font-weight:400; margin-bottom:14px; position:relative; z-index:2; text-shadow:0 1px 2px rgba(0,0,0,0.4); }
+.bcn { font-size:15px; font-weight:700; letter-spacing:1.5px; }
+.bcty { font-size:11px; font-weight:500; letter-spacing:0.5px; opacity:0.5; }
+.bcl { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; }
+.bcnm { font-size:14px; letter-spacing:4px; font-family:var(--font-mono); font-weight:400; margin-bottom:14px; position:relative; z-index:2; opacity:0.5; }
 .bcb { display:flex; justify-content:space-between; align-items:flex-end; position:relative; z-index:2; }
-.bcbl { font-size:9px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1.5px; font-weight:600; }
-.bcv { font-size:28px; font-weight:300; font-family:var(--font-mono); letter-spacing:0.5px; line-height:1.1; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.3); }
-.bcbn { font-size:10px; font-weight:600; color:rgba(212,175,122,0.5); letter-spacing:2px; text-transform:uppercase; }
+.bcbl { font-size:9px; text-transform:uppercase; letter-spacing:1.5px; font-weight:600; opacity:0.4; }
+.bcv { font-size:28px; font-weight:300; font-family:var(--font-mono); letter-spacing:0.5px; line-height:1.1; margin-top:2px; }
+.bcbn { font-size:10px; font-weight:600; letter-spacing:2px; text-transform:uppercase; opacity:0.5; }
+.chip { width:42px; height:32px; border-radius:6px; position:relative; margin-bottom:14px; z-index:2; box-shadow:0 2px 8px rgba(0,0,0,0.3); overflow:hidden; }
+.chip::before{content:'';position:absolute;inset:5px;border:1px solid rgba(0,0,0,0.15);border-radius:3px;}
+.chip::after{content:'';position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(0,0,0,0.12);box-shadow:0 6px 0 rgba(0,0,0,0.1),0 -6px 0 rgba(0,0,0,0.1);}
+
+/* === 1. 银行卡 - 金属深空 === */
+.bc.type-bank {
+  background:linear-gradient(145deg,#1c1c1e 0%,#0d0d0d 100%);
+  border:1px solid rgba(255,255,255,0.06);
+  box-shadow:0 20px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.bc.type-bank::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent,transparent 2px,rgba(255,255,255,0.012) 2px,rgba(255,255,255,0.012) 4px);pointer-events:none;z-index:0;}
+.bc.type-bank::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,122,0.35),transparent);z-index:1;}
+.bc.type-bank.dark1{background:linear-gradient(145deg,#1c1c1e 0%,#0d0d0d 100%);}
+.bc.type-bank.dark2{background:linear-gradient(145deg,#1a1a1c 0%,#0c0c0e 100%);}
+.bc.type-bank.dark3{background:linear-gradient(145deg,#1b1b1d 0%,#0b0b0d 100%);}
+.bc.type-bank.dark4{background:linear-gradient(145deg,#1d1d1f 0%,#0e0e10 100%);}
+.bc.type-bank .chip { background:linear-gradient(135deg,#c8c8c8 0%,#909090 40%,#d0d0d0 60%,#888 100%); }
+.bc.type-bank .chip::before{border-color:rgba(0,0,0,0.15);}
+.bc.type-bank .bcn { color:var(--gold); text-transform:uppercase; opacity:0.9; }
+.bc.type-bank .bcty { color:rgba(255,255,255,0.35); }
+.bc.type-bank .bcl { background:rgba(255,255,255,0.04); color:var(--gold); border:1px solid rgba(212,175,122,0.15); opacity:0.8; }
+.bc.type-bank .bcnm { color:rgba(255,255,255,0.45); text-shadow:0 1px 2px rgba(0,0,0,0.4); }
+.bc.type-bank .bcbl { color:rgba(255,255,255,0.3); }
+.bc.type-bank .bcv { color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.3); }
+.bc.type-bank .bcbn { color:rgba(212,175,122,0.5); }
+
+/* === 2. 支付宝 - 科技蓝 === */
+.bc.type-alipay {
+  background:linear-gradient(145deg,#0a1628 0%,#0d1f3c 50%,#061020 100%);
+  border:1px solid rgba(22,119,255,0.15);
+  box-shadow:0 20px 60px rgba(0,20,60,0.5), inset 0 1px 0 rgba(22,119,255,0.1);
+}
+.bc.type-alipay::before{content:'';position:absolute;top:-30%;right:-20%;width:200px;height:200px;background:radial-gradient(circle,rgba(22,119,255,0.2) 0%,transparent 60%);border-radius:50%;pointer-events:none;z-index:0;}
+.bc.type-alipay::after{content:'';position:absolute;bottom:-40%;left:-10%;width:180px;height:180px;background:radial-gradient(circle,rgba(22,119,255,0.08) 0%,transparent 60%);border-radius:50%;pointer-events:none;z-index:0;}
+.bc.type-alipay .bcn { color:#4A9EFF; }
+.bc.type-alipay .bcty { color:rgba(74,158,255,0.5); }
+.bc.type-alipay .bcl { background:rgba(22,119,255,0.12); color:#4A9EFF; border:1px solid rgba(22,119,255,0.2); }
+.bc.type-alipay .bcnm { color:rgba(255,255,255,0.4); }
+.bc.type-alipay .bcbl { color:rgba(255,255,255,0.3); }
+.bc.type-alipay .bcv { color:#fff; }
+.bc.type-alipay .bcbn { color:rgba(74,158,255,0.6); }
+.bc.type-alipay .holo svg{stroke:rgba(74,158,255,0.5);}
+
+/* === 3. 微信 - 生机绿 === */
+.bc.type-wechat {
+  background:linear-gradient(145deg,#0a1f12 0%,#0d2818 50%,#061a0e 100%);
+  border:1px solid rgba(7,193,96,0.12);
+  box-shadow:0 20px 60px rgba(0,40,15,0.5), inset 0 1px 0 rgba(7,193,96,0.08);
+}
+.bc.type-wechat::before{content:'';position:absolute;top:-20%;right:-10%;width:180px;height:180px;background:radial-gradient(circle,rgba(7,193,96,0.18) 0%,transparent 60%);border-radius:50%;pointer-events:none;z-index:0;}
+.bc.type-wechat::after{content:'';position:absolute;bottom:-50%;left:-20%;width:220px;height:220px;background:radial-gradient(circle,rgba(7,193,96,0.06) 0%,transparent 60%);border-radius:50%;pointer-events:none;z-index:0;}
+.bc.type-wechat .bcn { color:#2DC770; }
+.bc.type-wechat .bcty { color:rgba(45,199,112,0.5); }
+.bc.type-wechat .bcl { background:rgba(7,193,96,0.12); color:#2DC770; border:1px solid rgba(7,193,96,0.2); }
+.bc.type-wechat .bcnm { color:rgba(255,255,255,0.4); }
+.bc.type-wechat .bcbl { color:rgba(255,255,255,0.3); }
+.bc.type-wechat .bcv { color:#fff; }
+.bc.type-wechat .bcbn { color:rgba(45,199,112,0.6); }
+.bc.type-wechat .holo svg{stroke:rgba(45,199,112,0.5);}
+
+/* === 4. 其他/自定义 - 黑金经典 === */
+.bc.type-other {
+  background:linear-gradient(145deg,#14100a 0%,#0a0804 100%);
+  border:1px solid rgba(212,175,122,0.12);
+  box-shadow:0 20px 60px rgba(20,10,0,0.5), inset 0 1px 0 rgba(212,175,122,0.08);
+}
+.bc.type-other::before{content:'';position:absolute;top:-40%;right:-20%;width:200px;height:200px;background:radial-gradient(circle,rgba(212,175,122,0.1) 0%,transparent 60%);border-radius:50%;pointer-events:none;z-index:0;}
+.bc.type-other::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,122,0.25),transparent);z-index:1;}
+.bc.type-other .bcn { color:var(--gold); opacity:0.9; }
+.bc.type-other .bcty { color:rgba(212,175,122,0.4); }
+.bc.type-other .bcl { background:rgba(212,175,122,0.08); color:var(--gold); border:1px solid rgba(212,175,122,0.15); }
+.bc.type-other .bcnm { color:rgba(255,255,255,0.4); }
+.bc.type-other .bcbl { color:rgba(255,255,255,0.3); }
+.bc.type-other .bcv { color:var(--gold-light); }
+.bc.type-other .bcbn { color:rgba(212,175,122,0.5); }
 
 /* Quick actions */
 .qa { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:20px; }
