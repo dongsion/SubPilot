@@ -396,28 +396,6 @@ textarea.form-i{resize:none;min-height:80px;}
 .toast{position:fixed;top:60px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--card2);border:1px solid var(--border2);color:var(--t1);padding:12px 24px;border-radius:999px;font-size:13px;font-weight:500;z-index:300;opacity:0;transition:all .3s;pointer-events:none;box-shadow:0 8px 30px rgba(0,0,0,0.4);}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
 
-/* ===== Lock Screen ===== */
-.lock-overlay { position:fixed; inset:0; background:#000; z-index:999; display:none; flex-direction:column; align-items:center; justify-content:center; padding:40px 24px; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px); }
-.lock-overlay.on { display:flex; }
-.lock-content { display:flex; flex-direction:column; align-items:center; width:100%; max-width:300px; }
-.lock-icon { color:var(--gold); margin-bottom:20px; opacity:0.8; }
-.lock-title { font-size:28px; font-weight:700; letter-spacing:2px; margin-bottom:6px; }
-.lock-subtitle { font-size:13px; color:var(--t2); margin-bottom:32px; text-align:center; }
-.lock-unlock-btn { width:100%; padding:16px; border-radius:16px; background:var(--gold); color:#000; border:none; font-size:16px; font-weight:600; font-family:inherit; margin-top:8px; transition:transform .15s; }
-.lock-unlock-btn:active{transform:scale(.96);}
-.lock-pin-area { width:100%; }
-
-/* ===== PIN Pad ===== */
-.pin-dots { display:flex; gap:16px; justify-content:center; margin-bottom:28px; }
-.pin-dots span { width:14px; height:14px; border-radius:50%; border:2px solid var(--t3); transition:all .2s; }
-.pin-dots span.filled { background:var(--gold); border-color:var(--gold); }
-.pin-dots span.error { border-color:var(--red); background:var(--red); animation:pinShake .4s; }
-@keyframes pinShake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-8px);} 75%{transform:translateX(8px);} }
-.pin-pad { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; max-width:280px; margin:0 auto; }
-.pk { aspect-ratio:1; border-radius:50%; background:rgba(255,255,255,0.06); border:1px solid var(--border); color:var(--t1); font-size:24px; font-weight:600; font-family:var(--font-mono); display:flex; align-items:center; justify-content:center; transition:all .12s; }
-.pk:active{transform:scale(.9);background:rgba(255,255,255,0.12);}
-.pk-action { font-size:14px; color:var(--t2); background:transparent; border:none; }
-
 /* ===== Reports ===== */
 .rep-period { display:flex; gap:8px; margin-bottom:16px; }
 .rp-btn { flex:1; padding:10px; border-radius:12px; background:var(--card); border:1px solid var(--border); color:var(--t2); font-size:13px; font-weight:600; font-family:inherit; transition:all .15s; }
@@ -602,9 +580,8 @@ textarea.form-i{resize:none;min-height:80px;}
       <div class="info-r" onclick="openCloudAuth()"><span class="info-l">☁️ 云端同步</span><span class="info-v" style="color:var(--gold);" id="cloud-status">未登录 ›</span></div>
       <div class="info-r" onclick="openCloudConfig()"><span class="info-l" style="font-size:13px;color:var(--t2);">云服务配置</span><span class="info-v" style="color:var(--t3);font-size:12px;" id="cloud-config-status">默认 ›</span></div>
     </div>
-    <div class="sec" style="margin-top:8px;"><span class="st" style="font-size:13px;color:var(--t3);">安全与隐私</span></div>
+    <div class="sec" style="margin-top:8px;"><span class="st" style="font-size:13px;color:var(--t3);">通知</span></div>
     <div class="info-g">
-      <div class="info-r" onclick="openLockSettings()"><span class="info-l">🔒 应用锁</span><span class="info-v" style="color:var(--gold);" id="lock-status">未开启 ›</span></div>
       <div class="info-r" onclick="toggleNotifications()"><span class="info-l">🔔 到期提醒</span><span class="info-v" style="color:var(--gold);" id="notif-status">未开启 ›</span></div>
     </div>
     <div class="sec" style="margin-top:8px;"><span class="st" style="font-size:13px;color:var(--t3);">数据管理</span></div>
@@ -614,14 +591,14 @@ textarea.form-i{resize:none;min-height:80px;}
       <div class="info-r" onclick="if(confirm('确定清除所有数据？此操作不可撤销。')){clearAll();toast('数据已清除');}"><span class="info-l">清除所有数据</span><span class="info-v" style="color:var(--red);">›</span></div>
     </div>
     <div class="info-g">
-      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v1.7.3 ›</span></div>
+      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v1.7.4 ›</span></div>
       <div class="info-r" onclick="showChangelog()"><span class="info-l">更新日志</span><span class="info-v" style="color:var(--gold);">查看 ›</span></div>
       <div class="info-r" onclick="checkUpdate()"><span class="info-l">检查更新</span><span class="info-v" style="color:var(--gold);" id="update-status">›</span></div>
       <div class="info-r"><span class="info-l">数据存储</span><span class="info-v" style="color:var(--t3);">仅本地浏览器</span></div>
     </div>
     <div style="text-align:center;padding:40px 20px;color:var(--t3);font-size:12px;">
       <div style="margin-bottom:8px;font-size:20px;letter-spacing:1px;">SubPilot</div>
-      <div style="margin-bottom:4px;">订阅管家 · v1.7.3 (Build 2026.08.07)</div>
+      <div style="margin-bottom:4px;">订阅管家 · v1.7.4 (Build 2026.08.07)</div>
       <div>所有数据默认仅保存在本地，开启云同步后加密上传至 Supabase</div>
     </div>
     <input type="file" id="import-file" accept=".json" style="display:none;">
@@ -673,35 +650,6 @@ textarea.form-i{resize:none;min-height:80px;}
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
       </button>
     </div>
-  </div>
-</div>
-
-<!-- Lock Screen -->
-<div class="lock-overlay" id="lock-screen">
-  <div class="lock-content">
-    <div class="lock-icon">
-      <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-    </div>
-    <div class="lock-title">SubPilot</div>
-    <div class="lock-subtitle" id="lock-subtitle">点击下方按钮解锁</div>
-    <div class="lock-pin-area" id="lock-pin-area" style="display:none;">
-      <div class="pin-dots" id="pin-dots"><span></span><span></span><span></span><span></span></div>
-      <div class="pin-pad" id="pin-pad">
-        <button class="pk" onclick="pinInput('1')">1</button>
-        <button class="pk" onclick="pinInput('2')">2</button>
-        <button class="pk" onclick="pinInput('3')">3</button>
-        <button class="pk" onclick="pinInput('4')">4</button>
-        <button class="pk" onclick="pinInput('5')">5</button>
-        <button class="pk" onclick="pinInput('6')">6</button>
-        <button class="pk" onclick="pinInput('7')">7</button>
-        <button class="pk" onclick="pinInput('8')">8</button>
-        <button class="pk" onclick="pinInput('9')">9</button>
-        <button class="pk pk-action" onclick="pinCancel()">取消</button>
-        <button class="pk" onclick="pinInput('0')">0</button>
-        <button class="pk pk-action" onclick="pinDelete()">⌫</button>
-      </div>
-    </div>
-    <button class="lock-unlock-btn" id="lock-unlock-btn" onclick="attemptUnlock()">解锁</button>
   </div>
 </div>
 
@@ -973,32 +921,6 @@ textarea.form-i{resize:none;min-height:80px;}
     <div class="btn-row">
       <button class="btn btn-outline" onclick="closeSheet('sheet-qr')">取消</button>
       <button class="btn btn-gold" onclick="saveQRCode()">保存</button>
-    </div>
-  </div>
-</div>
-
-<!-- Sheet: Set PIN -->
-<div class="sheet-overlay" id="sheet-pin">
-  <div class="sheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-title">设置密码</div>
-    <div style="text-align:center;padding:10px 0 20px;">
-      <div style="font-size:13px;color:var(--t2);margin-bottom:16px;" id="pin-setup-hint">请输入4位数字密码</div>
-      <div class="pin-dots" style="justify-content:center;" id="pin-setup-dots"><span></span><span></span><span></span><span></span></div>
-    </div>
-    <div class="pin-pad" id="pin-setup-pad">
-      <button class="pk" onclick="pinSetupInput('1')">1</button>
-      <button class="pk" onclick="pinSetupInput('2')">2</button>
-      <button class="pk" onclick="pinSetupInput('3')">3</button>
-      <button class="pk" onclick="pinSetupInput('4')">4</button>
-      <button class="pk" onclick="pinSetupInput('5')">5</button>
-      <button class="pk" onclick="pinSetupInput('6')">6</button>
-      <button class="pk" onclick="pinSetupInput('7')">7</button>
-      <button class="pk" onclick="pinSetupInput('8')">8</button>
-      <button class="pk" onclick="pinSetupInput('9')">9</button>
-      <button class="pk pk-action" onclick="closeSheet('sheet-pin')">取消</button>
-      <button class="pk" onclick="pinSetupInput('0')">0</button>
-      <button class="pk pk-action" onclick="pinSetupDelete()">⌫</button>
     </div>
   </div>
 </div>

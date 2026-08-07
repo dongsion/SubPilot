@@ -204,8 +204,6 @@ let state = {
   editSubId: null,
   cardIconPickerId: null,
   settings: {
-    lockType: 'none', // 'none', 'biometric', 'pin'
-    pinHash: null,
     notifications: false,
     exRates: { USD: 7.25, EUR: 7.85, GBP: 9.20, JPY: 0.048, HKD: 0.93, TWD: 0.22 },
     defaultCurrency: 'CNY'
@@ -217,10 +215,6 @@ let state = {
   qrEditingId: null,
   qrPreviewData: null,
   qrViewingId: null,
-  pinInputBuffer: '',
-  pinSetupBuffer: '',
-  pinSetupStep: 0,
-  pinSetupFirst: '',
   invoiceEditingId: null,
   invoicePreviewData: null,
   invoiceViewingId: null,
@@ -332,7 +326,7 @@ function load() {
     state.invoices = JSON.parse(localStorage.getItem(KEYS.invoices) || '[]');
     // Merge loaded settings with defaults to ensure all keys exist
     const loaded = JSON.parse(localStorage.getItem(KEYS.settings) || '{}');
-    const defaults = { lockType: 'none', pinHash: null, notifications: false, exRates: { USD: 7.25, EUR: 7.85, GBP: 9.20, JPY: 0.048, HKD: 0.93, TWD: 0.22 }, defaultCurrency: 'CNY' };
+    const defaults = { notifications: false, exRates: { USD: 7.25, EUR: 7.85, GBP: 9.20, JPY: 0.048, HKD: 0.93, TWD: 0.22 }, defaultCurrency: 'CNY' };
     state.settings = { ...defaults, ...loaded };
     if (!state.settings.exRates) state.settings.exRates = defaults.exRates;
   } catch(e) { console.error('Load error', e); }
@@ -1674,7 +1668,6 @@ function render() {
   renderReports();
   renderQRCodes();
   renderInvoices();
-  updateLockStatus();
   updateNotifStatus();
   updateExrateStatus();
   updateCloudStatus();
@@ -1696,7 +1689,7 @@ $$('#tx-fp .pl').forEach(p => p.onclick = () => {
 // ===== Data Management =====
 function clearAll() {
   state.accounts = []; state.subscriptions = []; state.transactions = []; state.qrcodes = []; state.invoices = [];
-  state.settings = { lockType: 'none', pinHash: null, notifications: false, exRates: { USD: 7.25, EUR: 7.85, GBP: 9.20, JPY: 0.048, HKD: 0.93, TWD: 0.22 }, defaultCurrency: 'CNY' };
+  state.settings = { notifications: false, exRates: { USD: 7.25, EUR: 7.85, GBP: 9.20, JPY: 0.048, HKD: 0.93, TWD: 0.22 }, defaultCurrency: 'CNY' };
   localStorage.removeItem(KEYS.accounts); localStorage.removeItem(KEYS.subscriptions); localStorage.removeItem(KEYS.transactions);
   localStorage.removeItem(KEYS.onboarded); localStorage.removeItem(KEYS.settings); localStorage.removeItem(KEYS.qrcodes);
   localStorage.removeItem(KEYS.invoices);
@@ -1733,9 +1726,13 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '1.7.3';
+const APP_VERSION = '1.7.4';
 const APP_BUILD = '2026.08.07';
 const CHANGELOG = [
+  { ver: '1.7.4', date: '2026-08-07', items: [
+    '移除应用锁功能（Face ID/指纹/PIN密码），简化应用体验',
+    '清理锁屏相关界面与代码'
+  ]},
   { ver: '1.7.3', date: '2026-08-07', items: [
     '修复登录/注册错误提示，明确引导关闭邮箱确认',
     '优化邮箱确认未通过时的用户提示'
@@ -1902,9 +1899,6 @@ function init() {
   }
 
   render();
-
-  // Show lock screen on app launch if enabled
-  showLockScreen();
 
   // Check subscription expiry reminders
   checkSubscriptionReminders();
@@ -2381,212 +2375,9 @@ function cancelAITx() {
   renderQuickReplies();
 }
 
-// ===== App Lock (Biometric / PIN) =====
-function hashPin(pin) {
-  let h = 0;
-  for (let i = 0; i < pin.length; i++) { h = ((h << 5) - h + pin.charCodeAt(i)) | 0; }
-  return 'h' + h;
-}
-
-function updateLockStatus() {
-  const el = $('#lock-status');
-  if (!el) return;
-  const t = state.settings.lockType;
-  if (t === 'biometric') el.textContent = '生物识别 已开启 ›';
-  else if (t === 'pin') el.textContent = '密码锁 已开启 ›';
-  else el.textContent = '未开启 ›';
-}
-
-function openLockSettings() {
-  const options = [
-    { v: 'none', label: '关闭应用锁' },
-    { v: 'biometric', label: 'Face ID / 指纹' },
-    { v: 'pin', label: '数字密码' }
-  ];
-  const current = state.settings.lockType;
-  let msg = '选择锁定方式：\n\n';
-  options.forEach((o, i) => {
-    msg += `${i + 1}. ${o.label}${o.v === current ? ' (当前)' : ''}\n`;
-  });
-  msg += '\n输入数字选择（1-3）：';
-  const choice = prompt(msg);
-  if (!choice) return;
-  const idx = parseInt(choice) - 1;
-  if (idx < 0 || idx >= options.length) { toast('无效选择'); return; }
-  const selected = options[idx].v;
-
-  if (selected === 'none') {
-    state.settings.lockType = 'none';
-    state.settings.pinHash = null;
-    save();
-    updateLockStatus();
-    toast('应用锁已关闭');
-    haptic('medium');
-  } else if (selected === 'biometric') {
-    if (!window.PublicKeyCredential) {
-      toast('当前设备不支持生物识别，请使用密码锁');
-      return;
-    }
-    state.settings.lockType = 'biometric';
-    save();
-    updateLockStatus();
-    toast('生物识别锁已开启');
-    haptic('success');
-  } else if (selected === 'pin') {
-    state.pinSetupStep = 0;
-    state.pinSetupBuffer = '';
-    state.pinSetupFirst = '';
-    $('#pin-setup-hint').textContent = '请输入4位数字密码';
-    updatePinSetupDots();
-    openSheet('sheet-pin');
-  }
-}
-
-function updatePinSetupDots() {
-  const dots = $$('#pin-setup-dots span');
-  dots.forEach((d, i) => {
-    d.classList.remove('filled', 'error');
-    if (i < state.pinSetupBuffer.length) d.classList.add('filled');
-  });
-}
-
-function pinSetupInput(digit) {
-  haptic('light');
-  if (state.pinSetupBuffer.length >= 4) return;
-  state.pinSetupBuffer += digit;
-  updatePinSetupDots();
-  if (state.pinSetupBuffer.length === 4) {
-    setTimeout(() => {
-      if (state.pinSetupStep === 0) {
-        state.pinSetupFirst = state.pinSetupBuffer;
-        state.pinSetupBuffer = '';
-        state.pinSetupStep = 1;
-        $('#pin-setup-hint').textContent = '请再次输入确认';
-        updatePinSetupDots();
-      } else {
-        if (state.pinSetupBuffer === state.pinSetupFirst) {
-          state.settings.lockType = 'pin';
-          state.settings.pinHash = hashPin(state.pinSetupBuffer);
-          save();
-          updateLockStatus();
-          closeSheet('sheet-pin');
-          toast('密码锁已开启');
-          haptic('success');
-        } else {
-          $('#pin-setup-hint').textContent = '两次密码不一致，请重新输入';
-          haptic('error');
-          $$('#pin-setup-dots span').forEach(d => d.classList.add('error'));
-          setTimeout(() => {
-            state.pinSetupBuffer = '';
-            state.pinSetupStep = 0;
-            state.pinSetupFirst = '';
-            $('#pin-setup-hint').textContent = '请输入4位数字密码';
-            updatePinSetupDots();
-          }, 600);
-        }
-      }
-    }, 150);
-  }
-}
-
-function pinSetupDelete() {
-  haptic('light');
-  state.pinSetupBuffer = state.pinSetupBuffer.slice(0, -1);
-  updatePinSetupDots();
-}
-
-function showLockScreen() {
-  if (state.settings.lockType === 'none') return;
-  const overlay = $('#lock-screen');
-  const pinArea = $('#lock-pin-area');
-  const unlockBtn = $('#lock-unlock-btn');
-  const subtitle = $('#lock-subtitle');
-
-  if (state.settings.lockType === 'biometric') {
-    pinArea.style.display = 'none';
-    unlockBtn.style.display = 'block';
-    subtitle.textContent = '点击下方按钮使用生物识别解锁';
-  } else if (state.settings.lockType === 'pin') {
-    pinArea.style.display = 'block';
-    unlockBtn.style.display = 'none';
-    subtitle.textContent = '请输入密码解锁';
-    state.pinInputBuffer = '';
-    updatePinInputDots();
-  }
-  overlay.classList.add('on');
-}
-
-function hideLockScreen() {
-  $('#lock-screen').classList.remove('on');
-}
-
-async function attemptUnlock() {
-  haptic('medium');
-  if (state.settings.lockType === 'biometric') {
-    try {
-      const cred = await navigator.credentials.get({
-        publicKey: {
-          challenge: new Uint8Array(32),
-          timeout: 60000,
-          userVerification: 'required'
-        }
-      });
-      if (cred) {
-        hideLockScreen();
-        haptic('success');
-      }
-    } catch(e) {
-      toast('生物识别失败，请重试');
-      haptic('error');
-    }
-  }
-}
-
-function updatePinInputDots() {
-  const dots = $$('#pin-dots span');
-  dots.forEach((d, i) => {
-    d.classList.remove('filled', 'error');
-    if (i < state.pinInputBuffer.length) d.classList.add('filled');
-  });
-}
-
-function pinInput(digit) {
-  haptic('light');
-  if (state.pinInputBuffer.length >= 4) return;
-  state.pinInputBuffer += digit;
-  updatePinInputDots();
-  if (state.pinInputBuffer.length === 4) {
-    setTimeout(() => {
-      if (hashPin(state.pinInputBuffer) === state.settings.pinHash) {
-        hideLockScreen();
-        haptic('success');
-      } else {
-        haptic('error');
-        $$('#pin-dots span').forEach(d => d.classList.add('error'));
-        setTimeout(() => {
-          state.pinInputBuffer = '';
-          updatePinInputDots();
-        }, 600);
-      }
-    }, 150);
-  }
-}
-
-function pinDelete() {
-  haptic('light');
-  state.pinInputBuffer = state.pinInputBuffer.slice(0, -1);
-  updatePinInputDots();
-}
-
-function pinCancel() {
-  // Can't cancel lock screen - app stays locked
-  haptic('light');
-}
-
 // Lock on visibility change (return from background)
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
-    showLockScreen();
     checkSubscriptionReminders();
   }
 });
@@ -3624,10 +3415,7 @@ async function syncToCloud() {
     for (const type of CLOUD_DATA_TYPES) {
       let localData;
       if (type === 'settings') {
-        // Don't sync lock PIN hash for security
-        const safe = { ...state.settings };
-        delete safe.pinHash;
-        localData = safe;
+        localData = { ...state.settings };
       } else {
         localData = state[type];
       }
