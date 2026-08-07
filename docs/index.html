@@ -46,7 +46,7 @@ input { font-family:inherit; }
 
 /* Header */
 .hd { display:flex; justify-content:space-between; align-items:flex-start; padding:10px 0 22px; }
-.ht h1 { font-size:34px; font-weight:700; letter-spacing:-1px; line-height:1.1; }
+.ht h1 { font-size:26px; font-weight:700; letter-spacing:-0.6px; line-height:1.15; }
 .ht p { font-size:13px; color:var(--t2); margin-top:6px; font-weight:400; }
 .ib { width:40px; height:40px; border-radius:50%; background:rgba(255,255,255,0.04); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; color:var(--t2); font-size:18px; transition:all .2s; }
 .ib:active{transform:scale(.9);background:rgba(255,255,255,0.08);}
@@ -207,6 +207,17 @@ input { font-family:inherit; }
 .bc.bc-custom .chip::before { border-color:rgba(0,0,0,0.15); }
 .bc.bc-custom .chip::after { background:rgba(0,0,0,0.12); box-shadow:0 6px 0 rgba(0,0,0,0.1),0 -6px 0 rgba(0,0,0,0.1); }
 
+/* === 卡包分组 === */
+.card-group { margin-bottom:28px; }
+.card-group:last-child { margin-bottom:0; }
+.card-group-header { display:flex; align-items:center; gap:8px; margin-bottom:14px; padding:0 2px; }
+.card-group-icon { font-size:16px; width:22px; text-align:center; line-height:1; }
+.card-group-name { font-size:14px; font-weight:600; color:var(--t1); flex:1; }
+.card-group-count { font-size:11px; color:var(--t3); background:var(--card); border:1px solid var(--border); padding:2px 8px; border-radius:8px; font-weight:500; }
+.card-group-bal { font-size:14px; font-weight:700; color:var(--t2); font-family:var(--font-mono); letter-spacing:-0.3px; }
+.cards-grouped { position:relative; margin-bottom:0; min-height:216px; }
+.cards-grouped:has(.empty-state) { min-height:0; }
+
 /* Quick actions */
 .qa { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:20px; }
 .qai { display:flex; flex-direction:column; align-items:center; gap:7px; padding:14px 4px; border-radius:16px; background:var(--card); border:1px solid var(--border); transition:all .15s; }
@@ -355,6 +366,11 @@ textarea.form-i{resize:none;min-height:80px;}
 .color-pick { width:40px; height:40px; border-radius:12px; cursor:pointer; transition:all .15s; }
 .color-pick.on { transform:scale(1.1); box-shadow:0 0 0 2px var(--gold); }
 .color-pick:active { transform:scale(0.95); }
+.toggle-switch { width:48px; height:28px; border-radius:14px; background:rgba(255,255,255,0.1); border:1px solid var(--border); position:relative; cursor:pointer; transition:all .2s; flex-shrink:0; }
+.toggle-switch::after { content:''; position:absolute; top:2px; left:2px; width:22px; height:22px; border-radius:50%; background:var(--t3); transition:all .2s; }
+.toggle-switch.on { background:var(--gold); border-color:var(--gold); }
+.toggle-switch.on::after { left:22px; background:#000; }
+.toggle-switch:active::after { transform:scale(0.9); }
 .btn-row { display:flex; gap:10px; margin-top:24px; }
 .btn { flex:1; padding:15px; border-radius:14px; border:none; font-size:15px; font-weight:600; font-family:inherit; transition:opacity .15s; }
 .btn:active{opacity:.7;}
@@ -903,6 +919,15 @@ textarea.form-i{resize:none;min-height:80px;}
     <div class="form-g">
       <label class="form-l">卡号/账号末四位</label>
       <input type="text" class="form-i" id="acct-num" placeholder="如：8821" maxlength="4">
+    </div>
+    <div class="form-g">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:14px;font-weight:600;color:var(--t1);">计入总资产</div>
+          <div style="font-size:12px;color:var(--t3);margin-top:2px;">关闭后此卡余额不计入总资产统计</div>
+        </div>
+        <div class="toggle-switch on" id="acct-include-assets" onclick="this.classList.toggle('on');state.acctIncludeInAssets=this.classList.contains('on');haptic('light');"></div>
+      </div>
     </div>
     <div class="btn-row">
       <button class="btn btn-outline" onclick="closeSheet('sheet-acct')">取消</button>

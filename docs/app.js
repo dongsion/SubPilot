@@ -199,6 +199,7 @@ let state = {
   selectedCycle: 'month',
   selectedAcctType: 'bank',
   selectedCardColor: 'gold',
+  acctIncludeInAssets: true,
   currentSubId: null,
   fetchedAppIcon: null,
   editSubId: null,
@@ -308,13 +309,19 @@ const CARD_THEMES = {
 
 // Account type config
 const ACCOUNT_TYPES = {
-  bank: { name: '储蓄卡', brand: 'UnionPay', hasChip: true, hasHolo: true },
-  alipay: { name: '支付宝', brand: 'Alipay', hasChip: false, hasHolo: false },
-  wechat: { name: '微信零钱', brand: 'WeChat Pay', hasChip: false, hasHolo: false },
-  yunshanfu: { name: '云闪付', brand: 'UnionPay', hasChip: false, hasHolo: false },
-  licaicai: { name: '理财通', brand: 'Licaitong', hasChip: false, hasHolo: false },
-  yuebao: { name: '余额宝', brand: 'Yuebao', hasChip: false, hasHolo: false },
-  other: { name: '钱包', brand: 'Wallet', hasChip: false, hasHolo: false }
+  bank: { name: '储蓄卡', brand: 'UnionPay', hasChip: true, hasHolo: true, group: 'bank' },
+  alipay: { name: '支付宝', brand: 'Alipay', hasChip: false, hasHolo: false, group: 'cash' },
+  wechat: { name: '微信零钱', brand: 'WeChat Pay', hasChip: false, hasHolo: false, group: 'cash' },
+  yunshanfu: { name: '云闪付', brand: 'UnionPay', hasChip: false, hasHolo: false, group: 'bank' },
+  licaicai: { name: '理财通', brand: 'Licaitong', hasChip: false, hasHolo: false, group: 'wealth' },
+  yuebao: { name: '余额宝', brand: 'Yuebao', hasChip: false, hasHolo: false, group: 'wealth' },
+  other: { name: '钱包', brand: 'Wallet', hasChip: false, hasHolo: false, group: 'cash' }
+};
+
+const ACCOUNT_GROUPS = {
+  bank: { name: '银行卡', icon: '🏦' },
+  wealth: { name: '理财', icon: '📈' },
+  cash: { name: '现金/电子钱包', icon: '💰' }
 };
 
 // ===== Storage =====
@@ -942,8 +949,10 @@ function openAddAccount() {
   $('#acct-num').value = '';
   state.selectedAcctType = 'bank';
   state.selectedCardColor = 'gold';
+  state.acctIncludeInAssets = true;
   $$('#acct-type-pick .pick').forEach(p => p.classList.toggle('on', p.dataset.t === 'bank'));
   $$('#acct-color-pick .color-pick').forEach(p => p.classList.toggle('on', p.dataset.c === 'gold'));
+  $('#acct-include-assets').classList.add('on');
   openSheet('sheet-acct');
 }
 
@@ -980,6 +989,7 @@ function saveAccount() {
   const acct = {
     id: genId(), name, type: acctType, balance,
     cardNumber, color: acctColor, brandSlug: brand?.slug || null,
+    includeInAssets: state.acctIncludeInAssets !== false,
     createdAt: new Date().toISOString()
   };
   state.accounts.push(acct);
@@ -1465,149 +1475,177 @@ function renderTx() {
   container.innerHTML = html;
 }
 
+function renderCardHTML(a, origIdx, stackPos, groupKey) {
+  const isOn = stackPos === 0;
+  const stackClass = isOn ? 'on' : (stackPos === 1 ? 'off stack-1' : stackPos === 2 ? 'off stack-2' : 'off stack-3');
+  let acctTypeKey = a.type;
+  if (!ACCOUNT_TYPES[acctTypeKey]) acctTypeKey = 'other';
+  const acctType = ACCOUNT_TYPES[acctTypeKey];
+  if (!a.color) a.color = 'gold';
+  const theme = CARD_THEMES[a.color] || CARD_THEMES.gold;
+
+  let logoHtml;
+  let logoClickAttr = '';
+  const brandSlug = a.brandSlug || (a.type === 'alipay' ? 'alipay' : a.type === 'wechat' ? 'wechat' : a.type === 'yunshanfu' ? 'unionpay' : a.type === 'licaicai' ? 'licaicai' : a.type === 'yuebao' ? 'yuebao' : null);
+  if (a.iconUrl) {
+    logoHtml = `<img src="${a.iconUrl}" style="width:100%;height:100%;border-radius:10px;object-fit:cover;" onerror="this.style.opacity=0.3;" />`;
+    logoClickAttr = `onclick="openCardIconPicker('${a.id}')"`;
+  } else if (brandSlug && BRAND_ICONS[brandSlug]) {
+    const bi = BRAND_ICONS[brandSlug];
+    const fg = isLightColor(bi.bg) ? '#000' : '#fff';
+    logoHtml = `<svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:${fg};"><path d="${bi.p}"/></svg>`;
+    logoClickAttr = `onclick="openCardIconPicker('${a.id}')"`;
+  } else {
+    logoHtml = `<svg viewBox="0 0 24 24" width="20" height="20" fill="${theme.accent}"><path d="M12 2L2 7v2h20V7L12 2zm-8 9v7h2v-7h3v7h2v-7h2v7h2v-7h3v7h2v-7H4z"/></svg>`;
+    logoClickAttr = `onclick="openCardIconPicker('${a.id}')"`;
+  }
+
+  const holoSvg = acctType.hasHolo
+    ? `<div class="holo"><svg viewBox="0 0 24 28"><path d="M8 6c5.5 0 10 4.5 10 10M12 6c3.3 0 6 2.7 6 6M4 6c7.7 0 14 6.3 14 14M8 10c3.3 0 6 2.7 6 6M12 14c1.1 0 2 .9 2 2"/></svg></div>`
+    : '';
+  const chipHtml = acctType.hasChip ? `<div class="chip" style="background:${theme.chipBg};"></div>` : '';
+  const cardIdent = a.cardNumber
+    ? '•••• •••• •••• ' + a.cardNumber
+    : (a.type === 'bank' ? 'BANK CARD' : a.type === 'alipay' ? 'ALIPAY WALLET' : a.type === 'wechat' ? 'WECHAT WALLET' : a.type === 'yunshanfu' ? 'UNIONPAY' : a.type === 'licaicai' ? 'LICAITONG' : a.type === 'yuebao' ? 'YUEBAO' : 'DIGITAL WALLET');
+  const cardStyle = `background:${theme.gradient};border:1px solid ${theme.border};`;
+  const excludedBadge = a.includeInAssets === false ? '<div style="position:absolute;top:8px;right:8px;font-size:9px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,0.08);color:var(--t3);">不计入资产</div>' : '';
+
+  return `<div class="bc bc-custom ${stackClass}" data-idx="${origIdx}" data-stack="${stackPos}" style="${cardStyle}">
+    ${holoSvg}
+    ${excludedBadge}
+    <div class="bct">
+      <div class="bcti"><div class="bcn" style="color:${theme.accent};">${a.name}</div><div class="bcty" style="color:${theme.subtext};">${acctType.name}${a.cardNumber ? ' · 尾号'+a.cardNumber : ''}</div></div>
+      <div class="bcl" style="background:rgba(255,255,255,0.04);border:1px solid ${theme.border};" ${logoClickAttr}>${logoHtml}</div>
+    </div>
+    <div style="flex:1;"></div>
+    ${chipHtml}
+    <div class="bcnm" style="color:${theme.subtext};">${cardIdent}</div>
+    <div class="bcb">
+      <div class="bcbn" style="color:${theme.accent};opacity:0.6;">${acctType.brand}</div>
+      <div style="text-align:right;"><div class="bcbl" style="color:${theme.subtext};">可用余额</div><div class="bcv" style="color:${theme.text};">¥${fmt(Math.round(a.balance))}</div></div>
+    </div>
+  </div>`;
+}
+
 function renderAccounts() {
+  // Total assets only counts accounts with includeInAssets !== false
+  const totalAssets = state.accounts.filter(a => a.includeInAssets !== false).reduce((s,a)=>s+a.balance,0);
   $('#acct-sub').textContent = state.accounts.length > 0 ?
-    `${state.accounts.length}张卡片 · ¥${fmt(Math.round(state.accounts.reduce((s,a)=>s+a.balance,0)))}` :
+    `${state.accounts.length}张卡片 · ¥${fmt(Math.round(totalAssets))}` :
     '添加银行卡和钱包';
 
-  // Cards stack
+  // Cards stack - grouped by account type
   const cs = $('#cards-stack');
   const hintEl = $('#swipe-hint');
-  if (hintEl) hintEl.style.display = state.accounts.length > 1 ? 'block' : 'none';
   if (state.accounts.length === 0) {
     if (hintEl) hintEl.style.display = 'none';
     cs.innerHTML = `<div class="empty-state" style="padding:40px 20px;"><div class="es-icon">💳</div><div class="es-text">暂无账户</div><div class="es-sub">点击 + 添加你的第一张卡</div></div>`;
   } else {
-    // Reorder accounts so active card is first, rest follow in order
-    const ordered = [];
-    for (let i = 0; i < state.accounts.length; i++) {
-      ordered.push(state.accounts[(state.activeCardIdx + i) % state.accounts.length]);
-    }
+    // Group accounts by type group
+    const groupOrder = ['bank', 'wealth', 'cash'];
+    const grouped = {};
+    state.accounts.forEach((a, idx) => {
+      let typeKey = a.type;
+      if (!ACCOUNT_TYPES[typeKey]) typeKey = 'other';
+      const group = ACCOUNT_TYPES[typeKey].group || 'cash';
+      if (!grouped[group]) grouped[group] = [];
+      grouped[group].push({ acct: a, origIdx: idx });
+    });
 
-    cs.innerHTML = ordered.map((a, stackPos) => {
-      const isOn = stackPos === 0;
-      const stackClass = isOn ? 'on' : (stackPos === 1 ? 'off stack-1' : stackPos === 2 ? 'off stack-2' : 'off stack-3');
-      const origIdx = state.accounts.indexOf(a);
-      // Compatibility with old data - map old types
-      let acctTypeKey = a.type;
-      if (!ACCOUNT_TYPES[acctTypeKey]) acctTypeKey = 'other';
-      const acctType = ACCOUNT_TYPES[acctTypeKey];
-      // Ensure color exists
-      if (!a.color) a.color = 'gold';
-      const theme = CARD_THEMES[a.color] || CARD_THEMES.gold;
-      
-      // Get brand icon
-      let logoHtml;
-      let logoClickAttr = '';
-      const brandSlug = a.brandSlug || (a.type === 'alipay' ? 'alipay' : a.type === 'wechat' ? 'wechat' : a.type === 'yunshanfu' ? 'unionpay' : a.type === 'licaicai' ? 'licaicai' : a.type === 'yuebao' ? 'yuebao' : null);
-      if (a.iconUrl) {
-        logoHtml = `<img src="${a.iconUrl}" style="width:100%;height:100%;border-radius:10px;object-fit:cover;" onerror="this.style.opacity=0.3;" />`;
-        logoClickAttr = `onclick="openCardIconPicker('${a.id}')"`;
-      } else if (brandSlug && BRAND_ICONS[brandSlug]) {
-        const bi = BRAND_ICONS[brandSlug];
-        const fg = isLightColor(bi.bg) ? '#000' : '#fff';
-        logoHtml = `<svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:${fg};"><path d="${bi.p}"/></svg>`;
-        logoClickAttr = `onclick="openCardIconPicker('${a.id}')"`;
-      } else {
-        // Generic logo for account type
-        logoHtml = `<svg viewBox="0 0 24 24" width="20" height="20" fill="${theme.accent}"><path d="M12 2L2 7v2h20V7L12 2zm-8 9v7h2v-7h3v7h2v-7h2v7h2v-7h3v7h2v-7H4z"/></svg>`;
-        logoClickAttr = `onclick="openCardIconPicker('${a.id}')"`;
+    if (hintEl) hintEl.style.display = state.accounts.length > 1 ? 'block' : 'none';
+
+    let html = '';
+    groupOrder.forEach(groupKey => {
+      const items = grouped[groupKey];
+      if (!items || items.length === 0) return;
+      const groupInfo = ACCOUNT_GROUPS[groupKey];
+      const groupBalance = items.reduce((s, item) => s + item.acct.balance, 0);
+      html += `<div class="card-group">`;
+      html += `<div class="card-group-header"><span class="card-group-icon">${groupInfo.icon}</span><span class="card-group-name">${groupInfo.name}</span><span class="card-group-count">${items.length}张</span><span class="card-group-bal">¥${fmt(Math.round(groupBalance))}</span></div>`;
+
+      // Render stacked cards for this group
+      if (!state.activeCardIdxByGroup) state.activeCardIdxByGroup = {};
+      const activeIdx = state.activeCardIdxByGroup[groupKey] || 0;
+      const ordered = [];
+      for (let i = 0; i < items.length; i++) {
+        ordered.push(items[(activeIdx + i) % items.length]);
       }
-      
-      // NFC icon for bank cards
-      const holoSvg = acctType.hasHolo
-        ? `<div class="holo"><svg viewBox="0 0 24 28"><path d="M8 6c5.5 0 10 4.5 10 10M12 6c3.3 0 6 2.7 6 6M4 6c7.7 0 14 6.3 14 14M8 10c3.3 0 6 2.7 6 6M12 14c1.1 0 2 .9 2 2"/></svg></div>`
-        : '';
-      
-      // Chip for bank cards
-      const chipHtml = acctType.hasChip ? `<div class="chip" style="background:${theme.chipBg};"></div>` : '';
-      
-      // Card identifier text
-      const cardIdent = a.cardNumber
-        ? '•••• •••• •••• ' + a.cardNumber
-        : (a.type === 'bank' ? 'BANK CARD' : a.type === 'alipay' ? 'ALIPAY WALLET' : a.type === 'wechat' ? 'WECHAT WALLET' : a.type === 'yunshanfu' ? 'UNIONPAY' : a.type === 'licaicai' ? 'LICAITONG' : a.type === 'yuebao' ? 'YUEBAO' : 'DIGITAL WALLET');
-      
-      // Custom inline styles for card
-      const cardStyle = `background:${theme.gradient};border:1px solid ${theme.border};`;
-      
-      return `<div class="bc bc-custom ${stackClass}" data-idx="${origIdx}" data-stack="${stackPos}" style="${cardStyle}">
-        ${holoSvg}
-        <div class="bct">
-          <div class="bcti"><div class="bcn" style="color:${theme.accent};">${a.name}</div><div class="bcty" style="color:${theme.subtext};">${acctType.name}${a.cardNumber ? ' · 尾号'+a.cardNumber : ''}</div></div>
-          <div class="bcl" style="background:rgba(255,255,255,0.04);border:1px solid ${theme.border};" ${logoClickAttr}>${logoHtml}</div>
-        </div>
-        <div style="flex:1;"></div>
-        ${chipHtml}
-        <div class="bcnm" style="color:${theme.subtext};">${cardIdent}</div>
-        <div class="bcb">
-          <div class="bcbn" style="color:${theme.accent};opacity:0.6;">${acctType.brand}</div>
-          <div style="text-align:right;"><div class="bcbl" style="color:${theme.subtext};">可用余额</div><div class="bcv" style="color:${theme.text};">¥${fmt(Math.round(a.balance))}</div></div>
-        </div>
-      </div>`;
-    }).join('');
-    cs.querySelectorAll('.bc').forEach(c => {
-      const stackPos = parseInt(c.dataset.stack) || 0;
-      if (stackPos !== 0) return; // Only top card is interactive
+
+      html += `<div class="cards cards-grouped" data-group="${groupKey}">`;
+      ordered.forEach((item, stackPos) => {
+        const a = item.acct;
+        const origIdx = item.origIdx;
+        html += renderCardHTML(a, origIdx, stackPos, groupKey);
+      });
+      html += `</div>`;
+      html += `</div>`;
+    });
+
+    cs.innerHTML = html;
+
+    // Bind interactions for each group's top card
+    $$('.cards-grouped').forEach(groupCs => {
+      const groupKey = groupCs.dataset.group;
+      const topCard = groupCs.querySelector('.bc[data-stack="0"]');
+      if (!topCard) return;
 
       // Click to toggle detail section
-      c.onclick = (e) => {
+      topCard.onclick = (e) => {
         if (e.target.closest('.bcl')) return;
-        if (cs.dataset.animating === '1') return;
+        if (groupCs.dataset.animating === '1') return;
         const detailEl = $('#acct-detail-section');
         const isVisible = detailEl.style.display !== 'none';
         detailEl.style.display = isVisible ? 'none' : 'block';
         haptic('light');
       };
 
-      // Swipe right to cycle card to back
+      // Swipe right to cycle card to back within group
       let startX = 0, startY = 0, currentX = 0, currentY = 0, isDragging = false, isSwipe = false;
-      c.addEventListener('touchstart', (e) => {
+      topCard.addEventListener('touchstart', (e) => {
         if (e.target.closest('.bcl')) return;
-        if (cs.dataset.animating === '1') return;
+        if (groupCs.dataset.animating === '1') return;
         startX = e.touches[0].clientX;
         startY = e.touches[0].clientY;
         currentX = 0; currentY = 0;
         isDragging = true; isSwipe = false;
-        c.style.transition = 'none';
+        topCard.style.transition = 'none';
       }, { passive: true });
 
-      c.addEventListener('touchmove', (e) => {
+      topCard.addEventListener('touchmove', (e) => {
         if (!isDragging) return;
         currentX = e.touches[0].clientX - startX;
         currentY = e.touches[0].clientY - startY;
         if (currentX > 0 && currentX > Math.abs(currentY) && currentX > 10) {
           isSwipe = true;
-          c.style.transform = `translateX(${currentX}px) rotate(${currentX * 0.04}deg)`;
-          c.style.opacity = String(Math.max(1 - currentX / 350, 0.2));
+          topCard.style.transform = `translateX(${currentX}px) rotate(${currentX * 0.04}deg)`;
+          topCard.style.opacity = String(Math.max(1 - currentX / 350, 0.2));
         }
       }, { passive: true });
 
-      c.addEventListener('touchend', () => {
+      topCard.addEventListener('touchend', () => {
         if (!isDragging) return;
         isDragging = false;
-        c.style.transition = '';
+        topCard.style.transition = '';
 
-        if (isSwipe && currentX > 80 && state.accounts.length > 1) {
+        const groupItems = grouped[groupKey];
+        if (isSwipe && currentX > 80 && groupItems.length > 1) {
           haptic('medium');
-          cs.dataset.animating = '1';
+          groupCs.dataset.animating = '1';
+          topCard.classList.add('flying');
+          topCard.classList.remove('on');
+          topCard.style.transform = `translateX(${window.innerWidth + 100}px) rotate(25deg)`;
+          topCard.style.opacity = '0';
 
-          // Fly off: use flying class for quick exit
-          c.classList.add('flying');
-          c.classList.remove('on');
-          c.style.transform = `translateX(${window.innerWidth + 100}px) rotate(25deg)`;
-          c.style.opacity = '0';
-
-          // Immediately advance active index and re-render
-          // This causes next card to animate up to front position via CSS transition
-          state.activeCardIdx = (state.activeCardIdx + 1) % state.accounts.length;
+          if (!state.activeCardIdxByGroup) state.activeCardIdxByGroup = {};
+          state.activeCardIdxByGroup[groupKey] = ((state.activeCardIdxByGroup[groupKey] || 0) + 1) % groupItems.length;
           $('#acct-detail-section').style.display = 'none';
           save();
           render();
 
-          setTimeout(() => { delete cs.dataset.animating; }, 400);
+          setTimeout(() => { delete groupCs.dataset.animating; }, 400);
         } else {
-          c.style.transform = '';
-          c.style.opacity = '';
+          topCard.style.transform = '';
+          topCard.style.opacity = '';
         }
       });
     });
@@ -1616,7 +1654,7 @@ function renderAccounts() {
   // Stats
   const month = getMonthRange();
   const monthTx = state.transactions.filter(t => t.date >= month.start && t.date <= month.end);
-  const totalBalance = state.accounts.reduce((s,a)=>s+a.balance,0);
+  const totalBalance = totalAssets;
   const totalIncome = monthTx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
   const totalExpense = monthTx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
   $('#acct-stats').innerHTML = `
@@ -1722,9 +1760,15 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '1.8.1';
+const APP_VERSION = '1.8.2';
 const APP_BUILD = '2026.08.07';
 const CHANGELOG = [
+  { ver: '1.8.2', date: '2026-08-07', items: [
+    '卡包按类型分组显示：银行卡、理财、现金/电子钱包三组独立展示',
+    '每组显示分组标题、卡片数量和小计余额',
+    '新增「计入总资产」开关：可单独设置某张卡是否计入总资产统计',
+    '不计入资产的卡片显示「不计入资产」标记'
+  ]},
   { ver: '1.8.1', date: '2026-08-07', items: [
     '修复AI聊天框输入时画面被键盘顶上去的问题',
     '使用visualViewport API同时调整高度和顶部偏移，适配键盘弹出'
