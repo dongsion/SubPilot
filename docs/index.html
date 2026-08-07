@@ -277,7 +277,7 @@ input { font-family:inherit; }
 .ai-tab span{font-size:9px;color:var(--t3);font-weight:600;margin-top:2px;}
 
 /* AI Chat */
-.ai-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); z-index:300; display:none; flex-direction:column; padding-top:env(safe-area-inset-top, 0px); padding-bottom:env(safe-area-inset-bottom, 0px); padding-left:env(safe-area-inset-left, 0px); padding-right:env(safe-area-inset-right, 0px); }
+.ai-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); z-index:300; display:none; flex-direction:column; padding-top:env(safe-area-inset-top, 0px); padding-left:env(safe-area-inset-left, 0px); padding-right:env(safe-area-inset-right, 0px); }
 .ai-overlay.on{display:flex;}
 .ai-header { display:flex; align-items:center; gap:12px; padding:12px 16px; border-bottom:1px solid var(--border); flex-shrink:0; min-height:52px; }
 .ai-avatar { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,#6366f1,#8b5cf6); display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
@@ -615,14 +615,14 @@ textarea.form-i{resize:none;min-height:80px;}
       <div class="info-r" onclick="if(confirm('确定清除所有数据？此操作不可撤销。')){clearAll();toast('数据已清除');}"><span class="info-l">清除所有数据</span><span class="info-v" style="color:var(--red);">›</span></div>
     </div>
     <div class="info-g">
-      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v1.8.0 ›</span></div>
+      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v1.8.1 ›</span></div>
       <div class="info-r" onclick="showChangelog()"><span class="info-l">更新日志</span><span class="info-v" style="color:var(--gold);">查看 ›</span></div>
       <div class="info-r" onclick="checkUpdate()"><span class="info-l">检查更新</span><span class="info-v" style="color:var(--gold);" id="update-status">›</span></div>
       <div class="info-r"><span class="info-l">数据存储</span><span class="info-v" style="color:var(--t3);">仅本地浏览器</span></div>
     </div>
     <div style="text-align:center;padding:40px 20px;color:var(--t3);font-size:12px;">
       <div style="margin-bottom:8px;font-size:20px;letter-spacing:1px;">SubPilot</div>
-      <div style="margin-bottom:4px;">订阅管家 · v1.8.0 (Build 2026.08.07)</div>
+      <div style="margin-bottom:4px;">订阅管家 · v1.8.1 (Build 2026.08.07)</div>
       <div>所有数据默认仅保存在本地，开启云同步后加密上传至 Supabase</div>
     </div>
     <input type="file" id="import-file" accept=".json" style="display:none;">

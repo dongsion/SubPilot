@@ -1,4 +1,4 @@
-const CACHE_NAME = 'subpilot-v1.8.0';
+const CACHE_NAME = 'subpilot-v1.8.1';
 const ASSETS = ['./', './index.html', './app.js', './manifest.json', './icons/icon.svg'];
 
 self.addEventListener('install', e => {

@@ -1722,9 +1722,13 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '1.8.0';
+const APP_VERSION = '1.8.1';
 const APP_BUILD = '2026.08.07';
 const CHANGELOG = [
+  { ver: '1.8.1', date: '2026-08-07', items: [
+    '修复AI聊天框输入时画面被键盘顶上去的问题',
+    '使用visualViewport API同时调整高度和顶部偏移，适配键盘弹出'
+  ]},
   { ver: '1.8.0', date: '2026-08-07', items: [
     '彻底修复导航栏按钮位置：去掉safe-area底部padding，按钮紧贴屏幕底部',
     '导航栏仅保留2px底部间距，适配所有设备'
@@ -2014,16 +2018,21 @@ function openAIChat() {
   overlay.classList.add('on');
   renderAIMessages();
   renderQuickReplies();
-  // Use visualViewport to handle keyboard on mobile
+  // Use visualViewport to handle keyboard on mobile - fix both height and top offset
   if (window.visualViewport) {
     const onResize = () => {
-      overlay.style.height = window.visualViewport.height + 'px';
+      const vv = window.visualViewport;
+      overlay.style.height = vv.height + 'px';
+      overlay.style.top = vv.offsetTop + 'px';
       // Scroll messages to bottom when keyboard appears
       const container = $('#ai-messages');
       if (container) container.scrollTop = container.scrollHeight;
     };
-    window.visualViewport.removeEventListener('resize', onResize);
+    window.visualViewport.removeEventListener('resize', overlay._vvResize);
+    window.visualViewport.removeEventListener('scroll', overlay._vvResize);
+    overlay._vvResize = onResize;
     window.visualViewport.addEventListener('resize', onResize);
+    window.visualViewport.addEventListener('scroll', onResize);
     onResize();
   }
   setTimeout(() => {
@@ -2042,10 +2051,14 @@ function openAIChat() {
 }
 
 function closeAIChat() {
-  $('#ai-chat').classList.remove('on');
-  if (window.visualViewport) {
-    $('#ai-chat').style.height = '';
+  const overlay = $('#ai-chat');
+  overlay.classList.remove('on');
+  if (window.visualViewport && overlay._vvResize) {
+    window.visualViewport.removeEventListener('resize', overlay._vvResize);
+    window.visualViewport.removeEventListener('scroll', overlay._vvResize);
   }
+  overlay.style.height = '';
+  overlay.style.top = '';
 }
 
 function renderAIMessages() {
