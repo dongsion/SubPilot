@@ -1068,6 +1068,9 @@ function openAddAccount() {
   $('#acct-billing-day').value = '';
   $('#acct-payment-day').value = '';
   $('#acct-billing-fields').style.display = 'block';
+  // Hide icon picker section for new accounts
+  const iconSection = $('#acct-icon-section');
+  if (iconSection) iconSection.style.display = 'none';
   openSheet('sheet-acct');
 }
 
@@ -1091,6 +1094,20 @@ function editAccount(idx) {
   $('#acct-billing-day').value = a.billingDay || '';
   $('#acct-payment-day').value = a.paymentDay || '';
   $('#acct-billing-fields').style.display = (a.type || 'bank') === 'bank' ? 'block' : 'none';
+  // Show icon picker section in edit mode
+  const iconSection = $('#acct-icon-section');
+  if (iconSection) {
+    iconSection.style.display = 'block';
+    const thumb = $('#acct-icon-thumb');
+    const label = $('#acct-icon-label');
+    if (a.iconUrl) {
+      if (thumb) thumb.innerHTML = `<img src="${a.iconUrl}" style="width:100%;height:100%;border-radius:8px;object-fit:cover;" onerror="this.style.display='none';" />`;
+      if (label) label.textContent = '点击替换卡面图标';
+    } else {
+      if (thumb) thumb.textContent = '🎨';
+      if (label) label.textContent = '设置卡面图标';
+    }
+  }
   openSheet('sheet-acct');
 }
 
@@ -1281,6 +1298,11 @@ async function fetchCardIcon() {
           acct.iconUrl = iconUrl;
           save();
         }
+        // Update edit panel thumbnail
+        const editThumb = $('#acct-icon-thumb');
+        const editLabel = $('#acct-icon-label');
+        if (editThumb) editThumb.innerHTML = `<img src="${iconUrl}" style="width:100%;height:100%;border-radius:8px;object-fit:cover;" onerror="this.style.display='none';" />`;
+        if (editLabel) editLabel.textContent = '点击替换卡面图标';
         previewEl.innerHTML = `
           <div style="display:flex;align-items:center;gap:12px;padding:10px;background:rgba(255,255,255,0.04);border-radius:12px;border:1px solid var(--border);">
             <img src="${iconUrl}" style="width:48px;height:48px;border-radius:12px;object-fit:cover;" onerror="this.style.opacity=0.3;" />
@@ -1314,6 +1336,11 @@ function clearCardIcon() {
     save();
     render();
   }
+  // Update edit panel thumbnail
+  const editThumb = $('#acct-icon-thumb');
+  const editLabel = $('#acct-icon-label');
+  if (editThumb) editThumb.textContent = '🎨';
+  if (editLabel) editLabel.textContent = '设置卡面图标';
   closeSheet('sheet-card-icon');
   toast('图标已清除');
 }
@@ -2679,9 +2706,14 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '2.0.6';
+const APP_VERSION = '2.0.7';
 const APP_BUILD = '2026.08.08';
 const CHANGELOG = [
+  { ver: '2.0.7', date: '2026-08-08', items: [
+    '修复编辑账户时无法设置卡面图标的问题：编辑面板新增图标入口按钮',
+    '支持粘贴App Store链接自动获取应用图标作为卡面图标',
+    '图标更新后编辑面板缩略图实时同步'
+  ]},
   { ver: '2.0.6', date: '2026-08-08', items: [
     '修复卡面切换后无法点击的问题：DOM重排后ghost click被抑制400ms',
     '修复bringCardToFront中wc-visible类丢失导致卡片不可见的问题'
