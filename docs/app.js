@@ -2373,6 +2373,7 @@ function bringCardToFront(stackEl, clickedCard) {
     // Rebind click handler with new position
     card.onclick = (e) => {
       e.stopPropagation();
+      if (stackEl._swipeTriggered) { stackEl._swipeTriggered = false; return; }
       const idx = parseInt(card.dataset.idx);
       const newPos = Array.from(stackEl.querySelectorAll('.wc')).indexOf(card);
       if (newPos === 0) {
@@ -2495,6 +2496,7 @@ function renderAccounts() {
       const peekH = 28;
       const behindH = 36;
       const overlap = 8;
+      groupEl._swipeTriggered = false;
 
       cards.forEach((card, pos) => {
         // Reset all classes first
@@ -2521,6 +2523,7 @@ function renderAccounts() {
         // Click handler
         card.onclick = (e) => {
           e.stopPropagation();
+          if (groupEl._swipeTriggered) { groupEl._swipeTriggered = false; return; }
           const idx = parseInt(card.dataset.idx);
           if (pos === 0) {
             // Front card -> open detail
@@ -2549,10 +2552,11 @@ function renderAccounts() {
         const dx = t.clientX - touchStartX;
         const dy = t.clientY - touchStartY;
         const dt = Date.now() - touchStartTime;
-        // Swipe up-right: positive X, negative Y, within 500ms
-        if (dt < 500 && dx > 30 && dy < -20 && Math.abs(dx) > Math.abs(dy)) {
+        // Swipe up-right: positive X, negative Y, within 500ms, strong horizontal component
+        if (dt < 500 && dx > 50 && dy < -30 && Math.abs(dx) > Math.abs(dy) * 1.5) {
           const allCards = Array.from(groupEl.querySelectorAll('.wc'));
           if (allCards.length > 1) {
+            groupEl._swipeTriggered = true;
             // Bring the next behind card to front
             const nextCard = allCards[1];
             const idx = parseInt(nextCard.dataset.idx);
@@ -2671,9 +2675,13 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '2.0.4';
+const APP_VERSION = '2.0.5';
 const APP_BUILD = '2026.08.08';
 const CHANGELOG = [
+  { ver: '2.0.5', date: '2026-08-08', items: [
+    '修复滑动切换导致界面无法点击的问题：加入swipeTriggered标志防止touchend后的click事件误触发',
+    '提高滑动手势识别门槛，避免误触'
+  ]},
   { ver: '2.0.4', date: '2026-08-08', items: [
     '修复余额显示取整问题：输入2.94不再被四舍五入为3，正确显示小数',
     '新增卡面滑动手势：右上角滑动切换到下一张卡'
