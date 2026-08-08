@@ -29,9 +29,58 @@
   --gold-glow: rgba(212,175,122,0.25);
   --red: rgba(255,92,72,0.9);
   --green: rgba(82,204,130,0.9);
+  --hero-bg: linear-gradient(150deg,#16161a 0%,#0c0c0f 100%);
+  --tb-bg: rgba(0,0,0,0.92);
+  --lock-bg: #000;
+  --scrim: rgba(0,0,0,0.6);
+  --placeholder: rgba(255,255,255,0.12);
+}
+:root[data-theme="light"] {
+  --bg: #f5f5f7;
+  --card: #ffffff;
+  --card2: #f0f0f2;
+  --border: rgba(0,0,0,0.08);
+  --border2: rgba(0,0,0,0.12);
+  --t1: #1a1a1a;
+  --t2: rgba(0,0,0,0.5);
+  --t3: rgba(0,0,0,0.3);
+  --gold: #b8860b;
+  --gold-bg: rgba(184,134,11,0.08);
+  --gold-bd: rgba(184,134,11,0.15);
+  --gold-glow: rgba(184,134,11,0.2);
+  --red: rgba(220,50,40,0.9);
+  --green: rgba(40,160,80,0.9);
+  --hero-bg: linear-gradient(150deg,#ffffff 0%,#f0f0f2 100%);
+  --tb-bg: rgba(255,255,255,0.92);
+  --lock-bg: #f5f5f7;
+  --scrim: rgba(0,0,0,0.3);
+  --placeholder: rgba(0,0,0,0.2);
+}
+@media (prefers-color-scheme: light) {
+  :root[data-theme="auto"] {
+    --bg: #f5f5f7;
+    --card: #ffffff;
+    --card2: #f0f0f2;
+    --border: rgba(0,0,0,0.08);
+    --border2: rgba(0,0,0,0.12);
+    --t1: #1a1a1a;
+    --t2: rgba(0,0,0,0.5);
+    --t3: rgba(0,0,0,0.3);
+    --gold: #b8860b;
+    --gold-bg: rgba(184,134,11,0.08);
+    --gold-bd: rgba(184,134,11,0.15);
+    --gold-glow: rgba(184,134,11,0.2);
+    --red: rgba(220,50,40,0.9);
+    --green: rgba(40,160,80,0.9);
+    --hero-bg: linear-gradient(150deg,#ffffff 0%,#f0f0f2 100%);
+    --tb-bg: rgba(255,255,255,0.92);
+    --lock-bg: #f5f5f7;
+    --scrim: rgba(0,0,0,0.3);
+    --placeholder: rgba(0,0,0,0.2);
+  }
 }
 * { margin:0; padding:0; box-sizing:border-box; -webkit-font-smoothing:antialiased; -webkit-tap-highlight-color:transparent; }
-html, body { background:#000; color:var(--t1); font-family:var(--font-sans); overscroll-behavior:none; height:100%; overflow:hidden; }
+html, body { background:var(--bg); color:var(--t1); font-family:var(--font-sans); overscroll-behavior:none; height:100%; overflow:hidden; }
 body { max-width:430px; margin:0 auto; position:fixed; top:0; left:0; right:0; width:100%; height:100dvh; overflow:hidden; touch-action:none; padding-top:env(safe-area-inset-top, 0px); }
 button { font-family:inherit; cursor:pointer; }
 input { font-family:inherit; }
@@ -53,7 +102,7 @@ input { font-family:inherit; }
 .ib svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
 
 /* Hero */
-.hero { position:relative; border-radius:24px; padding:28px 26px; margin-bottom:20px; background:linear-gradient(150deg,#16161a 0%,#0c0c0f 100%); border:1px solid var(--border); overflow:hidden; }
+.hero { position:relative; border-radius:24px; padding:28px 26px; margin-bottom:20px; background:var(--hero-bg); border:1px solid var(--border); overflow:hidden; }
 .hero::before{content:'';position:absolute;top:-80px;right:-80px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,var(--gold-glow),transparent 65%);pointer-events:none;}
 .hl { font-size:11px; color:var(--t3); text-transform:uppercase; letter-spacing:1.5px; font-weight:600; }
 .hv { display:flex; align-items:baseline; gap:4px; margin:12px 0 20px; position:relative; z-index:2; }
@@ -163,7 +212,7 @@ input { font-family:inherit; }
 /* 底部弹出详情面板 */
 .card-detail-overlay { position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0); pointer-events:none; transition:background .35s ease; }
 .card-detail-overlay.active { background:rgba(0,0,0,0.55); pointer-events:auto; }
-.card-detail-sheet { position:fixed; bottom:0; left:0; right:0; z-index:10000; background:#1a1a1a; border-radius:24px 24px 0 0; transform:translateY(100%); transition:transform .42s cubic-bezier(.32,.72,0,1); padding:8px 20px 40px; max-height:85vh; overflow-y:auto; -webkit-overflow-scrolling:touch; box-shadow:0 -10px 40px rgba(0,0,0,0.5); }
+.card-detail-sheet { position:fixed; bottom:0; left:0; right:0; z-index:10000; background:var(--card2); border-radius:24px 24px 0 0; transform:translateY(100%); transition:transform .42s cubic-bezier(.32,.72,0,1); padding:8px 20px 40px; max-height:85vh; overflow-y:auto; -webkit-overflow-scrolling:touch; box-shadow:0 -10px 40px rgba(0,0,0,0.5); }
 .card-detail-overlay.active .card-detail-sheet { transform:translateY(0); }
 .card-detail-card { transition:transform .3s ease; }
 .card-detail-overlay.active .card-detail-card { animation:cardDetailPop .5s cubic-bezier(.22,1,.36,1); }
@@ -295,13 +344,13 @@ input { font-family:inherit; }
 /* Filter pills */
 .fp { display:flex; gap:7px; margin-bottom:16px; flex-wrap:wrap; }
 .pl { padding:7px 16px; border-radius:999px; border:none; font-size:12px; font-weight:600; font-family:inherit; transition:all .15s; }
-.pl.on{background:#fff;color:#000;}
+.pl.on{background:var(--t1);color:var(--bg);}
 .pl.off{background:var(--card);color:var(--t2);border:1px solid var(--border);}
 
 /* Tab bar */
-.tb { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:430px; display:flex; justify-content:space-around; align-items:flex-end; padding:4px 14px 2px; background:rgba(0,0,0,0.92); backdrop-filter:blur(40px); -webkit-backdrop-filter:blur(40px); border-top:1px solid var(--border); z-index:100; }
+.tb { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:430px; display:flex; justify-content:space-around; align-items:flex-end; padding:4px 14px 2px; background:var(--tb-bg); backdrop-filter:blur(40px); -webkit-backdrop-filter:blur(40px); border-top:1px solid var(--border); z-index:100; }
 .tbi { display:flex; flex-direction:column; align-items:center; gap:2px; font-size:9px; color:var(--t3); background:none; border:none; font-family:var(--font-sans); font-weight:600; padding:6px 8px 0; transition:color .2s; }
-.tbi.on{color:#fff;}
+.tbi.on{color:var(--t1);}
 .tbi svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
 .tbi.on svg{stroke:var(--gold);}
 
@@ -376,7 +425,7 @@ input { font-family:inherit; }
 }
 
 /* Modal / Sheet */
-.sheet-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(8px); z-index:200; display:none; align-items:flex-end; justify-content:center; }
+.sheet-overlay { position:fixed; inset:0; background:var(--scrim); backdrop-filter:blur(8px); z-index:200; display:none; align-items:flex-end; justify-content:center; }
 .sheet-overlay.on{display:flex;}
 .sheet { width:100%; max-width:430px; background:var(--card); border-radius:24px 24px 0 0; padding:12px 20px 36px; max-height:88vh; overflow-y:auto; overscroll-behavior:contain; touch-action:pan-y; animation:slideUp .3s cubic-bezier(.34,1.56,.64,1); }
 @keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
@@ -387,7 +436,7 @@ input { font-family:inherit; }
 .form-i { width:100%; background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:14px; padding:14px 16px; font-size:16px; color:var(--t1); font-family:var(--font-sans); transition:border-color .2s; outline:none; }
 .form-i:focus{border-color:var(--gold-bd);}
 .form-i::placeholder{color:var(--t3);}
-.form-i option{background:#1c1c1e;color:#fff;}
+.form-i option{background:var(--card2);color:var(--t1);}
 textarea.form-i{resize:none;min-height:80px;}
 .row-pick { display:flex; gap:8px; flex-wrap:wrap; }
 .pick { padding:9px 16px; border-radius:12px; background:rgba(255,255,255,0.04); border:1px solid var(--border); font-size:13px; color:var(--t2); font-family:inherit; font-weight:500; transition:all .15s; }
@@ -407,10 +456,10 @@ textarea.form-i{resize:none;min-height:80px;}
 .btn-outline{background:transparent;color:var(--t2);border:1px solid var(--border);}
 .btn-danger{background:rgba(255,92,72,0.1);color:var(--red);border:1px solid rgba(255,92,72,0.15);}
 .amt-big { font-size:40px; font-weight:700; font-family:var(--font-mono); letter-spacing:-2px; text-align:center; background:transparent; border:none; color:var(--t1); width:100%; outline:none; margin:10px 0 20px; }
-.amt-big::placeholder{color:rgba(255,255,255,0.12);}
+.amt-big::placeholder{color:var(--placeholder);}
 .type-toggle{display:flex;background:rgba(255,255,255,0.05);border-radius:12px;padding:3px;margin-bottom:20px;}
 .type-opt{flex:1;text-align:center;padding:10px 0;border-radius:10px;font-size:14px;font-weight:600;font-family:inherit;color:var(--t3);background:none;border:none;transition:all .15s;}
-.type-opt.on{background:#fff;color:#000;}
+.type-opt.on{background:var(--t1);color:var(--bg);}
 .type-opt.on.exp{background:rgba(255,92,72,0.85);color:#fff;}
 .type-opt.on.inc{background:rgba(82,204,130,0.85);color:#fff;}
 .cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px 8px;margin-bottom:8px;}
@@ -442,7 +491,7 @@ textarea.form-i{resize:none;min-height:80px;}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
 
 /* ===== Lock Screen (Rotary Wheel Password) ===== */
-.lock-overlay { position:fixed; inset:0; background:#000; z-index:999; display:none; flex-direction:column; align-items:center; justify-content:center; padding:40px 24px; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px); }
+.lock-overlay { position:fixed; inset:0; background:var(--lock-bg); z-index:999; display:none; flex-direction:column; align-items:center; justify-content:center; padding:40px 24px; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px); }
 .lock-overlay.on { display:flex; animation:lockFadeIn .3s ease; }
 @keyframes lockFadeIn { from{opacity:0;} to{opacity:1;} }
 .lock-content { display:flex; flex-direction:column; align-items:center; width:100%; max-width:340px; }
@@ -539,7 +588,183 @@ textarea.form-i{resize:none;min-height:80px;}
 .exrate-row { display:flex; justify-content:space-between; align-items:center; padding:14px 18px; border-bottom:1px solid var(--border); }
 .exrate-row:last-child{border-bottom:none;}
 .exrate-input { width:80px; text-align:right; background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:8px; padding:6px 10px; color:var(--t1); font-family:var(--font-mono); font-size:14px; outline:none; }
+
+/* ===== Budget Management ===== */
+.budget-summary { background:var(--hero-bg); border:1px solid var(--border); border-radius:20px; padding:24px 26px; margin-bottom:16px; position:relative; overflow:hidden; }
+.budget-summary::before { content:''; position:absolute; top:-60px; right:-60px; width:200px; height:200px; border-radius:50%; background:radial-gradient(circle,var(--gold-glow),transparent 65%); pointer-events:none; }
+.budget-summary-label { font-size:11px; color:var(--t3); text-transform:uppercase; letter-spacing:1.2px; font-weight:600; }
+.budget-summary-vals { display:flex; align-items:baseline; gap:6px; margin:10px 0 16px; position:relative; z-index:2; }
+.budget-summary-spent { font-size:36px; font-weight:700; font-family:var(--font-mono); letter-spacing:-1.5px; line-height:1; }
+.budget-summary-divider { font-size:20px; color:var(--t3); font-weight:300; }
+.budget-summary-total { font-size:22px; color:var(--t2); font-weight:500; font-family:var(--font-mono); }
+.budget-summary-meta { display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--t2); position:relative; z-index:2; }
+.budget-summary-remain { font-weight:600; font-family:var(--font-mono); }
+.budget-summary-remain.over { color:var(--red); }
+.budget-summary-remain.ok { color:var(--green); }
+
+.budget-cat { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:16px; margin-bottom:10px; transition:all .15s; }
+.budget-cat:active { transform:scale(0.98); background:var(--card2); }
+.budget-cat-top { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+.budget-cat-icon { width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px; background:var(--card2); border:1px solid var(--border); flex-shrink:0; }
+.budget-cat-info { flex:1; min-width:0; }
+.budget-cat-name { font-size:15px; font-weight:600; }
+.budget-cat-amt { font-size:12px; color:var(--t3); margin-top:3px; }
+.budget-cat-edit { font-size:11px; color:var(--gold); font-weight:600; padding:6px 14px; background:var(--gold-bg); border:1px solid var(--gold-bd); border-radius:8px; flex-shrink:0; }
+.budget-cat-edit:active { opacity:0.7; }
+.budget-prog { height:6px; border-radius:999px; background:rgba(255,255,255,0.06); overflow:hidden; margin-bottom:8px; }
+.budget-prog-fill { height:100%; border-radius:999px; transition:width .5s cubic-bezier(.34,1.56,.64,1); }
+.budget-prog-fill.green { background:var(--green); }
+.budget-prog-fill.gold { background:var(--gold); }
+.budget-prog-fill.red { background:var(--red); }
+.budget-prog-fill.empty { background:rgba(255,255,255,0.08); }
+.budget-cat-bottom { display:flex; justify-content:space-between; font-size:11px; }
+.budget-cat-spent { color:var(--t2); }
+.budget-cat-pct { font-weight:700; font-family:var(--font-mono); }
+
+/* Overview budget mini section */
+.ov-budget { background:var(--card); border:1px solid var(--border); border-radius:20px; padding:18px 20px; margin-bottom:20px; }
+.ov-budget-item { margin-bottom:14px; }
+.ov-budget-item:last-child { margin-bottom:0; }
+.ov-budget-top { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+.ov-budget-icon { font-size:16px; }
+.ov-budget-name { font-size:13px; font-weight:600; flex:1; }
+.ov-budget-val { font-size:12px; color:var(--t2); font-family:var(--font-mono); }
+.ov-budget-val.over { color:var(--red); }
+
+/* Transfer sheet display row */
+.transfer-from-row { background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:14px; padding:14px 16px; font-size:15px; font-weight:600; display:flex; align-items:center; gap:10px; }
+.transfer-from-bal { font-size:12px; color:var(--t3); font-weight:400; margin-left:auto; font-family:var(--font-mono); }
+.transfer-from-icon { font-size:18px; }
+
+/* Savings Goals */
+.savings-summary { background:var(--hero-bg); border:1px solid var(--border); border-radius:20px; padding:24px 26px; margin-bottom:16px; position:relative; overflow:hidden; }
+.savings-summary::before { content:''; position:absolute; top:-60px; right:-60px; width:200px; height:200px; border-radius:50%; background:radial-gradient(circle,var(--gold-glow),transparent 65%); pointer-events:none; }
+.savings-summary-label { font-size:11px; color:var(--t3); text-transform:uppercase; letter-spacing:1.2px; font-weight:600; }
+.savings-summary-vals { display:flex; align-items:baseline; gap:6px; margin:10px 0 0; position:relative; z-index:2; }
+.savings-summary-saved { font-size:36px; font-weight:700; font-family:var(--font-mono); letter-spacing:-1.5px; line-height:1; color:var(--gold); }
+.savings-summary-divider { font-size:20px; color:var(--t3); font-weight:300; }
+.savings-summary-total { font-size:22px; color:var(--t2); font-weight:500; font-family:var(--font-mono); }
+.savings-summary-meta { font-size:12px; color:var(--t2); margin-top:10px; position:relative; z-index:2; }
+
+.savings-item { display:flex; align-items:center; gap:16px; padding:16px 18px; background:var(--card); border:1px solid var(--border); border-radius:18px; margin-bottom:10px; transition:all .15s; }
+.savings-item:active { background:var(--card2); transform:scale(0.98); }
+.savings-ring { flex-shrink:0; width:64px; height:64px; position:relative; }
+.savings-ring svg { transform:rotate(-90deg); }
+.savings-ring-pct { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; font-family:var(--font-mono); color:var(--gold); }
+.savings-info { flex:1; min-width:0; }
+.savings-name { font-size:15px; font-weight:600; margin-bottom:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.savings-amt { font-size:13px; color:var(--t2); font-family:var(--font-mono); margin-bottom:4px; }
+.savings-amt .cur { color:var(--gold); font-weight:600; }
+.savings-days { font-size:11px; color:var(--t3); }
+.savings-days.urgent { color:var(--red); font-weight:600; }
+.savings-days.done { color:var(--green); font-weight:600; }
+.savings-actions { display:flex; gap:8px; flex-shrink:0; }
+.savings-act-btn { width:34px; height:34px; border-radius:10px; background:rgba(255,255,255,0.04); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:14px; color:var(--t2); }
+.savings-act-btn:active { opacity:0.6; }
+.savings-act-btn svg { width:15px; height:15px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+
+/* Credit Card Bills */
+.cc-bill-item { background:var(--card); border:1px solid var(--border); border-radius:18px; padding:18px; margin-bottom:12px; }
+.cc-bill-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+.cc-bill-name { font-size:15px; font-weight:600; }
+.cc-bill-last4 { font-size:12px; color:var(--t3); font-family:var(--font-mono); margin-top:2px; }
+.cc-bill-cycle { font-size:12px; color:var(--t2); margin-bottom:14px; padding:8px 12px; background:rgba(255,255,255,0.03); border-radius:10px; }
+.cc-bill-spent-row { display:flex; align-items:baseline; gap:8px; margin-bottom:14px; }
+.cc-bill-spent { font-size:28px; font-weight:700; font-family:var(--font-mono); color:var(--t1); }
+.cc-bill-spent-label { font-size:11px; color:var(--t3); }
+.cc-bill-due { display:flex; justify-content:space-between; align-items:center; font-size:12px; margin-bottom:8px; }
+.cc-bill-due-date { color:var(--t2); }
+.cc-bill-due-days { font-weight:700; font-family:var(--font-mono); color:var(--gold); }
+.cc-bill-due-days.urgent { color:var(--red); }
+.cc-bill-due-days.overdue { color:var(--red); }
+.cc-bill-prog { height:6px; border-radius:999px; background:rgba(255,255,255,0.06); overflow:hidden; margin-top:8px; }
+.cc-bill-prog-fill { height:100%; border-radius:999px; background:var(--gold); transition:width .5s cubic-bezier(.34,1.56,.64,1); }
+.cc-bill-prog-meta { display:flex; justify-content:space-between; font-size:10px; color:var(--t3); margin-top:6px; }
+
+/* ===== Global Search Overlay ===== */
+.search-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); z-index:300; display:none; flex-direction:column; padding-top:env(safe-area-inset-top, 0px); }
+.search-overlay.on { display:flex; animation:searchFadeIn .25s ease; }
+@keyframes searchFadeIn { from{opacity:0;} to{opacity:1;} }
+.search-panel { background:var(--bg); max-width:430px; width:100%; margin:0 auto; flex:1; display:flex; flex-direction:column; overflow:hidden; animation:searchSlideUp .3s cubic-bezier(.34,1.4,.64,1); }
+@keyframes searchSlideUp { from{transform:translateY(40px); opacity:0;} to{transform:translateY(0); opacity:1;} }
+.search-header { display:flex; align-items:center; gap:10px; padding:10px 16px; border-bottom:1px solid var(--border); flex-shrink:0; }
+.search-input-wrap { flex:1; display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.06); border:1px solid var(--border); border-radius:12px; padding:0 12px; transition:border-color .2s; }
+.search-input-wrap:focus-within { border-color:var(--gold-bd); }
+.search-ic { width:18px; height:18px; stroke:var(--t3); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; flex-shrink:0; }
+.search-input { flex:1; background:none; border:none; outline:none; color:var(--t1); font-size:16px; font-family:inherit; padding:12px 0; }
+.search-input::placeholder { color:var(--t3); }
+.search-clear { width:20px; height:20px; border-radius:50%; background:var(--t3); color:#000; border:none; font-size:13px; display:none; align-items:center; justify-content:center; flex-shrink:0; cursor:pointer; line-height:1; }
+.search-clear.show { display:flex; }
+.search-cancel { background:none; border:none; color:var(--gold); font-size:15px; font-weight:600; font-family:inherit; padding:4px 0; flex-shrink:0; }
+.search-results { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; touch-action:pan-y; padding:8px 16px calc(20px + env(safe-area-inset-bottom, 0px)); }
+.search-results::-webkit-scrollbar{display:none;}
+.search-empty { text-align:center; padding:80px 20px; color:var(--t3); }
+.search-empty .es-icon { font-size:48px; margin-bottom:16px; opacity:0.3; }
+.search-empty .es-text { font-size:14px; color:var(--t2); }
+.search-group { margin-bottom:20px; }
+.search-group-title { font-size:11px; color:var(--t3); text-transform:uppercase; letter-spacing:0.8px; font-weight:600; margin:16px 0 8px; }
+.search-item { display:flex; align-items:center; gap:12px; padding:12px 14px; background:var(--card); border:1px solid var(--border); border-radius:14px; margin-bottom:6px; transition:all .15s; cursor:pointer; }
+.search-item:active { background:var(--card2); transform:scale(0.98); }
+.search-item-icon { width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; overflow:hidden; font-size:18px; background:rgba(255,255,255,0.04); }
+.search-item-body { flex:1; min-width:0; }
+.search-item-name { font-size:14px; font-weight:600; color:var(--t1); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.search-item-meta { font-size:11px; color:var(--t3); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.search-item-amt { font-size:14px; font-weight:700; font-family:var(--font-mono); flex-shrink:0; }
+.search-item-amt.in { color:var(--green); }
+.search-item-amt.out { color:var(--t1); }
+
+/* ===== Tag System ===== */
+.tx-tag-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+.tx-tag-chip { font-size:12px; padding:4px 10px; border-radius:8px; background:var(--gold-bg); color:var(--gold); border:1px solid var(--gold-bd); font-weight:500; }
+.tx-item-tags { display:flex; flex-wrap:wrap; gap:4px; margin-top:4px; }
+.tx-item-tag { font-size:10px; padding:2px 7px; border-radius:6px; background:rgba(255,255,255,0.05); color:var(--t2); border:1px solid var(--border); }
+.tag-filter-dropdown { display:none; background:var(--card2); border:1px solid var(--border2); border-radius:14px; margin-bottom:12px; padding:6px; max-height:220px; overflow-y:auto; }
+.tag-filter-dropdown.open { display:block; animation:calFade .2s ease; }
+.tag-filter-item { padding:10px 14px; border-radius:10px; font-size:13px; color:var(--t2); cursor:pointer; transition:background .15s; }
+.tag-filter-item:active { background:rgba(255,255,255,0.04); }
+.tag-filter-item.active { background:var(--gold-bg); color:var(--gold); font-weight:600; }
+.tag-filter-empty { padding:16px; text-align:center; font-size:12px; color:var(--t3); }
+
+/* ===== Financial Calendar ===== */
+.cal-nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+.cal-month-label { font-size:17px; font-weight:700; letter-spacing:-0.3px; color:var(--t1); }
+.cal-legend { display:flex; flex-wrap:wrap; gap:10px 14px; margin-bottom:14px; padding:10px 14px; background:var(--card); border:1px solid var(--border); border-radius:14px; }
+.cal-legend-item { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--t3); }
+.cal-legend-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.cal-weekdays { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:6px; }
+.cal-weekday { text-align:center; font-size:11px; font-weight:600; color:var(--t3); padding:4px 0; }
+.cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:18px; }
+.cal-cell { aspect-ratio:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; padding-top:6px; border-radius:12px; background:var(--card); border:1px solid var(--border); cursor:pointer; transition:all .15s; position:relative; min-height:44px; }
+.cal-cell:active { transform:scale(0.95); }
+.cal-cell.empty { background:transparent; border:none; cursor:default; }
+.cal-cell.today { border:2px solid var(--gold); }
+.cal-cell.selected { background:var(--gold-bg); border-color:var(--gold-bd); }
+.cal-day-num { font-size:13px; font-weight:600; color:var(--t1); }
+.cal-cell.today .cal-day-num { color:var(--gold); }
+.cal-dots { display:flex; gap:2px; margin-top:3px; flex-wrap:wrap; justify-content:center; max-width:90%; }
+.cal-dot { width:5px; height:5px; border-radius:50%; }
+.cal-dot.gold { background:var(--gold); }
+.cal-dot.blue { background:#3b82f6; }
+.cal-dot.red { background:var(--red); }
+.cal-dot.green { background:var(--green); }
+.cal-events { margin-top:4px; }
+.cal-events-title { font-size:13px; font-weight:600; color:var(--t2); margin-bottom:10px; padding:0 2px; }
+.cal-event { display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--card); border:1px solid var(--border); border-radius:12px; margin-bottom:8px; }
+.cal-event-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.cal-event-body { flex:1; min-width:0; }
+.cal-event-name { font-size:13px; font-weight:500; color:var(--t1); }
+.cal-event-meta { font-size:11px; color:var(--t3); margin-top:2px; }
+.cal-event-amt { font-size:13px; font-weight:600; font-family:var(--font-mono); flex-shrink:0; }
+.cal-empty-events { text-align:center; padding:32px 20px; color:var(--t3); font-size:13px; }
+@keyframes calFade { from{opacity:0;transform:translateY(-4px);} to{opacity:1;transform:translateY(0);} }
 </style>
+<script>
+  // Apply theme as early as possible to avoid a flash of the dark theme for light/auto users
+  try {
+    var __s = JSON.parse(localStorage.getItem('subpilot_settings') || '{}');
+    document.documentElement.setAttribute('data-theme', __s.theme || 'dark');
+  } catch(e) { document.documentElement.setAttribute('data-theme', 'dark'); }
+</script>
 </head>
 <body>
 
@@ -548,9 +773,14 @@ textarea.form-i{resize:none;min-height:80px;}
   <div class="content">
     <div class="hd">
       <div class="ht"><h1>概览</h1><p id="overview-sub">8月 · 4项订阅</p></div>
-      <button class="ib" onclick="showView('settings')">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      </button>
+      <div style="display:flex;gap:8px;">
+        <button class="ib" onclick="openSearch()">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </button>
+        <button class="ib" onclick="showView('settings')">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+      </div>
     </div>
     <div class="hero">
       <div class="hl">本月总支出</div>
@@ -561,6 +791,7 @@ textarea.form-i{resize:none;min-height:80px;}
       <div class="cht"><span class="ctt">近7天支出</span><span class="ctp">本周</span></div>
       <div class="cbars" id="chart-bars"></div>
     </div>
+    <div id="overview-budget"></div>
     <div class="sec"><span class="st">最近流水</span><span class="sa2" onclick="showView('tx')">全部 ›</span></div>
     <div id="overview-tx"></div>
     <div style="height:20px;"></div>
@@ -608,7 +839,9 @@ textarea.form-i{resize:none;min-height:80px;}
       <button class="pl off" data-f="expense">支出</button>
       <button class="pl off" data-f="income">收入</button>
       <button class="pl off" data-f="sub">订阅</button>
+      <button class="pl off" id="tx-tag-pill" onclick="toggleTagFilter(event)">标签</button>
     </div>
+    <div class="tag-filter-dropdown" id="tag-filter-dropdown"></div>
     <div id="tx-list"></div>
     <div style="height:20px;"></div>
   </div>
@@ -668,9 +901,14 @@ textarea.form-i{resize:none;min-height:80px;}
       </button>
     </div>
     <div class="info-g">
+      <div class="info-r" onclick="showView('budget')"><span class="info-l">💰 预算管理</span><span class="info-v" style="color:var(--gold);" id="budget-status">管理 ›</span></div>
+      <div class="info-r" onclick="showView('savings')"><span class="info-l">🎯 储蓄目标</span><span class="info-v" style="color:var(--gold);" id="savings-status">管理 ›</span></div>
+      <div class="info-r" onclick="showView('cc-bills')"><span class="info-l">💳 信用卡账单</span><span class="info-v" style="color:var(--gold);" id="ccbills-status">查看 ›</span></div>
       <div class="info-r" onclick="showView('reports')"><span class="info-l">📊 收支报表</span><span class="info-v" style="color:var(--gold);">查看 ›</span></div>
       <div class="info-r" onclick="showView('qrcodes')"><span class="info-l">📱 二维码夹</span><span class="info-v" style="color:var(--gold);">管理 ›</span></div>
       <div class="info-r" onclick="showView('invoices')"><span class="info-l">🧾 发票夹</span><span class="info-v" style="color:var(--gold);">管理 ›</span></div>
+      <div class="info-r" onclick="showView('recurring')"><span class="info-l">🔄 周期记账</span><span class="info-v" style="color:var(--gold);">管理 ›</span></div>
+      <div class="info-r" onclick="showView('calendar')"><span class="info-l">📅 财务日历</span><span class="info-v" style="color:var(--gold);">查看 ›</span></div>
       <div class="info-r" onclick="openExchangeRateSettings()"><span class="info-l">💱 汇率换算</span><span class="info-v" style="color:var(--gold);" id="exrate-status">设置 ›</span></div>
     </div>
     <div class="sec" style="margin-top:8px;"><span class="st" style="font-size:13px;color:var(--t3);">云同步</span></div>
@@ -682,6 +920,10 @@ textarea.form-i{resize:none;min-height:80px;}
     <div class="info-g">
       <div class="info-r" onclick="openLockSettings()"><span class="info-l">🔒 应用密码</span><span class="info-v" style="color:var(--gold);" id="lock-status">未开启 ›</span></div>
     </div>
+    <div class="sec" style="margin-top:8px;"><span class="st" style="font-size:13px;color:var(--t3);">外观</span></div>
+    <div class="info-g">
+      <div class="info-r" onclick="toggleTheme()"><span class="info-l">🌙 主题</span><span class="info-v" style="color:var(--gold);" id="theme-status">深色 ›</span></div>
+    </div>
     <div class="sec" style="margin-top:8px;"><span class="st" style="font-size:13px;color:var(--t3);">通知</span></div>
     <div class="info-g">
       <div class="info-r" onclick="toggleNotifications()"><span class="info-l">🔔 到期提醒</span><span class="info-v" style="color:var(--gold);" id="notif-status">未开启 ›</span></div>
@@ -689,21 +931,121 @@ textarea.form-i{resize:none;min-height:80px;}
     <div class="sec" style="margin-top:8px;"><span class="st" style="font-size:13px;color:var(--t3);">数据管理</span></div>
     <div class="info-g">
       <div class="info-r" onclick="exportData()"><span class="info-l">导出数据</span><span class="info-v" style="color:var(--gold);">JSON ›</span></div>
+      <div class="info-r" onclick="exportCSV()"><span class="info-l">导出CSV</span><span class="info-v" style="color:var(--gold);">Excel ›</span></div>
       <div class="info-r" onclick="importDataPrompt()"><span class="info-l">导入数据</span><span class="info-v" style="color:var(--gold);">选择文件 ›</span></div>
       <div class="info-r" onclick="if(confirm('确定清除所有数据？此操作不可撤销。')){clearAll();toast('数据已清除');}"><span class="info-l">清除所有数据</span><span class="info-v" style="color:var(--red);">›</span></div>
     </div>
     <div class="info-g">
-      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v1.9.9 ›</span></div>
+      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v2.0.0 ›</span></div>
       <div class="info-r" onclick="showChangelog()"><span class="info-l">更新日志</span><span class="info-v" style="color:var(--gold);">查看 ›</span></div>
       <div class="info-r" onclick="checkUpdate()"><span class="info-l">检查更新</span><span class="info-v" style="color:var(--gold);" id="update-status">›</span></div>
       <div class="info-r"><span class="info-l">数据存储</span><span class="info-v" style="color:var(--t3);">仅本地浏览器</span></div>
     </div>
     <div style="text-align:center;padding:40px 20px;color:var(--t3);font-size:12px;">
       <div style="margin-bottom:8px;font-size:20px;letter-spacing:1px;">Countra</div>
-      <div data-ver-footer style="margin-bottom:4px;">转便数快 · v1.9.9 (Build 2026.08.08)</div>
+      <div data-ver-footer style="margin-bottom:4px;">转便数快 · v2.0.0 (Build 2026.08.08)</div>
       <div>所有数据默认仅保存在本地，开启云同步后加密上传至 Supabase</div>
     </div>
     <input type="file" id="import-file" accept=".json" style="display:none;">
+    <div style="height:20px;"></div>
+  </div>
+</div>
+
+<!-- View: Recurring Transactions -->
+<div class="view" id="view-recurring">
+  <div class="content">
+    <div class="hd">
+      <button class="ib" onclick="showView('settings')">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div style="font-size:16px;font-weight:600;margin-top:8px;">周期记账</div>
+      <button class="ib" onclick="openRecurringEditor()">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+    </div>
+    <div style="font-size:12px;color:var(--t3);line-height:1.6;padding:0 4px 16px;">
+      到期自动生成流水记录，适合固定周期重复的收支（如每月房租、每周零花钱等）。
+    </div>
+    <div id="recurring-list"></div>
+    <div style="height:20px;"></div>
+  </div>
+</div>
+
+<!-- View: Financial Calendar -->
+<div class="view" id="view-calendar">
+  <div class="content">
+    <div class="hd">
+      <button class="ib" onclick="showView('settings')">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div style="font-size:16px;font-weight:600;margin-top:8px;">财务日历</div>
+      <div style="width:40px;"></div>
+    </div>
+    <div class="cal-nav">
+      <button class="ib" onclick="calPrevMonth()">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="cal-month-label" id="cal-month-label"></div>
+      <button class="ib" onclick="calNextMonth()">
+        <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+    <div class="cal-legend">
+      <div class="cal-legend-item"><span class="cal-legend-dot" style="background:var(--gold);"></span>订阅续费</div>
+      <div class="cal-legend-item"><span class="cal-legend-dot" style="background:#3b82f6;"></span>周期记账</div>
+      <div class="cal-legend-item"><span class="cal-legend-dot" style="background:var(--red);"></span>支出</div>
+      <div class="cal-legend-item"><span class="cal-legend-dot" style="background:var(--green);"></span>收入</div>
+    </div>
+    <div class="cal-weekdays">
+      <div class="cal-weekday">日</div>
+      <div class="cal-weekday">一</div>
+      <div class="cal-weekday">二</div>
+      <div class="cal-weekday">三</div>
+      <div class="cal-weekday">四</div>
+      <div class="cal-weekday">五</div>
+      <div class="cal-weekday">六</div>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+    <div class="cal-events" id="cal-events"></div>
+    <div style="height:20px;"></div>
+  </div>
+</div>
+
+<!-- View: Savings Goals -->
+<div class="view" id="view-savings">
+  <div class="content">
+    <div class="hd">
+      <button class="ib" onclick="showView('settings')">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="ht"><h1>储蓄目标</h1><p id="savings-sub">积少成多</p></div>
+      <button class="ib" onclick="openSavingsEditor()">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+    </div>
+    <div id="savings-summary-container"></div>
+    <div class="sec"><span class="st">我的目标</span></div>
+    <div id="savings-list"></div>
+    <div style="height:20px;"></div>
+  </div>
+</div>
+
+<!-- View: Credit Card Bills -->
+<div class="view" id="view-cc-bills">
+  <div class="content">
+    <div class="hd">
+      <button class="ib" onclick="showView('settings')">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="ht"><h1>信用卡账单</h1><p id="ccbills-sub">账单周期管理</p></div>
+      <button class="ib" onclick="showView('accounts')" style="visibility:hidden;">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+    </div>
+    <div style="font-size:12px;color:var(--t3);line-height:1.6;padding:0 4px 16px;">
+      在账户编辑中设置账单日和还款日，自动统计每期账单消费。
+    </div>
+    <div id="cc-bills-list"></div>
     <div style="height:20px;"></div>
   </div>
 </div>
@@ -751,6 +1093,26 @@ textarea.form-i{resize:none;min-height:80px;}
       <button class="ai-send" onclick="sendAIMessage()">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- Global Search Overlay -->
+<div class="search-overlay" id="search-overlay" onclick="if(event.target===this)closeSearch()">
+  <div class="search-panel">
+    <div class="search-header">
+      <div class="search-input-wrap">
+        <svg class="search-ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" class="search-input" id="search-input" placeholder="搜索流水、订阅、账户..." oninput="onSearchInput()">
+        <button class="search-clear" id="search-clear" onclick="clearSearchInput()">×</button>
+      </div>
+      <button class="search-cancel" onclick="closeSearch()">取消</button>
+    </div>
+    <div class="search-results" id="search-results">
+      <div class="search-empty">
+        <div class="es-icon">🔍</div>
+        <div class="es-text">搜索流水、订阅、账户...</div>
+      </div>
     </div>
   </div>
 </div>
@@ -853,6 +1215,22 @@ textarea.form-i{resize:none;min-height:80px;}
   </div>
 </div>
 
+<!-- View: Budget Management -->
+<div class="view" id="view-budget">
+  <div class="content">
+    <div class="hd">
+      <div class="ht"><h1>预算管理</h1><p id="budget-sub">本月预算</p></div>
+      <button class="ib" onclick="showView('settings')">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+    </div>
+    <div id="budget-summary-container"></div>
+    <div class="sec"><span class="st">分类预算</span></div>
+    <div id="budget-list"></div>
+    <div style="height:20px;"></div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
@@ -877,6 +1255,11 @@ textarea.form-i{resize:none;min-height:80px;}
     <div class="form-g">
       <label class="form-l">备注</label>
       <input type="text" class="form-i" id="tx-note" placeholder="可选">
+    </div>
+    <div class="form-g">
+      <label class="form-l">标签</label>
+      <input type="text" class="form-i" id="tx-tags" placeholder="多个标签用逗号分隔" oninput="renderTxTagChips()">
+      <div class="tx-tag-chips" id="tx-tag-chips"></div>
     </div>
     <div class="form-g">
       <label class="form-l">日期</label>
@@ -1014,6 +1397,19 @@ textarea.form-i{resize:none;min-height:80px;}
     <div class="form-g">
       <label class="form-l">卡号末四位</label>
       <input type="text" class="form-i" id="acct-num" placeholder="如：8821" maxlength="4">
+    </div>
+    <div class="form-g" id="acct-billing-fields" style="display:none;">
+      <label class="form-l">信用卡账单设置</label>
+      <div style="display:flex;gap:10px;">
+        <div style="flex:1;">
+          <input type="number" class="form-i" id="acct-billing-day" placeholder="账单日" min="1" max="31" style="text-align:center;">
+          <div style="font-size:11px;color:var(--t3);text-align:center;margin-top:6px;">账单日 (1-31)</div>
+        </div>
+        <div style="flex:1;">
+          <input type="number" class="form-i" id="acct-payment-day" placeholder="还款日" min="1" max="31" style="text-align:center;">
+          <div style="font-size:11px;color:var(--t3);text-align:center;margin-top:6px;">还款日 (1-31)</div>
+        </div>
+      </div>
     </div>
     <div class="form-g">
       <label class="form-l">自定义分组（可选）</label>
@@ -1225,6 +1621,140 @@ textarea.form-i{resize:none;min-height:80px;}
       <button class="btn btn-gold" onclick="saveCloudConfig()">保存</button>
     </div>
     <div style="padding-top:10px;"><button class="btn btn-outline" style="width:100%;" onclick="resetCloudConfig()">恢复默认公共云</button></div>
+  </div>
+</div>
+
+<!-- Sheet: Add/Edit Recurring Transaction -->
+<div class="sheet-overlay" id="sheet-recurring">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="recurring-sheet-title">添加周期记账</div>
+    <div class="type-toggle" id="recurring-type">
+      <button class="type-opt on exp" data-t="expense">支出</button>
+      <button class="type-opt" data-t="income">收入</button>
+    </div>
+    <input type="text" class="amt-big" id="recurring-amt-input" placeholder="0.00" inputmode="decimal">
+    <div class="form-g">
+      <label class="form-l">分类</label>
+      <div class="cat-grid" id="recurring-cat-grid"></div>
+    </div>
+    <div class="form-g">
+      <label class="form-l">账户</label>
+      <div class="row-pick" id="recurring-acct-pick"></div>
+    </div>
+    <div class="form-g">
+      <label class="form-l">频率</label>
+      <div class="row-pick" id="recurring-freq-pick">
+        <button class="pick" data-f="daily">每天</button>
+        <button class="pick" data-f="weekly">每周</button>
+        <button class="pick on" data-f="monthly">每月</button>
+        <button class="pick" data-f="yearly">每年</button>
+      </div>
+    </div>
+    <div class="form-g">
+      <label class="form-l">备注</label>
+      <input type="text" class="form-i" id="recurring-note" placeholder="可选">
+    </div>
+    <div class="form-g">
+      <label class="form-l">下次记账日期</label>
+      <input type="date" class="form-i" id="recurring-nextdate">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-outline" onclick="closeSheet('sheet-recurring')">取消</button>
+      <button class="btn btn-gold" onclick="saveRecurring()">保存</button>
+    </div>
+    <div id="recurring-delete-btn" style="margin-top:12px;display:none;">
+      <button class="btn btn-danger" style="width:100%;" onclick="deleteRecurringCurrent()">删除此周期记账</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sheet: Budget Editor -->
+<div class="sheet-overlay" id="sheet-budget-editor">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">设置预算</div>
+    <div id="budget-editor-cat-name" style="font-size:16px;font-weight:600;margin-bottom:20px;display:flex;align-items:center;gap:8px;"></div>
+    <div class="form-g">
+      <label class="form-l">月度预算金额</label>
+      <input type="text" class="form-i" id="budget-editor-input" placeholder="0.00" inputmode="decimal">
+    </div>
+    <div class="form-g">
+      <label class="form-l">本月已支出</label>
+      <div id="budget-editor-spent" style="font-size:20px;font-weight:700;font-family:var(--font-mono);color:var(--gold);">¥0</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-outline" onclick="closeSheet('sheet-budget-editor')">取消</button>
+      <button class="btn btn-gold" onclick="saveBudgetFromEditor()">保存</button>
+    </div>
+    <div style="padding-top:10px;display:none;" id="budget-editor-clear-wrap">
+      <button class="btn btn-danger" style="width:100%;" onclick="clearBudgetFromEditor()">清除预算</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sheet: Transfer -->
+<div class="sheet-overlay" id="sheet-transfer">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">账户转账</div>
+    <div class="form-g">
+      <label class="form-l">转出账户</label>
+      <div class="transfer-from-row" id="transfer-from-display"></div>
+    </div>
+    <div class="form-g">
+      <label class="form-l">转入账户</label>
+      <select class="form-i" id="transfer-to"></select>
+    </div>
+    <div class="form-g">
+      <label class="form-l">转账金额</label>
+      <input type="text" class="form-i" id="transfer-amt" placeholder="0.00" inputmode="decimal">
+    </div>
+    <div class="form-g">
+      <label class="form-l">备注（可选）</label>
+      <input type="text" class="form-i" id="transfer-note" placeholder="转账备注">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-outline" onclick="closeSheet('sheet-transfer')">取消</button>
+      <button class="btn btn-gold" onclick="saveTransfer()">确认转账</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sheet: Savings Goal Editor -->
+<div class="sheet-overlay" id="sheet-savings">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="savings-sheet-title">添加储蓄目标</div>
+    <div class="form-g">
+      <label class="form-l">目标名称</label>
+      <input type="text" class="form-i" id="savings-name" placeholder="如：旅游基金、买房首付">
+    </div>
+    <div class="form-g">
+      <label class="form-l">目标金额</label>
+      <input type="text" class="form-i" id="savings-target" placeholder="0.00" inputmode="decimal">
+    </div>
+    <div class="form-g">
+      <label class="form-l">已存金额（可选）</label>
+      <input type="text" class="form-i" id="savings-current" placeholder="0.00" inputmode="decimal" value="0">
+    </div>
+    <div class="form-g">
+      <label class="form-l">关联账户（可选）</label>
+      <select class="form-i" id="savings-account">
+        <option value="">不关联账户</option>
+      </select>
+    </div>
+    <div class="form-g">
+      <label class="form-l">截止日期（可选）</label>
+      <input type="date" class="form-i" id="savings-deadline">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-outline" onclick="closeSheet('sheet-savings')">取消</button>
+      <button class="btn btn-gold" onclick="saveSavingsGoal()">保存</button>
+    </div>
+    <div id="savings-delete-btn" style="margin-top:12px;display:none;">
+      <button class="btn btn-danger" style="width:100%;" onclick="deleteSavingsGoalCurrent()">删除此目标</button>
+    </div>
   </div>
 </div>
 

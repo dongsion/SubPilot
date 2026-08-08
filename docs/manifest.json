@@ -31,6 +31,27 @@
       "description": "用AI一句话智能记账",
       "url": "./?action=ai-chat",
       "icons": [{ "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "预算管理",
+      "short_name": "预算",
+      "description": "查看和管理预算",
+      "url": "./?action=budget",
+      "icons": [{ "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "财务日历",
+      "short_name": "日历",
+      "description": "查看财务日历",
+      "url": "./?action=calendar",
+      "icons": [{ "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "搜索",
+      "short_name": "搜索",
+      "description": "搜索流水、订阅、账户",
+      "url": "./?action=search",
+      "icons": [{ "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
     }
   ]
 }

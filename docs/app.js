@@ -9,7 +9,10 @@ const KEYS = {
   qrcodes: 'subpilot_qrcodes',
   invoices: 'subpilot_invoices',
   cloudConfig: 'subpilot_cloud_config',
-  cloudSession: 'subpilot_cloud_session'
+  cloudSession: 'subpilot_cloud_session',
+  budgets: 'subpilot_budgets',
+  savingsGoals: 'subpilot_savings_goals',
+  recurringTx: 'subpilot_recurring_tx'
 };
 
 // ===== Embedded Brand Icons (SVG path data, viewBox 0 0 24 24) =====
@@ -191,6 +194,9 @@ let state = {
   accounts: [],
   subscriptions: [],
   transactions: [],
+  budgets: {},
+  savingsGoals: [],
+  recurringTx: [],
   currentView: 'overview',
   lastView: 'overview',
   activeCardIdx: 0,
@@ -205,6 +211,7 @@ let state = {
   currentSubId: null,
   fetchedAppIcon: null,
   editSubId: null,
+  editSavingsId: null,
   cardIconPickerId: null,
   settings: {
     appPassword: null,
@@ -230,7 +237,12 @@ let state = {
   supabaseClient: null,
   cloudUser: null,
   cloudLastSync: null,
-  authEmail: ''
+  authEmail: '',
+  tagFilter: null,
+  tagFilterOpen: false,
+  calendarYear: new Date().getFullYear(),
+  calendarMonth: new Date().getMonth(),
+  calendarSelectedDay: null
 };
 
 // Card color themes
@@ -335,9 +347,12 @@ function load() {
     state.transactions = JSON.parse(localStorage.getItem(KEYS.transactions) || '[]');
     state.qrcodes = JSON.parse(localStorage.getItem(KEYS.qrcodes) || '[]');
     state.invoices = JSON.parse(localStorage.getItem(KEYS.invoices) || '[]');
+    state.budgets = JSON.parse(localStorage.getItem(KEYS.budgets) || '{}');
+    state.savingsGoals = JSON.parse(localStorage.getItem(KEYS.savingsGoals) || '[]');
+    state.recurringTx = JSON.parse(localStorage.getItem(KEYS.recurringTx) || '[]');
     // Merge loaded settings with defaults to ensure all keys exist
     const loaded = JSON.parse(localStorage.getItem(KEYS.settings) || '{}');
-    const defaults = { appPassword: null, notifications: false, exRates: { USD: 7.25, EUR: 7.85, GBP: 9.20, JPY: 0.048, HKD: 0.93, TWD: 0.22 }, defaultCurrency: 'CNY' };
+    const defaults = { appPassword: null, notifications: false, exRates: { USD: 7.25, EUR: 7.85, GBP: 9.20, JPY: 0.048, HKD: 0.93, TWD: 0.22 }, defaultCurrency: 'CNY', theme: 'dark' };
     state.settings = { ...defaults, ...loaded };
     if (!state.settings.exRates) state.settings.exRates = defaults.exRates;
   } catch(e) { console.error('Load error', e); }
@@ -349,6 +364,9 @@ function save() {
   localStorage.setItem(KEYS.settings, JSON.stringify(state.settings));
   localStorage.setItem(KEYS.qrcodes, JSON.stringify(state.qrcodes));
   localStorage.setItem(KEYS.invoices, JSON.stringify(state.invoices));
+  localStorage.setItem(KEYS.budgets, JSON.stringify(state.budgets));
+  localStorage.setItem(KEYS.savingsGoals, JSON.stringify(state.savingsGoals));
+  localStorage.setItem(KEYS.recurringTx, JSON.stringify(state.recurringTx));
   updateBadge();
   markLocalChange();
 }
@@ -448,6 +466,12 @@ function handleUrlAction() {
     setTimeout(() => { showView('subs'); openAddSub(); }, 500);
   } else if (action === 'ai-chat') {
     setTimeout(() => openAIChat(), 500);
+  } else if (action === 'budget') {
+    setTimeout(() => showView('budget'), 500);
+  } else if (action === 'calendar') {
+    setTimeout(() => showView('calendar'), 500);
+  } else if (action === 'search') {
+    setTimeout(() => openSearch(), 500);
   }
   // Clean up URL
   if (action) {
@@ -544,6 +568,8 @@ function openAddTx(prefill) {
   state.selectedCat = 'food';
   $('#tx-amt-input').value = '';
   $('#tx-note').value = '';
+  $('#tx-tags').value = '';
+  $('#tx-tag-chips').innerHTML = '';
   $('#tx-date').value = today();
   // Type toggle
   $$('#tx-type .type-opt').forEach(b => {
@@ -587,6 +613,7 @@ function saveTx() {
   const acctId = acctBtn ? acctBtn.dataset.id : state.accounts[0].id;
   const note = $('#tx-note').value.trim();
   const date = $('#tx-date').value || today();
+  const tags = parseTxTags($('#tx-tags').value);
   const cats = state.txType === 'expense' ? EXPENSE_CATS : INCOME_CATS;
   const cat = cats.find(c => c.id === state.selectedCat) || cats[0];
   const now = new Date();
@@ -594,6 +621,7 @@ function saveTx() {
     id: genId(), type: state.txType, amount: amt,
     category: cat.id, categoryName: cat.name, categoryIcon: cat.icon,
     note, accountId: acctId, date,
+    tags,
     time: `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`,
     timestamp: now.toISOString(),
     isSubscription: false
@@ -620,6 +648,87 @@ $$('#tx-type .type-opt').forEach(b => {
     b.classList.add('on', state.txType === 'expense' ? 'exp' : 'inc');
     renderCatGrid();
   };
+});
+
+// ===== Tag System =====
+function parseTxTags(str) {
+  if (!str) return [];
+  return str.split(/[,，、\s]+/).map(s => s.trim()).filter(s => s.length > 0);
+}
+
+function renderTxTagChips() {
+  const tags = parseTxTags($('#tx-tags').value);
+  const el = $('#tx-tag-chips');
+  if (!el) return;
+  if (tags.length === 0) { el.innerHTML = ''; return; }
+  el.innerHTML = tags.map(t => `<span class="tx-tag-chip">#${escapeHtml(t)}</span>`).join('');
+}
+
+function getAllTags() {
+  const set = new Set();
+  state.transactions.forEach(t => {
+    if (Array.isArray(t.tags)) t.tags.forEach(tag => set.add(tag));
+  });
+  return [...set].sort((a, b) => a.localeCompare(b, 'zh-CN'));
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+function toggleTagFilter(e) {
+  if (e) e.stopPropagation();
+  state.tagFilterOpen = !state.tagFilterOpen;
+  const dropdown = $('#tag-filter-dropdown');
+  const pill = $('#tx-tag-pill');
+  if (!dropdown || !pill) return;
+  if (state.tagFilterOpen) {
+    pill.classList.add('on');
+    pill.classList.remove('off');
+    const tags = getAllTags();
+    if (tags.length === 0) {
+      dropdown.innerHTML = `<div class="tag-filter-empty">暂无标签</div>`;
+    } else {
+      let html = `<div class="tag-filter-item ${state.tagFilter === null ? 'active' : ''}" data-tag="">全部标签</div>`;
+      html += tags.map(t => `<div class="tag-filter-item ${state.tagFilter === t ? 'active' : ''}" data-tag="${escapeHtml(t)}">#${escapeHtml(t)}</div>`).join('');
+      dropdown.innerHTML = html;
+      // Attach click listeners (avoids escaping issues with special characters)
+      $$('#tag-filter-dropdown .tag-filter-item').forEach(item => {
+        item.onclick = (ev) => { ev.stopPropagation(); selectTagFilter(item.dataset.tag || null); };
+      });
+    }
+    dropdown.classList.add('open');
+  } else {
+    pill.classList.remove('on');
+    pill.classList.add('off');
+    dropdown.classList.remove('open');
+  }
+}
+
+function selectTagFilter(tag) {
+  state.tagFilter = tag;
+  state.tagFilterOpen = false;
+  const dropdown = $('#tag-filter-dropdown');
+  const pill = $('#tx-tag-pill');
+  if (dropdown) dropdown.classList.remove('open');
+  if (pill) {
+    pill.classList.remove('on', 'off');
+    pill.classList.add(tag ? 'on' : 'off');
+    pill.textContent = tag ? `#${tag}` : '标签';
+  }
+  renderTx();
+  haptic('light');
+}
+
+// Close tag filter when clicking outside
+document.addEventListener('click', e => {
+  if (state.tagFilterOpen && !e.target.closest('#tx-tag-pill') && !e.target.closest('#tag-filter-dropdown')) {
+    state.tagFilterOpen = false;
+    const dropdown = $('#tag-filter-dropdown');
+    const pill = $('#tx-tag-pill');
+    if (dropdown) dropdown.classList.remove('open');
+    if (pill) { pill.classList.remove('on'); pill.classList.add('off'); }
+  }
 });
 
 // ===== Add Subscription =====
@@ -956,6 +1065,9 @@ function openAddAccount() {
   $$('#acct-color-pick .color-pick').forEach(p => p.classList.toggle('on', p.dataset.c === 'gold'));
   $('#acct-include-assets').classList.add('on');
   $('#acct-save-btn').textContent = '保存';
+  $('#acct-billing-day').value = '';
+  $('#acct-payment-day').value = '';
+  $('#acct-billing-fields').style.display = 'block';
   openSheet('sheet-acct');
 }
 
@@ -976,6 +1088,9 @@ function editAccount(idx) {
   $$('#acct-color-pick .color-pick').forEach(p => p.classList.toggle('on', p.dataset.c === (a.color || 'gold')));
   $('#acct-include-assets').classList.toggle('on', a.includeInAssets !== false);
   $('#acct-save-btn').textContent = '保存修改';
+  $('#acct-billing-day').value = a.billingDay || '';
+  $('#acct-payment-day').value = a.paymentDay || '';
+  $('#acct-billing-fields').style.display = (a.type || 'bank') === 'bank' ? 'block' : 'none';
   openSheet('sheet-acct');
 }
 
@@ -986,6 +1101,8 @@ function saveAccount() {
   const cardNumber = $('#acct-num').value.trim();
   const currency = $('#acct-currency').value || 'CNY';
   const customGroup = $('#acct-custom-group').value.trim() || null;
+  const billingDay = parseInt($('#acct-billing-day').value) || 0;
+  const paymentDay = parseInt($('#acct-payment-day').value) || 0;
 
   // Auto-detect account type from name (only for new accounts)
   let acctType = state.selectedAcctType;
@@ -1021,6 +1138,8 @@ function saveAccount() {
     a.color = acctColor;
     a.includeInAssets = state.acctIncludeInAssets !== false;
     a.customGroup = customGroup;
+    a.billingDay = acctType === 'bank' ? (billingDay > 0 ? billingDay : null) : null;
+    a.paymentDay = acctType === 'bank' ? (paymentDay > 0 ? paymentDay : null) : null;
     state.editingAcctIdx = -1;
     save();
     closeSheet('sheet-acct');
@@ -1035,6 +1154,8 @@ function saveAccount() {
       cardNumber, currency, color: acctColor, brandSlug: brand?.slug || null,
       includeInAssets: state.acctIncludeInAssets !== false,
       customGroup,
+      billingDay: acctType === 'bank' ? (billingDay > 0 ? billingDay : null) : null,
+      paymentDay: acctType === 'bank' ? (paymentDay > 0 ? paymentDay : null) : null,
       createdAt: new Date().toISOString()
     };
     state.accounts.push(acct);
@@ -1050,6 +1171,8 @@ $$('#acct-type-pick .pick').forEach(p => p.onclick = () => {
   state.selectedAcctType = p.dataset.t;
   $$('#acct-type-pick .pick').forEach(x => x.classList.remove('on'));
   p.classList.add('on');
+  // Show billing fields only for bank type
+  $('#acct-billing-fields').style.display = state.selectedAcctType === 'bank' ? 'block' : 'none';
 });
 
 $$('#acct-color-pick .color-pick').forEach(p => p.onclick = () => {
@@ -1085,6 +1208,8 @@ $('#acct-name').addEventListener('input', () => {
       x.style.boxShadow = isOn ? '0 0 0 2px var(--gold)' : '';
       x.style.borderColor = isOn ? 'var(--gold)' : 'transparent';
     });
+    // Show billing fields only for bank type
+    $('#acct-billing-fields').style.display = autoType === 'bank' ? 'block' : 'none';
   }
 });
 
@@ -1244,6 +1369,240 @@ function processAutoDeductions() {
   if (deducted > 0) { save(); }
 }
 
+// ===== Recurring Transactions (周期性记账) =====
+const FREQ_LABELS = { daily: '每天', weekly: '每周', monthly: '每月', yearly: '每年' };
+
+function freqAdd(dateStr, freq) {
+  if (freq === 'daily') return addDays(dateStr, 1);
+  if (freq === 'weekly') return cycleAdd(dateStr, 'week');
+  if (freq === 'monthly') return cycleAdd(dateStr, 'month');
+  if (freq === 'yearly') return cycleAdd(dateStr, 'year');
+  return addDays(dateStr, 30);
+}
+
+function processRecurringTx() {
+  const now = today();
+  let processed = 0;
+  state.recurringTx.forEach(r => {
+    // Process all due dates (in case app hasn't been opened for multiple cycles)
+    let safety = 0;
+    while (r.nextDate <= now && safety < 366) {
+      safety++;
+      // Check if already processed for this date (use lastProcessed field)
+      if (r.lastProcessed === r.nextDate) break;
+
+      const acct = state.accounts.find(a => a.id === r.accountId);
+      const txTime = new Date(r.nextDate + 'T09:00:00');
+      const tx = {
+        id: genId(),
+        type: r.type,
+        amount: r.amount,
+        category: r.category,
+        categoryName: r.categoryName,
+        categoryIcon: r.categoryIcon,
+        note: r.note || r.categoryName,
+        accountId: r.accountId,
+        date: r.nextDate,
+        time: '09:00',
+        timestamp: txTime.toISOString(),
+        isSubscription: false
+      };
+      state.transactions.unshift(tx);
+      if (acct) {
+        acct.balance += r.type === 'expense' ? -r.amount : r.amount;
+      }
+      r.lastProcessed = r.nextDate;
+      r.nextDate = freqAdd(r.nextDate, r.frequency);
+      processed++;
+    }
+  });
+  if (processed > 0) { save(); }
+}
+
+function renderRecurringTx() {
+  const container = $('#recurring-list');
+  if (!container) return;
+
+  if (state.recurringTx.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="es-icon">🔄</div><div class="es-text">暂无周期记账</div><div class="es-sub">点击 + 创建周期记账</div></div>`;
+    return;
+  }
+
+  // Sort by nextDate ascending
+  const sorted = [...state.recurringTx].sort((a, b) => new Date(a.nextDate) - new Date(b.nextDate));
+
+  container.innerHTML = sorted.map(r => {
+    const acct = state.accounts.find(a => a.id === r.accountId);
+    const days = daysBetween(today(), r.nextDate);
+    const isDue = days <= 0;
+    const daysText = isDue ? '今天到期' : `${days}天后`;
+    const daysStyle = isDue ? 'color:var(--red);font-weight:600;' : '';
+    const typeIcon = r.type === 'income' ? '💰' : '💸';
+    const icon = r.categoryIcon || typeIcon;
+    const nameText = r.note || r.categoryName || '周期记账';
+    return `<div class="sc2" onclick="openRecurringEditor('${r.id}')">
+      <div class="si" style="background:rgba(255,255,255,0.04);font-size:22px;display:flex;align-items:center;justify-content:center;">${icon}</div>
+      <div class="sif">
+        <div class="sn">${nameText} <span class="badge">周期</span></div>
+        <div class="sd">${FREQ_LABELS[r.frequency] || r.frequency} · ¥${fmt(r.amount)} · <span style="${daysStyle}">${daysText}</span></div>
+      </div>
+      <div style="font-size:15px;font-weight:700;font-family:var(--font-mono);color:${r.type==='income'?'var(--green)':'var(--t1)'};flex-shrink:0;">${r.type==='income'?'+':'-'}¥${fmt(r.amount)}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderRecurringCatGrid() {
+  const cats = state.recurringTxType === 'expense' ? EXPENSE_CATS : INCOME_CATS;
+  $('#recurring-cat-grid').innerHTML = cats.map(c => `<div class="cat-i ${c.id === state.recurringSelectedCat ? 'on' : ''}" data-c="${c.id}">
+    <div class="cat-ic">${c.icon}</div><div class="cat-nm">${c.name}</div>
+  </div>`).join('');
+  $$('#recurring-cat-grid .cat-i').forEach(el => el.onclick = () => {
+    state.recurringSelectedCat = el.dataset.c;
+    renderRecurringCatGrid();
+  });
+}
+
+function renderRecurringAcctPick() {
+  if (state.accounts.length === 0) {
+    $('#recurring-acct-pick').innerHTML = '<div style="font-size:12px;color:var(--t3);padding:8px 0;">请先添加账户</div>';
+    return;
+  }
+  const editing = state.editRecurringId ? state.recurringTx.find(x => x.id === state.editRecurringId) : null;
+  const selectedId = editing ? editing.accountId : state.accounts[0].id;
+  $('#recurring-acct-pick').innerHTML = state.accounts.map(a =>
+    `<button class="pick ${a.id === selectedId ? 'on' : ''}" data-id="${a.id}">${a.name}</button>`
+  ).join('');
+  $$('#recurring-acct-pick .pick').forEach(b => b.onclick = () => {
+    $$('#recurring-acct-pick .pick').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+  });
+}
+
+function openRecurringEditor(id) {
+  const isNew = !id;
+  state.editRecurringId = id || null;
+
+  $('#recurring-sheet-title').textContent = isNew ? '添加周期记账' : '编辑周期记账';
+  $('#recurring-delete-btn').style.display = isNew ? 'none' : 'block';
+
+  // Default state
+  state.recurringTxType = 'expense';
+  state.recurringSelectedCat = 'food';
+  state.recurringSelectedFreq = 'monthly';
+
+  if (isNew) {
+    $('#recurring-amt-input').value = '';
+    $('#recurring-note').value = '';
+    $('#recurring-nextdate').value = today();
+  } else {
+    const r = state.recurringTx.find(x => x.id === id);
+    if (!r) return;
+    state.recurringTxType = r.type;
+    state.recurringSelectedCat = r.category;
+    state.recurringSelectedFreq = r.frequency;
+    $('#recurring-amt-input').value = r.amount;
+    $('#recurring-note').value = r.note || '';
+    $('#recurring-nextdate').value = r.nextDate;
+  }
+
+  // Type toggle
+  $$('#recurring-type .type-opt').forEach(b => {
+    b.classList.remove('on', 'exp', 'inc');
+    if (b.dataset.t === state.recurringTxType) b.classList.add('on', state.recurringTxType === 'expense' ? 'exp' : 'inc');
+  });
+
+  renderRecurringCatGrid();
+  renderRecurringAcctPick();
+  $$('#recurring-freq-pick .pick').forEach(p => p.classList.toggle('on', p.dataset.f === state.recurringSelectedFreq));
+
+  openSheet('sheet-recurring');
+  setTimeout(() => $('#recurring-amt-input').focus(), 300);
+}
+
+function saveRecurring() {
+  const amt = parseFloat($('#recurring-amt-input').value);
+  if (!amt || amt <= 0) { toast('请输入金额'); haptic('error'); return; }
+  if (state.accounts.length === 0) { toast('请先添加账户'); haptic('error'); return; }
+
+  const acctBtn = document.querySelector('#recurring-acct-pick .pick.on');
+  const acctId = acctBtn ? acctBtn.dataset.id : state.accounts[0].id;
+  const note = $('#recurring-note').value.trim();
+  const nextDate = $('#recurring-nextdate').value || today();
+  const cats = state.recurringTxType === 'expense' ? EXPENSE_CATS : INCOME_CATS;
+  const cat = cats.find(c => c.id === state.recurringSelectedCat) || cats[0];
+
+  const data = {
+    type: state.recurringTxType,
+    amount: amt,
+    category: cat.id,
+    categoryName: cat.name,
+    categoryIcon: cat.icon,
+    note,
+    accountId: acctId,
+    frequency: state.recurringSelectedFreq,
+    nextDate
+  };
+
+  if (state.editRecurringId) {
+    const r = state.recurringTx.find(x => x.id === state.editRecurringId);
+    if (r) {
+      Object.assign(r, data);
+      r.lastProcessed = null; // reset so nextDate change takes effect
+    }
+    toast('已更新');
+  } else {
+    data.id = genId();
+    data.createdAt = new Date().toISOString();
+    data.lastProcessed = null;
+    state.recurringTx.push(data);
+    toast('已添加');
+  }
+
+  save();
+  closeSheet('sheet-recurring');
+  haptic('success');
+  renderRecurringTx();
+}
+
+function deleteRecurring(id) {
+  if (!confirm('确定删除此周期记账？已生成的流水记录将保留。')) return;
+  state.recurringTx = state.recurringTx.filter(r => r.id !== id);
+  save();
+  closeSheet('sheet-recurring');
+  toast('已删除');
+  haptic('success');
+  renderRecurringTx();
+}
+
+function deleteRecurringCurrent() {
+  if (state.editRecurringId) deleteRecurring(state.editRecurringId);
+}
+
+// Type toggle for recurring editor
+$$('#recurring-type .type-opt').forEach(b => {
+  b.onclick = () => {
+    state.recurringTxType = b.dataset.t;
+    state.recurringSelectedCat = state.recurringTxType === 'expense' ? 'food' : 'salary';
+    $$('#recurring-type .type-opt').forEach(x => { x.classList.remove('on','exp','inc'); });
+    b.classList.add('on', state.recurringTxType === 'expense' ? 'exp' : 'inc');
+    renderRecurringCatGrid();
+  };
+});
+
+// Frequency picker for recurring editor
+$$('#recurring-freq-pick .pick').forEach(p => {
+  p.onclick = () => {
+    $$('#recurring-freq-pick .pick').forEach(x => x.classList.remove('on'));
+    p.classList.add('on');
+    state.recurringSelectedFreq = p.dataset.f;
+  };
+});
+
+// Amount input filter for recurring editor
+$('#recurring-amt-input')?.addEventListener('input', function(e) {
+  this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+});
+
 // ===== Render Functions =====
 function renderOverview() {
   const month = getMonthRange();
@@ -1282,6 +1641,41 @@ function renderOverview() {
     html += `<div class="cbg"><div class="cbb ${isToday?'on':''}" style="height:${pct}%;"></div><span class="cbl">${days[6-i]}</span></div>`;
   }
   bars.innerHTML = html;
+
+  // Budget progress section (top 3 categories)
+  const budgetContainer = $('#overview-budget');
+  if (budgetContainer) {
+    const budgetCats = EXPENSE_CATS.map(cat => {
+      const budget = state.budgets[cat.id] || 0;
+      const spent = getMonthSpendingByCat(cat.id);
+      return { cat, budget, spent };
+    }).filter(item => item.budget > 0)
+      .sort((a, b) => (b.spent / b.budget) - (a.spent / a.budget))
+      .slice(0, 3);
+
+    if (budgetCats.length > 0) {
+      budgetContainer.innerHTML = `
+        <div class="ov-budget">
+          <div class="sec" style="margin-bottom:14px;"><span class="st" style="font-size:16px;">预算进度</span><span class="sa2" onclick="showView('budget')">管理 ›</span></div>
+          ${budgetCats.map(({ cat, budget, spent }) => {
+            const pct = Math.round((spent / budget) * 100);
+            const barColor = pct > 100 ? 'red' : (pct >= 80 ? 'gold' : 'green');
+            const barWidth = Math.min(100, pct);
+            return `<div class="ov-budget-item">
+              <div class="ov-budget-top">
+                <span class="ov-budget-icon">${cat.icon}</span>
+                <span class="ov-budget-name">${cat.name}</span>
+                <span class="ov-budget-val ${pct > 100 ? 'over' : ''}">¥${fmt(Math.round(spent))} / ¥${fmt(budget)}</span>
+              </div>
+              <div class="budget-prog"><div class="budget-prog-fill ${barColor}" style="width:${barWidth}%;"></div></div>
+            </div>`;
+          }).join('')}
+        </div>
+      `;
+    } else {
+      budgetContainer.innerHTML = '';
+    }
+  }
 
   // 最近流水（最近5条）
   const container = $('#overview-tx');
@@ -1481,16 +1875,18 @@ function renderTx() {
   $('#tx-income').textContent = `¥${fmt(Math.round(inc))}`;
   $('#tx-balance').textContent = `¥${fmt(Math.round(inc - exp))}`;
 
-  const filter = document.querySelector('#tx-fp .pl.on')?.dataset.f || 'all';
+  const filter = document.querySelector('#tx-fp .pl.on:not(#tx-tag-pill)')?.dataset.f || 'all';
   let txs = monthTx;
   if (filter === 'expense') txs = txs.filter(t => t.type === 'expense');
   if (filter === 'income') txs = txs.filter(t => t.type === 'income');
   if (filter === 'sub') txs = txs.filter(t => t.isSubscription);
+  if (state.tagFilter) txs = txs.filter(t => Array.isArray(t.tags) && t.tags.includes(state.tagFilter));
   txs.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
 
   const container = $('#tx-list');
   if (txs.length === 0) {
-    container.innerHTML = `<div class="empty-state"><div class="es-icon">📝</div><div class="es-text">暂无记录</div><div class="es-sub">点击 + 记一笔</div></div>`;
+    const hint = state.tagFilter ? `<div class="es-sub">标签 #${state.tagFilter} 无记录</div>` : `<div class="es-sub">点击 + 记一笔</div>`;
+    container.innerHTML = `<div class="empty-state"><div class="es-icon">📝</div><div class="es-text">暂无记录</div>${hint}</div>`;
     return;
   }
 
@@ -1556,6 +1952,9 @@ function renderTx() {
       const iconContent = isSub ? txIconSvg('sub') : txIconSvg(t.category);
       const badge = isSub ? '<span class="tx-badge">订阅</span>' : '';
       const amtClass = t.type === 'income' ? 'in' : 'out';
+      const tagsHtml = (Array.isArray(t.tags) && t.tags.length > 0)
+        ? `<div class="tx-item-tags">${t.tags.map(tg => `<span class="tx-item-tag">#${escapeHtml(tg)}</span>`).join('')}</div>`
+        : '';
 
       html += `<div class="tx-item" onclick="openTxDetail('${t.id}')">
         <div class="tx-item-icon" style="background:${iconBg};">
@@ -1564,6 +1963,7 @@ function renderTx() {
         <div class="tx-item-body">
           <div class="tx-item-name">${t.categoryName} ${badge}</div>
           <div class="tx-item-meta"><span class="tx-acct-dot" style="background:${acctColor};"></span>${acct?.name || '未知'} · ${t.time}</div>
+          ${tagsHtml}
         </div>
         <div class="tx-item-amt ${amtClass}">${t.type==='income'?'+':'-'}¥${fmt(t.amount)}</div>
       </div>`;
@@ -1847,7 +2247,7 @@ function openCardDetail(idx) {
     </div>
     <div class="card-detail-actions">
       <div class="card-detail-btn" onclick="event.stopPropagation();closeCardDetail();openAddTx()">记一笔</div>
-      <div class="card-detail-btn" onclick="event.stopPropagation();toast('转账功能开发中')">转账</div>
+      <div class="card-detail-btn" onclick="event.stopPropagation();closeCardDetail();openTransfer('${a.id}')">转账</div>
       <div class="card-detail-btn" onclick="event.stopPropagation();closeCardDetail();editAccount(${idx})">编辑</div>
     </div>
   `;
@@ -1923,7 +2323,7 @@ function openCardOverlay(acct) {
       </div>
       <div class="bce-actions">
         <div class="bce-btn" onclick="closeCardOverlay();openAddTx()">记一笔</div>
-        <div class="bce-btn" onclick="toast('转账功能开发中')">转账</div>
+        <div class="bce-btn" onclick="closeCardOverlay();openTransfer('${acct.id}')">转账</div>
         <div class="bce-btn" onclick="closeCardOverlay();$('#acct-detail-section').style.display='block'">更多</div>
       </div>
     </div>
@@ -2146,10 +2546,16 @@ function render() {
   renderReports();
   renderQRCodes();
   renderInvoices();
+  renderBudgets();
+  renderSavingsGoals();
+  renderCreditCardBills();
+  renderCalendar();
+  renderRecurringTx();
   updateLockStatus();
   updateNotifStatus();
   updateExrateStatus();
   updateCloudStatus();
+  updateThemeStatus();
   if (state.currentView === 'subdetail') renderSubDetail();
 }
 
@@ -2159,29 +2565,59 @@ $$('#sub-fp .pl').forEach(p => p.onclick = () => {
   p.classList.remove('off'); p.classList.add('on');
   renderSubs();
 });
-$$('#tx-fp .pl').forEach(p => p.onclick = () => {
-  $$('#tx-fp .pl').forEach(x => { x.classList.remove('on'); x.classList.add('off'); });
-  p.classList.remove('off'); p.classList.add('on');
-  renderTx();
+$$('#tx-fp .pl').forEach(p => {
+  if (p.id === 'tx-tag-pill') return; // tag pill handled separately
+  p.onclick = () => {
+    $$('#tx-fp .pl').forEach(x => { if (x.id !== 'tx-tag-pill') { x.classList.remove('on'); x.classList.add('off'); } });
+    p.classList.remove('off'); p.classList.add('on');
+    renderTx();
+  };
 });
 
 // ===== Data Management =====
 function clearAll() {
-  state.accounts = []; state.subscriptions = []; state.transactions = []; state.qrcodes = []; state.invoices = [];
+  state.accounts = []; state.subscriptions = []; state.transactions = []; state.qrcodes = []; state.invoices = []; state.recurringTx = []; state.savingsGoals = [];
   state.settings = { appPassword: null, notifications: false, exRates: { USD: 7.25, EUR: 7.85, GBP: 9.20, JPY: 0.048, HKD: 0.93, TWD: 0.22 }, defaultCurrency: 'CNY' };
   localStorage.removeItem(KEYS.accounts); localStorage.removeItem(KEYS.subscriptions); localStorage.removeItem(KEYS.transactions);
   localStorage.removeItem(KEYS.onboarded); localStorage.removeItem(KEYS.settings); localStorage.removeItem(KEYS.qrcodes);
-  localStorage.removeItem(KEYS.invoices);
+  localStorage.removeItem(KEYS.invoices); localStorage.removeItem(KEYS.recurringTx); localStorage.removeItem(KEYS.savingsGoals);
   render();
 }
 function exportData() {
-  const data = { accounts: state.accounts, subscriptions: state.subscriptions, transactions: state.transactions, qrcodes: state.qrcodes, invoices: state.invoices, settings: state.settings, exportedAt: new Date().toISOString() };
+  const data = { accounts: state.accounts, subscriptions: state.subscriptions, transactions: state.transactions, qrcodes: state.qrcodes, invoices: state.invoices, recurringTx: state.recurringTx, savingsGoals: state.savingsGoals, settings: state.settings, exportedAt: new Date().toISOString() };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url; a.download = `countra-backup-${today()}.json`; a.click();
   URL.revokeObjectURL(url);
   toast('数据已导出');
+  haptic('success');
+}
+function exportCSV() {
+  const headers = ['日期', '时间', '类型', '分类', '金额', '账户', '备注', '标签', '是否订阅'];
+  // Escape a CSV field: wrap in quotes if it contains comma, quote, or newline; double inner quotes.
+  const esc = (v) => {
+    const s = String(v == null ? '' : v);
+    return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  const rows = [headers.map(esc).join(',')];
+  state.transactions.forEach(t => {
+    const acct = state.accounts.find(a => a.id === t.accountId);
+    const acctName = acct ? acct.name : '';
+    const tags = Array.isArray(t.tags) ? t.tags.join(';') : '';
+    const typeLabel = t.type === 'income' ? '收入' : '支出';
+    const catName = t.categoryName || t.category || '';
+    const isSub = t.isSubscription ? '是' : '否';
+    rows.push([t.date || '', t.time || '', typeLabel, catName, t.amount, acctName, t.note || '', tags, isSub].map(esc).join(','));
+  });
+  // BOM prefix (\uFEFF) ensures Excel reads Chinese (UTF-8) correctly
+  const csv = '\uFEFF' + rows.join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `countra-export-${today()}.csv`; a.click();
+  URL.revokeObjectURL(url);
+  toast('CSV已导出');
   haptic('success');
 }
 function importDataPrompt() { $('#import-file').click(); }
@@ -2196,6 +2632,8 @@ $('#import-file').addEventListener('change', e => {
       if (data.transactions) state.transactions = data.transactions;
       if (data.qrcodes) state.qrcodes = data.qrcodes;
       if (data.invoices) state.invoices = data.invoices;
+      if (data.recurringTx) state.recurringTx = data.recurringTx;
+      if (data.savingsGoals) state.savingsGoals = data.savingsGoals;
       if (data.settings) state.settings = { ...state.settings, ...data.settings };
       save(); render(); toast('数据已导入');
       haptic('success');
@@ -2205,9 +2643,23 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '1.9.9';
+const APP_VERSION = '2.0.0';
 const APP_BUILD = '2026.08.08';
 const CHANGELOG = [
+  { ver: '2.0.0', date: '2026-08-08', items: [
+    '预算管理：按分类设置月度预算，实时追踪支出进度与剩余额度',
+    '储蓄目标：创建梦想储蓄计划，记录存入/取出，可视化进度条',
+    '周期交易：自动记录定期收支（工资/房租/会员等），支持按日/周/月/年循环',
+    '账户转账：支持账户间互转，自动生成双向交易记录',
+    '全局搜索：一键搜索流水、订阅、账户，快速定位历史记录',
+    '信用卡账单：信用卡还款日管理与账单追踪',
+    '标签系统：交易自定义标签，支持按标签筛选流水',
+    '财务日历：日历视图展示每日收支流水，直观查看资金流向',
+    'CSV导出：一键导出流水数据为CSV格式，兼容Excel',
+    '深浅主题：支持深色/浅色/跟随系统三种主题模式切换',
+    'PWA快捷方式：桌面长按图标直达记账/订阅/AI/预算/日历/搜索',
+    '全面性能优化与UI细节打磨'
+  ]},
   { ver: '1.9.9', date: '2026-08-08', items: [
     '应用更名：SubPilot → Countra（转便数快）',
     '更新应用名称、图标、标题等所有品牌标识',
@@ -2514,6 +2966,7 @@ async function forceUpdate() {
 // ===== Init =====
 function init() {
   load();
+  applyTheme();
 
   // 动态设置版本号显示（避免SW缓存导致版本号不更新）
   const verEl = document.getElementById('ver-display');
@@ -2523,6 +2976,8 @@ function init() {
 
   // Process auto-deductions after data is loaded
   processAutoDeductions();
+  // Process recurring transactions
+  processRecurringTx();
 
   // Register SW
   if ('serviceWorker' in navigator) {
@@ -2670,6 +3125,164 @@ function closeAIChat() {
   overlay.style.top = '';
 }
 
+// ===== Global Search =====
+let searchDebounceTimer = null;
+const SEARCH_EMPTY_HTML = `<div class="search-empty"><div class="es-icon">🔍</div><div class="es-text">搜索流水、订阅、账户...</div></div>`;
+const SEARCH_NO_RESULT_HTML = `<div class="search-empty"><div class="es-icon">🔍</div><div class="es-text">未找到相关结果</div></div>`;
+
+function openSearch() {
+  const overlay = $('#search-overlay');
+  overlay.classList.add('on');
+  $('#search-input').value = '';
+  $('#search-clear').classList.remove('show');
+  $('#search-results').innerHTML = SEARCH_EMPTY_HTML;
+  setTimeout(() => $('#search-input').focus(), 300);
+  haptic('light');
+}
+
+function closeSearch() {
+  $('#search-overlay').classList.remove('on');
+  if (searchDebounceTimer) { clearTimeout(searchDebounceTimer); searchDebounceTimer = null; }
+  haptic('light');
+}
+
+function onSearchInput() {
+  const val = $('#search-input').value;
+  $('#search-clear').classList.toggle('show', !!val);
+  if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+  searchDebounceTimer = setTimeout(() => doSearch(val), 300);
+}
+
+function clearSearchInput() {
+  $('#search-input').value = '';
+  $('#search-clear').classList.remove('show');
+  $('#search-results').innerHTML = SEARCH_EMPTY_HTML;
+  if (searchDebounceTimer) { clearTimeout(searchDebounceTimer); searchDebounceTimer = null; }
+  $('#search-input').focus();
+  haptic('light');
+}
+
+function doSearch(query) {
+  query = (query || '').trim().toLowerCase();
+  if (!query) {
+    $('#search-results').innerHTML = SEARCH_EMPTY_HTML;
+    return;
+  }
+
+  // Search transactions: note / categoryName / amount
+  const txResults = state.transactions.filter(t => {
+    return (t.note && t.note.toLowerCase().includes(query)) ||
+           (t.categoryName && t.categoryName.toLowerCase().includes(query)) ||
+           (String(t.amount).includes(query));
+  }).slice(0, 20);
+
+  // Search subscriptions: name / brand name
+  const subResults = state.subscriptions.filter(s => {
+    return (s.name && s.name.toLowerCase().includes(query)) ||
+           (s.brand && s.brand.name && s.brand.name.toLowerCase().includes(query));
+  });
+
+  // Search accounts: name / cardNumber
+  const acctResults = state.accounts.filter(a => {
+    return (a.name && a.name.toLowerCase().includes(query)) ||
+           (a.cardNumber && String(a.cardNumber).toLowerCase().includes(query));
+  });
+
+  const total = txResults.length + subResults.length + acctResults.length;
+  if (total === 0) {
+    $('#search-results').innerHTML = SEARCH_NO_RESULT_HTML;
+    return;
+  }
+
+  let html = '';
+
+  // Transactions group
+  if (txResults.length > 0) {
+    html += `<div class="search-group"><div class="search-group-title">流水 · ${txResults.length}</div>`;
+    txResults.forEach(t => {
+      const acct = state.accounts.find(a => a.id === t.accountId);
+      const amtClass = t.type === 'income' ? 'in' : 'out';
+      const icon = t.categoryIcon || (t.isSubscription ? '🔄' : '💸');
+      const nameText = t.note ? `${t.categoryName} · ${t.note}` : (t.categoryName || '未分类');
+      html += `<div class="search-item" onclick="onSearchTxClick('${t.id}')">
+        <div class="search-item-icon">${icon}</div>
+        <div class="search-item-body">
+          <div class="search-item-name">${nameText}</div>
+          <div class="search-item-meta">${t.date} · ${acct ? acct.name : '未知'}${t.isSubscription ? ' · 订阅' : ''}</div>
+        </div>
+        <div class="search-item-amt ${amtClass}">${t.type==='income'?'+':'-'}¥${fmt(t.amount)}</div>
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  // Subscriptions group
+  if (subResults.length > 0) {
+    html += `<div class="search-group"><div class="search-group-title">订阅 · ${subResults.length}</div>`;
+    subResults.forEach(s => {
+      const iconHtml = s.brand ? brandIconSvg(s.brand) : letterIcon((s.name[0]||'?').toUpperCase(), 'rgba(255,255,255,0.4)');
+      const cur = s.currency || 'CNY';
+      const curSymbols = { CNY: '¥', USD: '$', EUR: '€', GBP: '£', JPY: '¥', HKD: 'HK$', TWD: 'NT$' };
+      const curSym = curSymbols[cur] || '¥';
+      html += `<div class="search-item" onclick="onSearchSubClick('${s.id}')">
+        <div class="search-item-icon">${iconHtml}</div>
+        <div class="search-item-body">
+          <div class="search-item-name">${s.name}</div>
+          <div class="search-item-meta">${curSym}${fmt(s.price)}${cycleToLabel(s.cycle)} · 下次 ${s.nextDate}</div>
+        </div>
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  // Accounts group
+  if (acctResults.length > 0) {
+    html += `<div class="search-group"><div class="search-group-title">账户 · ${acctResults.length}</div>`;
+    acctResults.forEach(a => {
+      const theme = CARD_THEMES[a.color] || CARD_THEMES.gold;
+      const acctType = ACCOUNT_TYPES[a.type] || { name: '账户' };
+      const metaText = a.cardNumber ? `尾号 ${a.cardNumber}` : acctType.name;
+      html += `<div class="search-item" onclick="onSearchAcctClick()">
+        <div class="search-item-icon" style="background:${theme.accent}22;color:${theme.accent};">${acctType.name[0]}</div>
+        <div class="search-item-body">
+          <div class="search-item-name">${a.name}</div>
+          <div class="search-item-meta">${metaText}</div>
+        </div>
+        <div class="search-item-amt">¥${fmt(Math.round(a.balance))}</div>
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  $('#search-results').innerHTML = html;
+}
+
+function onSearchTxClick(txId) {
+  closeSearch();
+  openTxDetail(txId);
+}
+
+function onSearchSubClick(subId) {
+  closeSearch();
+  state.currentSubId = subId;
+  showView('subdetail');
+}
+
+function onSearchAcctClick() {
+  closeSearch();
+  showView('accounts');
+}
+
+// Enter key to search immediately
+$('#search-input')?.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+    doSearch(this.value);
+    this.blur();
+  }
+});
+
 function renderAIMessages() {
   const container = $('#ai-messages');
   if (aiState.messages.length === 0) {
@@ -2732,6 +3345,7 @@ function openTxDetail(txId) {
         </div>
         ${t.note ? `<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:var(--t3);">备注</span><span style="font-size:13px;color:var(--t1);">${t.note}</span></div>` : ''}
         ${t.isSubscription ? `<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:var(--t3);">类型</span><span style="font-size:12px;padding:2px 8px;border-radius:6px;background:var(--gold-bg);color:var(--gold);font-weight:600;">订阅自动扣款</span></div>` : ''}
+        ${(Array.isArray(t.tags) && t.tags.length > 0) ? `<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;"><span style="font-size:13px;color:var(--t3);flex-shrink:0;">标签</span><span style="font-size:12px;display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;">${t.tags.map(tg => `<span style="padding:3px 9px;border-radius:8px;background:var(--card2);color:var(--gold);border:1px solid var(--gold-bd);font-weight:500;">#${escapeHtml(tg)}</span>`).join('')}</span></div>` : ''}
       </div>
     </div>
     <div class="card-detail-actions">
@@ -3092,6 +3706,38 @@ function updateLockStatus() {
   const el = $('#lock-status');
   if (!el) return;
   el.textContent = state.settings.appPassword ? '已开启 ›' : '未开启 ›';
+}
+
+// ===== Theme Switching =====
+const THEME_LABELS = { dark: '深色', light: '浅色', auto: '跟随系统' };
+const THEME_ORDER = ['dark', 'light', 'auto'];
+
+function applyTheme() {
+  const theme = state.settings.theme || 'dark';
+  document.documentElement.setAttribute('data-theme', theme);
+  // Sync the status-bar / PWA theme-color meta to the effective theme
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) {
+    const isLight = theme === 'light' || (theme === 'auto' && window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches);
+    meta.content = isLight ? '#f5f5f7' : '#000000';
+  }
+}
+
+function toggleTheme() {
+  const cur = state.settings.theme || 'dark';
+  const idx = THEME_ORDER.indexOf(cur);
+  state.settings.theme = THEME_ORDER[(idx + 1) % THEME_ORDER.length];
+  save();
+  applyTheme();
+  updateThemeStatus();
+  toast(`主题已切换为${THEME_LABELS[state.settings.theme]}`);
+  haptic('medium');
+}
+
+function updateThemeStatus() {
+  const el = $('#theme-status');
+  if (!el) return;
+  el.textContent = (THEME_LABELS[state.settings.theme] || '深色') + ' ›';
 }
 
 // Build the rotary wheel with digits 0-9
@@ -4500,5 +5146,715 @@ function markLocalChange() {
 }
 
 // ===== Update render() to include new views =====
+
+// ===== Budget Management =====
+function getMonthSpendingByCat(catId) {
+  const month = getMonthRange();
+  return state.transactions
+    .filter(t => t.type === 'expense' && t.category === catId &&
+            t.date >= month.start && t.date <= month.end && !t.isTransfer)
+    .reduce((sum, t) => sum + t.amount, 0);
+}
+
+function openBudgetEditor(catId) {
+  const cat = EXPENSE_CATS.find(c => c.id === catId);
+  if (!cat) return;
+  state.editingBudgetCat = catId;
+  $('#budget-editor-cat-name').innerHTML = `${cat.icon} ${cat.name}`;
+  const current = state.budgets[catId] || '';
+  $('#budget-editor-input').value = current;
+  const spent = getMonthSpendingByCat(catId);
+  $('#budget-editor-spent').textContent = '¥' + fmt(Math.round(spent));
+  const clearWrap = $('#budget-editor-clear-wrap');
+  if (clearWrap) clearWrap.style.display = current ? 'block' : 'none';
+  openSheet('sheet-budget-editor');
+  haptic('light');
+  setTimeout(() => $('#budget-editor-input').focus(), 300);
+}
+
+function saveBudget(catId, amount) {
+  if (amount && amount > 0) {
+    state.budgets[catId] = amount;
+  } else {
+    delete state.budgets[catId];
+  }
+  save();
+  render();
+  haptic('success');
+}
+
+function saveBudgetFromEditor() {
+  const raw = $('#budget-editor-input').value.trim();
+  const amount = parseFloat(raw);
+  if (raw && (isNaN(amount) || amount < 0)) { toast('请输入有效金额'); haptic('error'); return; }
+  saveBudget(state.editingBudgetCat, amount);
+  closeSheet('sheet-budget-editor');
+  toast('预算已保存');
+}
+
+function clearBudgetFromEditor() {
+  delete state.budgets[state.editingBudgetCat];
+  save();
+  closeSheet('sheet-budget-editor');
+  render();
+  toast('预算已清除');
+  haptic('medium');
+}
+
+function renderBudgets() {
+  const listEl = $('#budget-list');
+  if (!listEl) return;
+  const summaryEl = $('#budget-summary-container');
+  const subEl = $('#budget-sub');
+
+  let totalBudget = 0;
+  let totalSpent = 0;
+
+  const catData = EXPENSE_CATS.map(cat => {
+    const budget = state.budgets[cat.id] || 0;
+    const spent = getMonthSpendingByCat(cat.id);
+    totalBudget += budget;
+    totalSpent += spent;
+    return { cat, budget, spent };
+  });
+
+  if (subEl) {
+    const month = getMonthRange();
+    const count = Object.keys(state.budgets).filter(k => state.budgets[k] > 0).length;
+    subEl.textContent = `${month.label} · ${count}项预算`;
+  }
+
+  // Render summary
+  if (summaryEl) {
+    const remain = totalBudget - totalSpent;
+    const pct = totalBudget > 0 ? Math.round((totalSpent / totalBudget) * 100) : 0;
+    const barColor = totalBudget === 0 ? 'empty' : (pct > 100 ? 'red' : (pct >= 80 ? 'gold' : 'green'));
+    const remainClass = remain < 0 ? 'over' : 'ok';
+    const remainText = remain >= 0 ? '剩余 ¥' + fmt(Math.round(remain)) : '超支 ¥' + fmt(Math.round(-remain));
+    summaryEl.innerHTML = totalBudget > 0 ? `
+      <div class="budget-summary">
+        <div class="budget-summary-label">本月总预算</div>
+        <div class="budget-summary-vals">
+          <span class="budget-summary-spent">¥${fmt(Math.round(totalSpent))}</span>
+          <span class="budget-summary-divider">/</span>
+          <span class="budget-summary-total">¥${fmt(Math.round(totalBudget))}</span>
+        </div>
+        <div class="budget-prog"><div class="budget-prog-fill ${barColor}" style="width:${Math.min(100,pct)}%;"></div></div>
+        <div class="budget-summary-meta">
+          <span>已使用 ${pct}%</span>
+          <span class="budget-summary-remain ${remainClass}">${remainText}</span>
+        </div>
+      </div>
+    ` : `
+      <div class="budget-summary">
+        <div class="budget-summary-label">本月总预算</div>
+        <div class="budget-summary-vals">
+          <span class="budget-summary-spent" style="font-size:22px;color:var(--t2);">点击下方分类设置预算</span>
+        </div>
+      </div>
+    `;
+  }
+
+  // Render category list
+  listEl.innerHTML = catData.map(({ cat, budget, spent }) => {
+    const pct = budget > 0 ? Math.round((spent / budget) * 100) : 0;
+    const barColor = budget === 0 ? 'empty' : (pct > 100 ? 'red' : (pct >= 80 ? 'gold' : 'green'));
+    const barWidth = budget > 0 ? Math.min(100, pct) : 0;
+    const budgetText = budget > 0 ? `¥${fmt(budget)}` : '未设置';
+    const pctColor = budget === 0 ? 'var(--t3)' : (pct > 100 ? 'var(--red)' : (pct >= 80 ? 'var(--gold)' : 'var(--green)'));
+    const pctText = budget > 0 ? (pct > 100 ? '超支' + (pct - 100) + '%' : pct + '%') : '—';
+    const spentText = budget > 0 ? `已使用 ${pct}%` : '点击设置预算';
+    return `<div class="budget-cat" onclick="openBudgetEditor('${cat.id}')">
+      <div class="budget-cat-top">
+        <div class="budget-cat-icon">${cat.icon}</div>
+        <div class="budget-cat-info">
+          <div class="budget-cat-name">${cat.name}</div>
+          <div class="budget-cat-amt">预算 ${budgetText} · 已花 ¥${fmt(Math.round(spent))}</div>
+        </div>
+        <div class="budget-cat-edit">${budget > 0 ? '编辑' : '设置'}</div>
+      </div>
+      <div class="budget-prog"><div class="budget-prog-fill ${barColor}" style="width:${barWidth}%;"></div></div>
+      <div class="budget-cat-bottom">
+        <span class="budget-cat-spent">${spentText}</span>
+        <span class="budget-cat-pct" style="color:${pctColor};">${pctText}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ===== Account Transfer =====
+function openTransfer(fromAccountId) {
+  if (state.accounts.length < 2) { toast('至少需要两个账户才能转账'); haptic('error'); return; }
+  const fromAcct = state.accounts.find(a => a.id === fromAccountId);
+  if (!fromAcct) { toast('账户不存在'); return; }
+  state.transferFromId = fromAccountId;
+
+  // Display from account info
+  $('#transfer-from-display').innerHTML =
+    `<span class="transfer-from-icon">💸</span> ${fromAcct.name}` +
+    `<span class="transfer-from-bal">余额 ¥${fmt(Math.round(fromAcct.balance))}</span>`;
+
+  // Populate to account dropdown (exclude from account)
+  const toSelect = $('#transfer-to');
+  toSelect.innerHTML = state.accounts
+    .filter(a => a.id !== fromAccountId)
+    .map(a => `<option value="${a.id}">${a.name} · ¥${fmt(Math.round(a.balance))}</option>`)
+    .join('');
+
+  // Reset input fields
+  $('#transfer-amt').value = '';
+  $('#transfer-note').value = '';
+
+  openSheet('sheet-transfer');
+  haptic('light');
+  setTimeout(() => $('#transfer-amt').focus(), 300);
+}
+
+function saveTransfer() {
+  const amt = parseFloat($('#transfer-amt').value);
+  if (!amt || amt <= 0) { toast('请输入有效金额'); haptic('error'); return; }
+
+  const fromId = state.transferFromId;
+  const toId = $('#transfer-to').value;
+  if (!fromId || !toId) { toast('请选择账户'); haptic('error'); return; }
+  if (fromId === toId) { toast('转出和转入账户不能相同'); haptic('error'); return; }
+
+  const fromAcct = state.accounts.find(a => a.id === fromId);
+  const toAcct = state.accounts.find(a => a.id === toId);
+  if (!fromAcct || !toAcct) { toast('账户不存在'); haptic('error'); return; }
+
+  const note = $('#transfer-note').value.trim();
+  const date = today();
+  const now = new Date();
+  const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  const pairId = genId();
+
+  // Expense from source account
+  const outTx = {
+    id: genId(), type: 'expense', amount: amt,
+    category: 'other', categoryName: '转账', categoryIcon: '💸',
+    note: note || `转账至${toAcct.name}`,
+    accountId: fromId, date, time,
+    timestamp: now.toISOString(),
+    isSubscription: false,
+    isTransfer: true,
+    transferPair: pairId,
+    transferTo: toId
+  };
+
+  // Income to target account
+  const inTx = {
+    id: genId(), type: 'income', amount: amt,
+    category: 'other_in', categoryName: '转账', categoryIcon: '💸',
+    note: note || `来自${fromAcct.name}转账`,
+    accountId: toId, date, time,
+    timestamp: now.toISOString(),
+    isSubscription: false,
+    isTransfer: true,
+    transferPair: pairId,
+    transferFrom: fromId
+  };
+
+  state.transactions.unshift(outTx, inTx);
+
+  // Update both account balances
+  fromAcct.balance -= amt;
+  toAcct.balance += amt;
+
+  save();
+  closeSheet('sheet-transfer');
+  toast('转账成功');
+  haptic('success');
+  render();
+}
+
+// ===== Savings Goals =====
+function renderSavingsGoals() {
+  const listEl = $('#savings-list');
+  if (!listEl) return;
+  const summaryEl = $('#savings-summary-container');
+  const subEl = $('#savings-sub');
+
+  const totalSaved = state.savingsGoals.reduce((s, g) => s + (g.currentAmount || 0), 0);
+  const totalTarget = state.savingsGoals.reduce((s, g) => s + (g.targetAmount || 0), 0);
+
+  if (subEl) {
+    subEl.textContent = state.savingsGoals.length > 0
+      ? `${state.savingsGoals.length}个目标 · 已存 ¥${fmt(Math.round(totalSaved))}`
+      : '积少成多';
+  }
+
+  // Render summary
+  if (summaryEl) {
+    const pct = totalTarget > 0 ? Math.round((totalSaved / totalTarget) * 100) : 0;
+    summaryEl.innerHTML = state.savingsGoals.length > 0 ? `
+      <div class="savings-summary">
+        <div class="savings-summary-label">储蓄总进度</div>
+        <div class="savings-summary-vals">
+          <span class="savings-summary-saved">¥${fmt(Math.round(totalSaved))}</span>
+          <span class="savings-summary-divider">/</span>
+          <span class="savings-summary-total">¥${fmt(Math.round(totalTarget))}</span>
+        </div>
+        <div class="savings-summary-meta">总体完成 ${pct}%</div>
+      </div>
+    ` : '';
+  }
+
+  // Render list
+  if (state.savingsGoals.length === 0) {
+    listEl.innerHTML = `<div class="empty-state"><div class="es-icon">🎯</div><div class="es-text">暂无储蓄目标</div><div class="es-sub">点击 + 创建第一个目标</div></div>`;
+    return;
+  }
+
+  listEl.innerHTML = state.savingsGoals.map(g => {
+    const pct = g.targetAmount > 0 ? Math.min(100, Math.round((g.currentAmount / g.targetAmount) * 100)) : 0;
+    const isDone = g.targetAmount > 0 && g.currentAmount >= g.targetAmount;
+    const circumference = 2 * Math.PI * 26;
+    const dashOffset = circumference * (1 - pct / 100);
+
+    let daysText = '';
+    let daysClass = '';
+    if (g.deadline) {
+      const days = daysBetween(today(), g.deadline);
+      if (days < 0) {
+        daysText = '已过期';
+        daysClass = 'urgent';
+      } else if (days === 0) {
+        daysText = '今天截止';
+        daysClass = 'urgent';
+      } else if (days <= 7) {
+        daysText = `还剩 ${days} 天`;
+        daysClass = 'urgent';
+      } else {
+        daysText = `还剩 ${days} 天`;
+      }
+    } else {
+      daysText = '无截止日期';
+    }
+    if (isDone) { daysClass = 'done'; daysText = '已达成 🎉'; }
+
+    const acct = g.accountId ? state.accounts.find(a => a.id === g.accountId) : null;
+    const acctText = acct ? ` · ${acct.name}` : '';
+
+    return `<div class="savings-item" onclick="openSavingsEditor('${g.id}')">
+      <div class="savings-ring">
+        <svg width="64" height="64" viewBox="0 0 64 64">
+          <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="5"/>
+          <circle cx="32" cy="32" r="26" fill="none" stroke="var(--gold)" stroke-width="5" stroke-linecap="round"
+            stroke-dasharray="${circumference}" stroke-dashoffset="${dashOffset}"/>
+        </svg>
+        <div class="savings-ring-pct">${pct}%</div>
+      </div>
+      <div class="savings-info">
+        <div class="savings-name">${g.name}</div>
+        <div class="savings-amt"><span class="cur">¥${fmt(g.currentAmount || 0)}</span> / ¥${fmt(g.targetAmount || 0)}${acctText}</div>
+        <div class="savings-days ${daysClass}">${daysText}</div>
+      </div>
+      <div class="savings-actions">
+        <div class="savings-act-btn" onclick="event.stopPropagation();openSavingsEditor('${g.id}')" title="编辑">
+          <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </div>
+        <div class="savings-act-btn" onclick="event.stopPropagation();deleteSavingsGoal('${g.id}')" title="删除">
+          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openSavingsEditor(id) {
+  const isNew = !id;
+  state.editSavingsId = id || null;
+
+  $('#savings-sheet-title').textContent = isNew ? '添加储蓄目标' : '编辑储蓄目标';
+  $('#savings-delete-btn').style.display = isNew ? 'none' : 'block';
+
+  // Populate account select
+  const acctSelect = $('#savings-account');
+  acctSelect.innerHTML = '<option value="">不关联账户</option>' +
+    state.accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+
+  if (isNew) {
+    $('#savings-name').value = '';
+    $('#savings-target').value = '';
+    $('#savings-current').value = '0';
+    $('#savings-account').value = '';
+    $('#savings-deadline').value = '';
+  } else {
+    const g = state.savingsGoals.find(x => x.id === id);
+    if (!g) return;
+    $('#savings-name').value = g.name || '';
+    $('#savings-target').value = g.targetAmount || '';
+    $('#savings-current').value = g.currentAmount || 0;
+    $('#savings-account').value = g.accountId || '';
+    $('#savings-deadline').value = g.deadline || '';
+  }
+
+  openSheet('sheet-savings');
+  setTimeout(() => $('#savings-name').focus(), 300);
+}
+
+function saveSavingsGoal() {
+  const name = $('#savings-name').value.trim();
+  if (!name) { toast('请输入目标名称'); haptic('error'); return; }
+  const targetAmount = parseFloat($('#savings-target').value);
+  if (!targetAmount || targetAmount <= 0) { toast('请输入目标金额'); haptic('error'); return; }
+  const currentAmount = parseFloat($('#savings-current').value) || 0;
+  const accountId = $('#savings-account').value || null;
+  const deadline = $('#savings-deadline').value || null;
+
+  const data = { name, targetAmount, currentAmount, accountId, deadline };
+
+  if (state.editSavingsId) {
+    const g = state.savingsGoals.find(x => x.id === state.editSavingsId);
+    if (g) Object.assign(g, data);
+    toast('目标已更新');
+  } else {
+    data.id = genId();
+    data.createdAt = new Date().toISOString();
+    state.savingsGoals.push(data);
+    toast('目标已添加');
+  }
+
+  save();
+  closeSheet('sheet-savings');
+  haptic('success');
+  renderSavingsGoals();
+}
+
+function deleteSavingsGoal(id) {
+  if (!confirm('确定删除此储蓄目标？')) return;
+  state.savingsGoals = state.savingsGoals.filter(g => g.id !== id);
+  save();
+  closeSheet('sheet-savings');
+  toast('已删除');
+  haptic('success');
+  renderSavingsGoals();
+}
+
+function deleteSavingsGoalCurrent() {
+  if (state.editSavingsId) deleteSavingsGoal(state.editSavingsId);
+}
+
+// ===== Credit Card Bills =====
+function getBillingCycleRange(billingDay) {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth();
+  const d = now.getDate();
+
+  let startDate, endDate;
+  if (d >= billingDay) {
+    // Current cycle started this month on billingDay
+    startDate = new Date(y, m, billingDay);
+    endDate = new Date(y, m + 1, billingDay);
+  } else {
+    // Current cycle started last month on billingDay
+    startDate = new Date(y, m - 1, billingDay);
+    endDate = new Date(y, m, billingDay);
+  }
+  return {
+    start: startDate.toISOString().slice(0, 10),
+    end: endDate.toISOString().slice(0, 10),
+    startDate,
+    endDate
+  };
+}
+
+function getBillingCycleSpending(accountId, billingDay) {
+  const range = getBillingCycleRange(billingDay);
+  return state.transactions
+    .filter(t => t.accountId === accountId && t.type === 'expense' && t.date >= range.start && t.date < range.end)
+    .reduce((s, t) => s + t.amount, 0);
+}
+
+function renderCreditCardBills() {
+  const listEl = $('#cc-bills-list');
+  if (!listEl) return;
+
+  // Filter accounts that have billingDay set
+  const ccAccounts = state.accounts.filter(a => a.billingDay != null && a.billingDay > 0);
+
+  const subEl = $('#ccbills-sub');
+  if (subEl) {
+    subEl.textContent = ccAccounts.length > 0
+      ? `${ccAccounts.length}张信用卡`
+      : '账单周期管理';
+  }
+
+  if (ccAccounts.length === 0) {
+    listEl.innerHTML = `<div class="empty-state"><div class="es-icon">💳</div><div class="es-text">暂无信用卡账单</div><div class="es-sub">在账户编辑中设置账单日和还款日</div></div>`;
+    return;
+  }
+
+  listEl.innerHTML = ccAccounts.map(a => {
+    const billingDay = a.billingDay;
+    const paymentDay = a.paymentDay || billingDay;
+    const range = getBillingCycleRange(billingDay);
+
+    // Calculate cycle spending
+    const spent = getBillingCycleSpending(a.id, billingDay);
+
+    // Calculate payment due date
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth();
+    let dueDate;
+    // If paymentDay >= billingDay, due is in the same cycle month as end
+    // If paymentDay < billingDay, due is in the month after billing day
+    if (paymentDay >= billingDay) {
+      // Due date is paymentDay in the end date's month
+      const endMonth = range.endDate.getMonth();
+      const endYear = range.endDate.getFullYear();
+      dueDate = new Date(endYear, endMonth, paymentDay);
+    } else {
+      // Due date is paymentDay in the month after the end date's month
+      const endMonth = range.endDate.getMonth();
+      const endYear = range.endDate.getFullYear();
+      dueDate = new Date(endYear, endMonth + 1, paymentDay);
+    }
+
+    const dueStr = dueDate.toISOString().slice(0, 10);
+    const daysToDue = daysBetween(today(), dueStr);
+
+    let dueDaysText, dueDaysClass;
+    if (daysToDue < 0) {
+      dueDaysText = `已逾期 ${-daysToDue} 天`;
+      dueDaysClass = 'overdue';
+    } else if (daysToDue === 0) {
+      dueDaysText = '今天还款';
+      dueDaysClass = 'urgent';
+    } else if (daysToDue <= 3) {
+      dueDaysText = `${daysToDue} 天后还款`;
+      dueDaysClass = 'urgent';
+    } else {
+      dueDaysText = `${daysToDue} 天后还款`;
+      dueDaysClass = '';
+    }
+
+    // Cycle progress
+    const totalCycleDays = daysBetween(range.start, range.end);
+    const elapsedDays = daysBetween(range.start, today());
+    const cyclePct = Math.min(100, Math.max(0, Math.round((elapsedDays / totalCycleDays) * 100)));
+
+    const last4 = a.cardNumber ? `**** ${a.cardNumber}` : '';
+    const fmtStart = new Date(range.start).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+    const fmtEnd = new Date(range.end).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+    const fmtDue = dueDate.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+
+    return `<div class="cc-bill-item">
+      <div class="cc-bill-top">
+        <div>
+          <div class="cc-bill-name">${a.name}</div>
+          ${last4 ? `<div class="cc-bill-last4">${last4}</div>` : ''}
+        </div>
+        <div style="font-size:11px;color:var(--t3);text-align:right;">
+          账单日 ${billingDay}<br>还款日 ${paymentDay}
+        </div>
+      </div>
+      <div class="cc-bill-cycle">本期账单周期：${fmtStart} — ${fmtEnd}</div>
+      <div class="cc-bill-spent-row">
+        <span class="cc-bill-spent">¥${fmt(Math.round(spent))}</span>
+        <span class="cc-bill-spent-label">本期消费</span>
+      </div>
+      <div class="cc-bill-due">
+        <span class="cc-bill-due-date">还款日：${fmtDue}</span>
+        <span class="cc-bill-due-days ${dueDaysClass}">${dueDaysText}</span>
+      </div>
+      <div class="cc-bill-prog"><div class="cc-bill-prog-fill" style="width:${cyclePct}%;"></div></div>
+      <div class="cc-bill-prog-meta">
+        <span>账单周期进度 ${cyclePct}%</span>
+        <span>已过 ${elapsedDays} / ${totalCycleDays} 天</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ===== Financial Calendar =====
+function getCalendarEvents(year, month) {
+  // month is 0-indexed
+  const start = new Date(year, month, 1).toISOString().slice(0, 10);
+  const end = new Date(year, month + 1, 0).toISOString().slice(0, 10);
+  const events = {};
+
+  const addEvent = (dateStr, ev) => {
+    if (!events[dateStr]) events[dateStr] = [];
+    events[dateStr].push(ev);
+  };
+
+  // Subscription renewals (gold dot)
+  state.subscriptions.forEach(s => {
+    if (s.nextDate >= start && s.nextDate <= end) {
+      const acct = state.accounts.find(a => a.id === s.accountId);
+      addEvent(s.nextDate, {
+        type: 'sub',
+        dotColor: 'gold',
+        label: s.name + ' 续费',
+        amount: s.price,
+        currency: s.currency || 'CNY',
+        meta: acct ? acct.name : '订阅'
+      });
+    }
+  });
+
+  // Recurring transactions (blue dot)
+  state.recurringTx.forEach(r => {
+    if (r.nextDate >= start && r.nextDate <= end) {
+      const acct = state.accounts.find(a => a.id === r.accountId);
+      addEvent(r.nextDate, {
+        type: 'recurring',
+        dotColor: 'blue',
+        label: r.categoryName + '（' + (FREQ_LABELS[r.frequency] || r.frequency) + '）',
+        amount: r.amount,
+        income: r.type === 'income',
+        meta: acct ? acct.name : '周期记账'
+      });
+    }
+  });
+
+  // Transactions (red=expense / green=income)
+  state.transactions.forEach(t => {
+    if (t.date >= start && t.date <= end) {
+      addEvent(t.date, {
+        type: 'tx',
+        dotColor: t.type === 'income' ? 'green' : 'red',
+        label: t.categoryName || '交易',
+        amount: t.amount,
+        income: t.type === 'income',
+        time: t.time,
+        meta: t.isSubscription ? '订阅扣款' : (t.note || '')
+      });
+    }
+  });
+
+  return events;
+}
+
+function renderCalendar() {
+  const grid = $('#cal-grid');
+  const labelEl = $('#cal-month-label');
+  if (!grid || !labelEl) return;
+
+  const y = state.calendarYear;
+  const m = state.calendarMonth;
+  labelEl.textContent = `${y}年${m + 1}月`;
+
+  // Default selected day to today if within the viewed month
+  if (!state.calendarSelectedDay) {
+    const now = new Date();
+    if (now.getFullYear() === y && now.getMonth() === m) {
+      state.calendarSelectedDay = today();
+    }
+  }
+
+  const events = getCalendarEvents(y, m);
+  const firstDay = new Date(y, m, 1).getDay(); // 0=Sunday
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  const todayStr = today();
+
+  let html = '';
+  // Leading empty cells
+  for (let i = 0; i < firstDay; i++) {
+    html += `<div class="cal-cell empty"></div>`;
+  }
+  // Day cells
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const dayEvents = events[dateStr] || [];
+    const isToday = dateStr === todayStr;
+    const isSelected = dateStr === state.calendarSelectedDay;
+    const classes = ['cal-cell'];
+    if (isToday) classes.push('today');
+    if (isSelected) classes.push('selected');
+
+    // Build dots (deduplicate by color to avoid clutter, max 4)
+    const dotColors = [];
+    const seen = new Set();
+    dayEvents.forEach(ev => {
+      if (!seen.has(ev.dotColor)) { seen.add(ev.dotColor); dotColors.push(ev.dotColor); }
+    });
+    const dotsHtml = dotColors.map(c => `<span class="cal-dot ${c}"></span>`).join('');
+
+    html += `<div class="${classes.join(' ')}" onclick="selectCalendarDay('${dateStr}')">
+      <div class="cal-day-num">${d}</div>
+      ${dotsHtml ? `<div class="cal-dots">${dotsHtml}</div>` : ''}
+    </div>`;
+  }
+  // Trailing empty cells to complete the last week row
+  const totalCells = firstDay + daysInMonth;
+  const trailing = (7 - (totalCells % 7)) % 7;
+  for (let i = 0; i < trailing; i++) {
+    html += `<div class="cal-cell empty"></div>`;
+  }
+
+  grid.innerHTML = html;
+  renderCalendarEvents(state.calendarSelectedDay, events);
+}
+
+function renderCalendarEvents(dayStr, events) {
+  const el = $('#cal-events');
+  if (!el) return;
+  if (!events) events = getCalendarEvents(state.calendarYear, state.calendarMonth);
+
+  if (!dayStr) {
+    el.innerHTML = `<div class="cal-empty-events">点击日期查看当天事件</div>`;
+    return;
+  }
+
+  const dayEvents = events[dayStr] || [];
+  const d = new Date(dayStr);
+  const label = `${d.getMonth() + 1}月${d.getDate()}日 · 周${['日','一','二','三','四','五','六'][d.getDay()]}`;
+
+  if (dayEvents.length === 0) {
+    el.innerHTML = `<div class="cal-events-title">${label}</div><div class="cal-empty-events">当天暂无财务事件</div>`;
+    return;
+  }
+
+  // Sort: subscriptions & recurring first, then transactions by time
+  const order = { sub: 0, recurring: 1, tx: 2 };
+  dayEvents.sort((a, b) => (order[a.type] - order[b.type]) || (a.time || '').localeCompare(b.time || ''));
+
+  let html = `<div class="cal-events-title">${label} · ${dayEvents.length}项</div>`;
+  dayEvents.forEach(ev => {
+    const amtText = ev.amount != null ? (ev.income ? '+' : '-') + '¥' + fmt(ev.amount) : '';
+    const amtColor = ev.income ? 'var(--green)' : (ev.dotColor === 'gold' ? 'var(--gold)' : (ev.dotColor === 'blue' ? '#3b82f6' : 'var(--red)'));
+    html += `<div class="cal-event">
+      <span class="cal-event-dot" style="background:${dotColorVar(ev.dotColor)};"></span>
+      <div class="cal-event-body">
+        <div class="cal-event-name">${escapeHtml(ev.label)}</div>
+        <div class="cal-event-meta">${escapeHtml(ev.meta || '')}${ev.time ? ' · ' + ev.time : ''}</div>
+      </div>
+      ${amtText ? `<div class="cal-event-amt" style="color:${amtColor};">${amtText}</div>` : ''}
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+
+function dotColorVar(c) {
+  return { gold: 'var(--gold)', blue: '#3b82f6', red: 'var(--red)', green: 'var(--green)' }[c] || 'var(--t3)';
+}
+
+function selectCalendarDay(dayStr) {
+  state.calendarSelectedDay = dayStr;
+  renderCalendar();
+  haptic('light');
+}
+
+function calPrevMonth() {
+  state.calendarMonth--;
+  if (state.calendarMonth < 0) { state.calendarMonth = 11; state.calendarYear--; }
+  state.calendarSelectedDay = null;
+  renderCalendar();
+  haptic('light');
+}
+
+function calNextMonth() {
+  state.calendarMonth++;
+  if (state.calendarMonth > 11) { state.calendarMonth = 0; state.calendarYear++; }
+  state.calendarSelectedDay = null;
+  renderCalendar();
+  haptic('light');
+}
+
 
 init();
