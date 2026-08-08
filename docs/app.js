@@ -1049,7 +1049,40 @@ $('#sub-name').addEventListener('input', () => {
   }
 });
 
+// 实时更新分组预设标签高亮
+$('#acct-custom-group').addEventListener('input', () => {
+  renderGroupPresets($('#acct-custom-group').value);
+});
+
 // ===== Add/Edit Account =====
+function renderGroupPresets(currentVal) {
+  const container = $('#acct-group-presets');
+  if (!container) return;
+  // 收集所有已使用过的自定义分组
+  const used = [];
+  state.accounts.forEach(a => {
+    if (a.customGroup && !used.includes(a.customGroup)) used.push(a.customGroup);
+  });
+  if (used.length === 0) { container.innerHTML = ''; return; }
+  const sel = (currentVal || '').trim();
+  container.innerHTML = used.map(g => {
+    const on = g === sel;
+    return `<span onclick="selectGroupPreset('${g.replace(/'/g,"\\'")}')" style="padding:6px 14px;border-radius:20px;font-size:13px;cursor:pointer;border:1px solid ${on ? 'var(--gold)' : 'rgba(255,255,255,0.15)'};background:${on ? 'var(--gold)' : 'rgba(255,255,255,0.06)'};color:${on ? '#000' : 'var(--t2)'};transition:all .2s ease;">${g}</span>`;
+  }).join('') + (sel && !used.includes(sel)
+    ? `<span style="padding:6px 14px;border-radius:20px;font-size:13px;border:1px solid var(--gold);background:var(--gold);color:#000;">${sel}</span>`
+    : '');
+}
+function selectGroupPreset(g) {
+  const inp = $('#acct-custom-group');
+  if (inp.value.trim() === g) {
+    inp.value = ''; // 再点一次取消选择
+  } else {
+    inp.value = g;
+  }
+  renderGroupPresets(inp.value);
+  haptic('light');
+}
+
 function openAddAccount() {
   state.editingAcctIdx = -1;
   $('#sheet-acct-title').textContent = '添加账户';
@@ -1058,6 +1091,7 @@ function openAddAccount() {
   $('#acct-num').value = '';
   $('#acct-currency').value = 'CNY';
   $('#acct-custom-group').value = '';
+  renderGroupPresets('');
   state.selectedAcctType = 'bank';
   state.selectedCardColor = 'gold';
   state.acctIncludeInAssets = true;
@@ -1087,6 +1121,7 @@ function editAccount(idx) {
   $('#acct-num').value = a.cardNumber || '';
   $('#acct-currency').value = a.currency || 'CNY';
   $('#acct-custom-group').value = a.customGroup || '';
+  renderGroupPresets(a.customGroup || '');
   state.selectedAcctType = a.type || 'bank';
   state.selectedCardColor = a.color || 'gold';
   state.acctIncludeInAssets = a.includeInAssets !== false;
