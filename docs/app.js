@@ -1992,7 +1992,7 @@ function toggleBalanceMask() {
     revealedCards.clear();
   } else {
     totalEl.classList.remove('masked');
-    textEl.textContent = '¥' + fmt(Math.round(totalAssets));
+    textEl.textContent = '¥' + fmt(totalAssets);
     eyeEl.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
     state.accounts.forEach(a => revealedCards.add(a.id));
   }
@@ -2019,7 +2019,7 @@ function toggleCardBalance(cardId, ev) {
       const cs = { CNY:'¥', USD:'$', EUR:'€', GBP:'£', JPY:'¥', HKD:'HK$', TWD:'NT$' };
       const sym = cs[account.currency || 'CNY'] || '¥';
       const revealed = !balanceMasked || revealedCards.has(cardId);
-      balEl.textContent = revealed ? sym + fmt(Math.round(account.balance)) : '****';
+      balEl.textContent = revealed ? sym + fmt(account.balance) : '****';
       if (eyeEl2) {
         eyeEl2.innerHTML = revealed
           ? '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'
@@ -2138,7 +2138,7 @@ function renderWalletCard(a, origIdx) {
   const curSyms = { CNY:'¥', USD:'$', EUR:'€', GBP:'£', JPY:'¥', HKD:'HK$', TWD:'NT$' };
   const curSym = curSyms[a.currency || 'CNY'] || '¥';
   const cardRevealed = !balanceMasked || revealedCards.has(a.id);
-  const balText = cardRevealed ? curSym + fmt(Math.round(a.balance)) : '****';
+  const balText = cardRevealed ? curSym + fmt(a.balance) : '****';
   const eyeSvg = cardRevealed
     ? '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'
     : '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
@@ -2220,7 +2220,7 @@ function openCardDetail(idx) {
   const chipHtml = acctType.hasChip ? '<div class="card-detail-chip"></div>' : '';
   const curSyms = { CNY:'¥', USD:'$', EUR:'€', GBP:'£', JPY:'¥', HKD:'HK$', TWD:'NT$' };
   const curSym = curSyms[a.currency || 'CNY'] || '¥';
-  const balText = (!balanceMasked || revealedCards.has(a.id)) ? curSym + fmt(Math.round(a.balance)) : '****';
+  const balText = (!balanceMasked || revealedCards.has(a.id)) ? curSym + fmt(a.balance) : '****';
   const excludedBadge = a.includeInAssets === false ? '<div class="wc-exclude">不计入</div>' : '';
   const currencyLabel = a.currency && a.currency !== 'CNY' ? ' · ' + a.currency : '';
 
@@ -2318,7 +2318,7 @@ function openCardOverlay(acct) {
         <div class="bce-brand" style="color:${theme.accent};opacity:0.6;">${acctType.brand}</div>
         <div style="text-align:right;">
           <div class="bce-bal-label" style="color:${theme.subtext};">可用余额</div>
-          <div class="bce-bal" style="color:${theme.text};">¥${fmt(Math.round(acct.balance))}</div>
+          <div class="bce-bal" style="color:${theme.text};">¥${fmt(acct.balance)}</div>
         </div>
       </div>
       <div class="bce-actions">
@@ -2394,7 +2394,7 @@ function renderAccounts() {
   // Total assets
   const totalAssets = state.accounts.filter(a => a.includeInAssets !== false).reduce((s,a)=>s+a.balance,0);
   $('#acct-sub').textContent = state.accounts.length > 0 ?
-    `${state.accounts.length}张卡片 · ¥${fmt(Math.round(totalAssets))}` :
+    `${state.accounts.length}张卡片 · ¥${fmt(totalAssets)}` :
     '添加银行卡和钱包';
 
   // Update wallet total display
@@ -2407,7 +2407,7 @@ function renderAccounts() {
       textEl.textContent = '****';
     } else {
       totalEl.classList.remove('masked');
-      textEl.textContent = '¥' + fmt(Math.round(totalAssets));
+      textEl.textContent = '¥' + fmt(totalAssets);
     }
   }
 
@@ -2469,7 +2469,7 @@ function renderAccounts() {
       <span class="card-group-icon">${groupIcon}</span>
       <span class="card-group-name">${groupName}</span>
       <span class="card-group-count">${groupAccounts.length}张</span>
-      <span class="card-group-total">${balanceMasked ? '****' : curSyms.CNY + fmt(Math.round(groupTotal))}</span>
+      <span class="card-group-total">${balanceMasked ? '****' : curSyms.CNY + fmt(groupTotal)}</span>
     </div>`;
     html += `<div class="card-group-stack" style="min-height:${stackH}px;" data-group="${gk}">`;
 
@@ -2534,6 +2534,34 @@ function renderAccounts() {
           }
         };
       });
+
+      // Swipe gesture: swipe up-right to cycle to next card
+      let touchStartX = 0, touchStartY = 0, touchStartTime = 0;
+      groupEl.addEventListener('touchstart', (e) => {
+        const t = e.touches[0];
+        touchStartX = t.clientX;
+        touchStartY = t.clientY;
+        touchStartTime = Date.now();
+      }, { passive: true });
+
+      groupEl.addEventListener('touchend', (e) => {
+        const t = e.changedTouches[0];
+        const dx = t.clientX - touchStartX;
+        const dy = t.clientY - touchStartY;
+        const dt = Date.now() - touchStartTime;
+        // Swipe up-right: positive X, negative Y, within 500ms
+        if (dt < 500 && dx > 30 && dy < -20 && Math.abs(dx) > Math.abs(dy)) {
+          const allCards = Array.from(groupEl.querySelectorAll('.wc'));
+          if (allCards.length > 1) {
+            // Bring the next behind card to front
+            const nextCard = allCards[1];
+            const idx = parseInt(nextCard.dataset.idx);
+            state.activeCardByGroup[gk] = state.accounts[idx].id;
+            haptic('light');
+            bringCardToFront(groupEl, nextCard);
+          }
+        }
+      }, { passive: true });
     });
   });
 }
@@ -2643,9 +2671,13 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '2.0.3';
+const APP_VERSION = '2.0.4';
 const APP_BUILD = '2026.08.08';
 const CHANGELOG = [
+  { ver: '2.0.4', date: '2026-08-08', items: [
+    '修复余额显示取整问题：输入2.94不再被四舍五入为3，正确显示小数',
+    '新增卡面滑动手势：右上角滑动切换到下一张卡'
+  ]},
   { ver: '2.0.3', date: '2026-08-08', items: [
     '卡面余额默认显示，点眼睛图标可隐藏'
   ]},
