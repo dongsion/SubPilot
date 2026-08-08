@@ -107,6 +107,30 @@ input { font-family:inherit; }
 .bc.stack-3 { z-index:7; transform:translateY(32px) scale(0.88); opacity:0.15; filter:blur(1px); }
 .bc.flying { z-index:20; pointer-events:none; transition:transform .32s cubic-bezier(.4,0,.8,.5), opacity .32s ease; }
 
+/* === 卡片展开层 === */
+.card-overlay { position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0); transition:background .4s ease; pointer-events:none; }
+.card-overlay.active { background:rgba(0,0,0,0.75); pointer-events:auto; }
+.card-expanded { width:90%; max-width:380px; border-radius:24px; overflow:hidden; box-shadow:0 30px 80px rgba(0,0,0,0.7); transform:scale(0.3) translateY(-200px); opacity:0; transition:transform .45s cubic-bezier(.34,1.3,.64,1), opacity .35s ease; position:relative; }
+.card-overlay.active .card-expanded { transform:scale(1) translateY(0); opacity:1; }
+.card-expanded .bce-content { padding:28px 26px 24px; min-height:220px; display:flex; flex-direction:column; position:relative; z-index:2; }
+.card-expanded .bce-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px; }
+.card-expanded .bce-name { font-size:18px; font-weight:700; letter-spacing:1px; }
+.card-expanded .bce-type { font-size:12px; font-weight:500; opacity:0.5; margin-top:4px; }
+.card-expanded .bce-logo { width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; }
+.card-expanded .bce-logo img { width:100%; height:100%; border-radius:12px; object-fit:cover; }
+.card-expanded .bce-num { font-size:16px; letter-spacing:4px; font-family:var(--font-mono); opacity:0.5; margin:16px 0; }
+.card-expanded .bce-bal-label { font-size:10px; text-transform:uppercase; letter-spacing:1.5px; font-weight:600; opacity:0.4; }
+.card-expanded .bce-bal { font-size:42px; font-weight:300; font-family:var(--font-mono); letter-spacing:0.5px; line-height:1.1; margin-top:4px; }
+.card-expanded .bce-chip { width:48px; height:36px; border-radius:7px; position:relative; margin-bottom:16px; z-index:2; box-shadow:0 2px 8px rgba(0,0,0,0.3); overflow:hidden; }
+.card-expanded .bce-chip::before { content:''; position:absolute; inset:6px; border:1px solid rgba(0,0,0,0.15); border-radius:3px; }
+.card-expanded .bce-chip::after { content:''; position:absolute; top:50%; left:0; right:0; height:1px; background:rgba(0,0,0,0.12); box-shadow:0 7px 0 rgba(0,0,0,0.1),0 -7px 0 rgba(0,0,0,0.1); }
+.card-expanded .bce-brand { font-size:11px; font-weight:600; letter-spacing:2px; text-transform:uppercase; opacity:0.5; }
+.card-expanded .bce-close { position:absolute; top:-16px; right:-16px; width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,0.15); backdrop-filter:blur(10px); display:flex; align-items:center; justify-content:center; z-index:10; font-size:18px; color:#fff; cursor:pointer; transition:transform .2s; }
+.card-expanded .bce-close:active { transform:scale(0.85); }
+.card-expanded .bce-actions { display:flex; gap:10px; margin-top:20px; }
+.card-expanded .bce-btn { flex:1; padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05); color:var(--t2); font-size:13px; font-weight:600; text-align:center; cursor:pointer; transition:all .15s; }
+.card-expanded .bce-btn:active { transform:scale(0.95); background:rgba(255,255,255,0.1); }
+
 /* === 通用元素 === */
 .holo { position:absolute; top:24px; right:24px; width:32px; height:28px; z-index:2; opacity:0.4; }
 .holo svg{width:32px;height:28px;fill:none;stroke:rgba(255,255,255,0.5);stroke-width:1.5;stroke-linecap:round;}
@@ -566,7 +590,7 @@ textarea.form-i{resize:none;min-height:80px;}
       <div class="ht"><h1>账户</h1><p id="acct-sub">0张卡片</p></div>
     </div>
     <div class="cards" id="cards-stack"></div>
-    <div id="swipe-hint" style="text-align:center;font-size:11px;color:var(--t3);margin:-8px 0 16px;letter-spacing:0.5px;">← 向右滑动切换卡片 · 点击查看详情 →</div>
+    <div id="swipe-hint" style="text-align:center;font-size:11px;color:var(--t3);margin:-8px 0 16px;letter-spacing:0.5px;">↑ 向上拉动卡片查看详情 · 向右滑动切换卡片 →</div>
     <div id="acct-detail-section" style="display:none;">
     <div class="qa">
       <div class="qai" onclick="openAddTx()"><div class="qai2"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div><span class="qal">记一笔</span></div>
@@ -1131,6 +1155,11 @@ textarea.form-i{resize:none;min-height:80px;}
 
 <!-- Supabase JS SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Card Expanded Overlay -->
+<div class="card-overlay" id="card-overlay" onclick="closeCardOverlay(event)">
+  <div class="card-expanded" id="card-expanded" onclick="event.stopPropagation()"></div>
+</div>
+
 <script src="app.js"></script>
 </body>
 </html>

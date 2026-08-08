@@ -1527,6 +1527,79 @@ function renderCardHTML(a, origIdx, stackPos, groupKey) {
   </div>`;
 }
 
+// ===== Card Overlay (expand view) =====
+function openCardOverlay(acct) {
+  if (!acct) return;
+  let acctTypeKey = acct.type;
+  if (!ACCOUNT_TYPES[acctTypeKey]) acctTypeKey = 'other';
+  const acctType = ACCOUNT_TYPES[acctTypeKey];
+  if (!acct.color) acct.color = 'gold';
+  const theme = CARD_THEMES[acct.color] || CARD_THEMES.gold;
+
+  // Logo
+  let logoHtml = '';
+  const brandSlug = acct.brandSlug || (acct.type === 'alipay' ? 'alipay' : acct.type === 'wechat' ? 'wechat' : acct.type === 'yunshanfu' ? 'unionpay' : acct.type === 'licaicai' ? 'licaicai' : acct.type === 'yuebao' ? 'yuebao' : null);
+  if (acct.iconUrl) {
+    logoHtml = `<img src="${acct.iconUrl}" />`;
+  } else if (brandSlug && BRAND_ICONS[brandSlug]) {
+    const bi = BRAND_ICONS[brandSlug];
+    const fg = isLightColor(bi.bg) ? '#000' : '#fff';
+    logoHtml = `<svg viewBox="0 0 24 24" style="width:28px;height:28px;fill:${fg};"><path d="${bi.p}"/></svg>`;
+  } else {
+    logoHtml = `<svg viewBox="0 0 24 24" width="28" height="28" fill="${theme.accent}"><path d="M12 2L2 7v2h20V7L12 2zm-8 9v7h2v-7h3v7h2v-7h2v7h2v-7h3v7h2v-7H4z"/></svg>`;
+  }
+
+  const cardIdent = acct.cardNumber
+    ? '•••• •••• •••• ' + acct.cardNumber
+    : (acct.type === 'bank' ? 'BANK CARD' : acct.type === 'alipay' ? 'ALIPAY WALLET' : acct.type === 'wechat' ? 'WECHAT WALLET' : acct.type === 'yunshanfu' ? 'UNIONPAY' : acct.type === 'licaicai' ? 'LICAITONG' : acct.type === 'yuebao' ? 'YUEBAO' : 'DIGITAL WALLET');
+
+  const chipHtml = acctType.hasChip ? `<div class="bce-chip" style="background:${theme.chipBg};"></div>` : '';
+  const excludedBadge = acct.includeInAssets === false ? '<div style="position:absolute;top:12px;right:12px;font-size:9px;padding:3px 8px;border-radius:6px;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);z-index:5;">不计入资产</div>' : '';
+
+  const cardStyle = `background:${theme.gradient};border:1px solid ${theme.border};`;
+
+  $('#card-expanded').style.cssText = cardStyle;
+  $('#card-expanded').innerHTML = `
+    <div class="bce-close" onclick="closeCardOverlay()">×</div>
+    ${excludedBadge}
+    <div class="bce-content">
+      <div class="bce-top">
+        <div>
+          <div class="bce-name" style="color:${theme.accent};">${acct.name}</div>
+          <div class="bce-type" style="color:${theme.subtext};">${acctType.name}${acct.cardNumber ? ' · 尾号' + acct.cardNumber : ''}</div>
+        </div>
+        <div class="bce-logo" style="background:rgba(255,255,255,0.04);border:1px solid ${theme.border};">${logoHtml}</div>
+      </div>
+      ${chipHtml}
+      <div class="bce-num" style="color:${theme.subtext};">${cardIdent}</div>
+      <div style="flex:1;"></div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;">
+        <div class="bce-brand" style="color:${theme.accent};opacity:0.6;">${acctType.brand}</div>
+        <div style="text-align:right;">
+          <div class="bce-bal-label" style="color:${theme.subtext};">可用余额</div>
+          <div class="bce-bal" style="color:${theme.text};">¥${fmt(Math.round(acct.balance))}</div>
+        </div>
+      </div>
+      <div class="bce-actions">
+        <div class="bce-btn" onclick="closeCardOverlay();openAddTx()">记一笔</div>
+        <div class="bce-btn" onclick="toast('转账功能开发中')">转账</div>
+        <div class="bce-btn" onclick="closeCardOverlay();$('#acct-detail-section').style.display='block'">更多</div>
+      </div>
+    </div>
+  `;
+
+  const overlay = $('#card-overlay');
+  overlay.classList.add('active');
+  haptic('light');
+}
+
+function closeCardOverlay(e) {
+  if (e && e.target.closest('.card-expanded') && !e.target.closest('.bce-close')) return;
+  const overlay = $('#card-overlay');
+  overlay.classList.remove('active');
+  haptic('light');
+}
+
 function renderAccounts() {
   // Total assets only counts accounts with includeInAssets !== false
   const totalAssets = state.accounts.filter(a => a.includeInAssets !== false).reduce((s,a)=>s+a.balance,0);
@@ -1593,21 +1666,23 @@ function renderAccounts() {
       topCard.onclick = (e) => {
         if (e.target.closest('.bcl')) return;
         if (groupCs.dataset.animating === '1') return;
+        if (groupCs.dataset.dragging === '1') return;
         const detailEl = $('#acct-detail-section');
         const isVisible = detailEl.style.display !== 'none';
         detailEl.style.display = isVisible ? 'none' : 'block';
         haptic('light');
       };
 
-      // Swipe right to cycle card to back within group
-      let startX = 0, startY = 0, currentX = 0, currentY = 0, isDragging = false, isSwipe = false;
+      // Touch interaction: up-swipe to expand, right-swipe to cycle
+      let startX = 0, startY = 0, currentX = 0, currentY = 0, isDragging = false, isSwipe = false, swipeDir = null;
       topCard.addEventListener('touchstart', (e) => {
         if (e.target.closest('.bcl')) return;
         if (groupCs.dataset.animating === '1') return;
         startX = e.touches[0].clientX;
         startY = e.touches[0].clientY;
         currentX = 0; currentY = 0;
-        isDragging = true; isSwipe = false;
+        isDragging = true; isSwipe = false; swipeDir = null;
+        groupCs.dataset.dragging = '';
         topCard.style.transition = 'none';
       }, { passive: true });
 
@@ -1615,7 +1690,25 @@ function renderAccounts() {
         if (!isDragging) return;
         currentX = e.touches[0].clientX - startX;
         currentY = e.touches[0].clientY - startY;
-        if (currentX > 0 && currentX > Math.abs(currentY) && currentX > 10) {
+
+        // Determine swipe direction on first significant movement
+        if (!swipeDir && (Math.abs(currentX) > 10 || Math.abs(currentY) > 10)) {
+          if (Math.abs(currentY) > Math.abs(currentX) && currentY < 0) {
+            swipeDir = 'up';
+          } else if (currentX > 0 && currentX > Math.abs(currentY)) {
+            swipeDir = 'right';
+          }
+        }
+
+        if (swipeDir === 'up') {
+          isSwipe = true;
+          groupCs.dataset.dragging = '1';
+          const pull = Math.abs(currentY);
+          const scale = 1 + Math.min(pull / 800, 0.05);
+          topCard.style.transform = `translateY(${currentY}px) scale(${scale})`;
+          topCard.style.opacity = String(Math.max(1 - pull / 500, 0.3));
+          topCard.style.zIndex = '20';
+        } else if (swipeDir === 'right') {
           isSwipe = true;
           topCard.style.transform = `translateX(${currentX}px) rotate(${currentX * 0.04}deg)`;
           topCard.style.opacity = String(Math.max(1 - currentX / 350, 0.2));
@@ -1626,9 +1719,34 @@ function renderAccounts() {
         if (!isDragging) return;
         isDragging = false;
         topCard.style.transition = '';
+        delete groupCs.dataset.dragging;
 
         const groupItems = grouped[groupKey];
-        if (isSwipe && currentX > 80 && groupItems.length > 1) {
+
+        if (swipeDir === 'up' && currentY < -60) {
+          // Up-swipe: fly up and expand
+          haptic('medium');
+          groupCs.dataset.animating = '1';
+          topCard.classList.add('flying');
+          topCard.style.transform = `translateY(-${window.innerHeight + 100}px) scale(1.1)`;
+          topCard.style.opacity = '0';
+
+          const acctIdx = parseInt(topCard.dataset.idx);
+          const acct = state.accounts[acctIdx];
+          if (acct) {
+            setTimeout(() => {
+              openCardOverlay(acct);
+              topCard.classList.remove('flying');
+              topCard.style.transform = '';
+              topCard.style.opacity = '';
+              topCard.style.zIndex = '';
+              delete groupCs.dataset.animating;
+            }, 350);
+          } else {
+            delete groupCs.dataset.animating;
+          }
+        } else if (swipeDir === 'right' && currentX > 80 && groupItems && groupItems.length > 1) {
+          // Right-swipe: cycle card to back
           haptic('medium');
           groupCs.dataset.animating = '1';
           topCard.classList.add('flying');
@@ -1644,8 +1762,10 @@ function renderAccounts() {
 
           setTimeout(() => { delete groupCs.dataset.animating; }, 400);
         } else {
+          // Snap back
           topCard.style.transform = '';
           topCard.style.opacity = '';
+          topCard.style.zIndex = '';
         }
       });
     });
@@ -1760,9 +1880,15 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '1.8.2';
-const APP_BUILD = '2026.08.07';
+const APP_VERSION = '1.8.3';
+const APP_BUILD = '2026.08.08';
 const CHANGELOG = [
+  { ver: '1.8.3', date: '2026-08-08', items: [
+    '新增卡片向上拉飞出动效：向上拉动卡片飞出后放大展示完整信息',
+    '放大卡片显示余额、卡号、品牌等全部详情，支持快捷操作按钮',
+    '点击放大卡片或空白处即可缩回卡片堆叠状态',
+    '向右滑动切换卡片功能保留不变'
+  ]},
   { ver: '1.8.2', date: '2026-08-07', items: [
     '卡包按类型分组显示：银行卡、理财、现金/电子钱包三组独立展示',
     '每组显示分组标题、卡片数量和小计余额',
