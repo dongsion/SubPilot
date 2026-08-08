@@ -96,18 +96,71 @@ input { font-family:inherit; }
 .rf{fill:none;stroke-width:3;stroke-linecap:round;}
 .rt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;font-family:var(--font-mono);}
 
-/* Bank cards - 差异化卡面设计 */
-.cards { position:relative; margin-bottom:24px; min-height:216px; }
-.bc { border-radius:20px; padding:22px 24px 20px; height:200px; position:absolute; top:0; left:0; right:0; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.5); cursor:grab; display:flex; flex-direction:column; transition:transform .45s cubic-bezier(.34,1.3,.64,1), opacity .35s ease, scale .45s cubic-bezier(.34,1.3,.64,1), filter .45s ease; will-change:transform,opacity; }
-.cards:has(.empty-state) { min-height:0; height:auto; }
-.bc.on { z-index:10; transform:translateY(0) scale(1); opacity:1; filter:none; }
-.bc.off { pointer-events:none; }
-.bc.stack-1 { z-index:9; transform:translateY(12px) scale(0.96); opacity:0.6; filter:blur(0.3px); }
-.bc.stack-2 { z-index:8; transform:translateY(24px) scale(0.92); opacity:0.35; filter:blur(0.6px); }
-.bc.stack-3 { z-index:7; transform:translateY(32px) scale(0.88); opacity:0.15; filter:blur(1px); }
-.bc.flying { z-index:20; pointer-events:none; transition:transform .32s cubic-bezier(.4,0,.8,.5), opacity .32s ease; }
+/* Bank cards - 钱包卡舌式设计 */
+.wallet-wrap { position:relative; margin-bottom:16px; padding:0; }
+.wallet-container { position:relative; background:transparent; border-radius:0; padding:0; box-shadow:none; border:none; overflow:visible; }
 
-/* === 卡片展开层 === */
+/* 卡片区 - 钱包容器 */
+.wallet-cards { position:relative; min-height:260px; padding:0; overflow:visible; perspective:1000px; }
+.wallet-cards:has(.empty-state) { min-height:0; padding-top:0; overflow:hidden; }
+
+/* 单张卡片 - 钱包堆叠模式 */
+.wc { position:absolute; left:0; right:0; border-radius:18px; overflow:hidden; cursor:pointer; display:flex; flex-direction:column; padding:0; transition:transform .45s cubic-bezier(.34,1.3,.64,1), opacity .35s ease, left .45s cubic-bezier(.34,1.3,.64,1), right .45s cubic-bezier(.34,1.3,.64,1), filter .35s ease, box-shadow .4s ease, height .45s cubic-bezier(.34,1.3,.64,1), border-radius .4s ease; will-change:transform; -webkit-tap-highlight-color:transparent; box-shadow:0 4px 20px rgba(0,0,0,0.4); }
+.wc.pulled-out { height:200px; border-radius:20px; box-shadow:0 8px 30px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.08); z-index:50 !important; }
+
+/* 卡片顶部高光条 */
+.wc::before { content:''; position:absolute; top:0; left:10px; right:10px; height:1px; background:linear-gradient(90deg,transparent,rgba(255,255,255,0.25),transparent); z-index:10; border-radius:1px; }
+
+/* 堆叠状态：薄卡带 */
+.wc:not(.pulled-out) { height:56px; border-radius:14px; box-shadow:0 2px 12px rgba(0,0,0,0.4); }
+
+/* 卡带内容（堆叠状态可见部分） */
+.wc-tab { display:none; align-items:center; height:56px; padding:0 16px; gap:10px; position:relative; z-index:8; }
+.wc:not(.pulled-out) .wc-tab { display:flex; }
+.wc-tab-logo { width:28px; height:20px; border-radius:4px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.2); flex-shrink:0; overflow:hidden; }
+.wc-tab-logo img { width:100%; height:100%; object-fit:cover; border-radius:4px; }
+.wc-tab-logo svg { width:16px; height:12px; fill:#fff; }
+.wc-tab-name { flex:1; font-size:13px; font-weight:600; color:#fff; letter-spacing:0.2px; }
+.wc-tab-last4 { font-size:12px; color:rgba(255,255,255,0.6); font-family:var(--font-mono); font-weight:500; letter-spacing:1px; }
+
+/* 卡片完整内容 - 抽出时显示 */
+.wc-full { display:none; flex-direction:column; width:100%; height:100%; position:relative; z-index:8; padding:18px; }
+.wc.pulled-out .wc-full { display:flex; }
+.wc-full-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; }
+.wc-full-name { font-size:18px; font-weight:700; letter-spacing:0.3px; }
+.wc-full-type { font-size:11px; font-weight:500; opacity:0.55; margin-top:3px; letter-spacing:0.2px; }
+.wc-full-logo { width:40px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center; overflow:hidden; background:rgba(255,255,255,0.15); }
+.wc-full-logo img { width:100%; height:100%; border-radius:8px; object-fit:cover; }
+.wc-full-logo svg { width:24px; height:20px; fill:#fff; }
+.wc-full-chip { width:38px; height:28px; border-radius:5px; background:linear-gradient(135deg,#d4af37 0%,#f0d060 30%,#c9a227 60%,#e8c547 100%); position:relative; margin-bottom:10px; box-shadow:0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.3); }
+.wc-full-chip::before { content:''; position:absolute; inset:4px; border:1px solid rgba(0,0,0,0.1); border-radius:3px; }
+.wc-full-chip::after { content:''; position:absolute; top:50%; left:0; right:0; height:1px; background:rgba(0,0,0,0.08); box-shadow:0 6px 0 rgba(0,0,0,0.06),0 -6px 0 rgba(0,0,0,0.06); }
+.wc-full-num { font-size:15px; letter-spacing:3px; font-family:var(--font-mono); opacity:0.55; margin-bottom:8px; }
+.wc-full-bottom { display:flex; justify-content:space-between; align-items:flex-end; margin-top:auto; }
+.wc-full-brand { font-size:10px; font-weight:800; letter-spacing:2px; text-transform:uppercase; opacity:0.5; }
+.wc-full-bal-label { font-size:9px; text-transform:uppercase; letter-spacing:1px; font-weight:600; opacity:0.4; text-align:right; }
+.wc-full-bal { font-size:28px; font-weight:300; font-family:var(--font-mono); letter-spacing:0; line-height:1; margin-top:3px; text-align:right; }
+
+/* 抽出时的操作按钮 */
+.wc-full-actions { display:flex; gap:8px; margin-top:14px; }
+.wc-full-btn { flex:1; padding:9px 0; border-radius:10px; background:rgba(255,255,255,0.12); color:#fff; font-size:12px; font-weight:600; text-align:center; transition:all .15s; border:1px solid rgba(255,255,255,0.08); }
+.wc-full-btn:active { transform:scale(0.95); background:rgba(255,255,255,0.2); }
+
+/* 不计入资产标签 */
+.wc-exclude { position:absolute; top:10px; right:12px; font-size:9px; padding:3px 8px; border-radius:6px; background:rgba(0,0,0,0.3); color:rgba(255,255,255,0.6); z-index:15; font-weight:500; }
+
+/* TOTAL BALANCE 面板 */
+.wallet-balance { padding:0 0 18px; text-align:center; position:relative; z-index:5; }
+.wallet-balance-label { font-size:10px; text-transform:uppercase; letter-spacing:2px; font-weight:600; color:rgba(255,255,255,0.25); margin-bottom:6px; }
+.wallet-balance-value { font-size:32px; font-weight:200; font-family:var(--font-mono); color:rgba(255,255,255,0.9); letter-spacing:1px; cursor:pointer; transition:all .2s; display:inline-flex; align-items:center; gap:8px; -webkit-tap-highlight-color:transparent; }
+.wallet-balance-value:active { transform:scale(0.97); }
+.wallet-balance-value.masked { letter-spacing:8px; color:rgba(255,255,255,0.2); }
+.wallet-eye { width:16px; height:16px; opacity:0.3; }
+
+/* 钱包提示 */
+.wallet-hint { text-align:center; font-size:10px; color:rgba(255,255,255,0.2); padding:10px 0 0; letter-spacing:0.3px; }
+
+/* === 卡片展开层（保留但简化）=== */
 .card-overlay { position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0); transition:background .4s ease; pointer-events:none; }
 .card-overlay.active { background:rgba(0,0,0,0.75); pointer-events:auto; }
 .card-expanded { width:90%; max-width:380px; border-radius:24px; overflow:hidden; box-shadow:0 30px 80px rgba(0,0,0,0.7); transform:scale(0.3) translateY(-200px); opacity:0; transition:transform .45s cubic-bezier(.34,1.3,.64,1), opacity .35s ease; position:relative; }
@@ -130,117 +183,6 @@ input { font-family:inherit; }
 .card-expanded .bce-actions { display:flex; gap:10px; margin-top:20px; }
 .card-expanded .bce-btn { flex:1; padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05); color:var(--t2); font-size:13px; font-weight:600; text-align:center; cursor:pointer; transition:all .15s; }
 .card-expanded .bce-btn:active { transform:scale(0.95); background:rgba(255,255,255,0.1); }
-
-/* === 通用元素 === */
-.holo { position:absolute; top:24px; right:24px; width:32px; height:28px; z-index:2; opacity:0.4; }
-.holo svg{width:32px;height:28px;fill:none;stroke:rgba(255,255,255,0.5);stroke-width:1.5;stroke-linecap:round;}
-.bct { display:flex; justify-content:space-between; align-items:flex-start; position:relative; z-index:2; margin-bottom:auto; }
-.bcti { display:flex; flex-direction:column; gap:4px; }
-.bcn { font-size:15px; font-weight:700; letter-spacing:1.5px; }
-.bcty { font-size:11px; font-weight:500; letter-spacing:0.5px; opacity:0.5; }
-.bcl { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; }
-.bcnm { font-size:14px; letter-spacing:4px; font-family:var(--font-mono); font-weight:400; margin-bottom:10px; position:relative; z-index:2; opacity:0.5; }
-.bcb { display:flex; justify-content:space-between; align-items:flex-end; position:relative; z-index:2; }
-.bcbl { font-size:9px; text-transform:uppercase; letter-spacing:1.5px; font-weight:600; opacity:0.4; }
-.bcv { font-size:26px; font-weight:300; font-family:var(--font-mono); letter-spacing:0.5px; line-height:1.1; margin-top:2px; }
-.bcbn { font-size:10px; font-weight:600; letter-spacing:2px; text-transform:uppercase; opacity:0.5; }
-.bcl { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; cursor:pointer; transition:transform .2s; }
-.bcl:active{transform:scale(.9);}
-.bcl img{width:100%;height:100%;border-radius:10px;object-fit:cover;}
-.chip { width:40px; height:30px; border-radius:6px; position:relative; margin-bottom:10px; z-index:2; box-shadow:0 2px 8px rgba(0,0,0,0.3); overflow:hidden; }
-.chip::before{content:'';position:absolute;inset:5px;border:1px solid rgba(0,0,0,0.15);border-radius:3px;}
-.chip::after{content:'';position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(0,0,0,0.12);box-shadow:0 6px 0 rgba(0,0,0,0.1),0 -6px 0 rgba(0,0,0,0.1);}
-
-/* === 1. 银行卡 - 金属深空 === */
-.bc.type-bank {
-  background:linear-gradient(145deg,#1c1c1e 0%,#0d0d0d 100%);
-  border:1px solid rgba(255,255,255,0.06);
-  box-shadow:0 20px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06);
-}
-.bc.type-bank::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent,transparent 2px,rgba(255,255,255,0.012) 2px,rgba(255,255,255,0.012) 4px);pointer-events:none;z-index:0;}
-.bc.type-bank::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,122,0.35),transparent);z-index:1;}
-.bc.type-bank.dark1{background:linear-gradient(145deg,#1c1c1e 0%,#0d0d0d 100%);}
-.bc.type-bank.dark2{background:linear-gradient(145deg,#1a1a1c 0%,#0c0c0e 100%);}
-.bc.type-bank.dark3{background:linear-gradient(145deg,#1b1b1d 0%,#0b0b0d 100%);}
-.bc.type-bank.dark4{background:linear-gradient(145deg,#1d1d1f 0%,#0e0e10 100%);}
-.bc.type-bank .chip { background:linear-gradient(135deg,#c8c8c8 0%,#909090 40%,#d0d0d0 60%,#888 100%); }
-.bc.type-bank .chip::before{border-color:rgba(0,0,0,0.15);}
-.bc.type-bank .bcn { color:var(--gold); text-transform:uppercase; opacity:0.9; }
-.bc.type-bank .bcty { color:rgba(255,255,255,0.35); }
-.bc.type-bank .bcl { background:rgba(255,255,255,0.04); color:var(--gold); border:1px solid rgba(212,175,122,0.15); opacity:0.8; }
-.bc.type-bank .bcnm { color:rgba(255,255,255,0.45); text-shadow:0 1px 2px rgba(0,0,0,0.4); }
-.bc.type-bank .bcbl { color:rgba(255,255,255,0.3); }
-.bc.type-bank .bcv { color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.3); }
-.bc.type-bank .bcbn { color:rgba(212,175,122,0.5); }
-
-/* === 2. 支付宝 - 科技蓝 === */
-.bc.type-alipay {
-  background:linear-gradient(145deg,#0a1628 0%,#0d1f3c 50%,#061020 100%);
-  border:1px solid rgba(22,119,255,0.15);
-  box-shadow:0 20px 60px rgba(0,20,60,0.5), inset 0 1px 0 rgba(22,119,255,0.1);
-}
-.bc.type-alipay::before{content:'';position:absolute;top:-30%;right:-20%;width:200px;height:200px;background:radial-gradient(circle,rgba(22,119,255,0.2) 0%,transparent 60%);border-radius:50%;pointer-events:none;z-index:0;}
-.bc.type-alipay::after{content:'';position:absolute;bottom:-40%;left:-10%;width:180px;height:180px;background:radial-gradient(circle,rgba(22,119,255,0.08) 0%,transparent 60%);border-radius:50%;pointer-events:none;z-index:0;}
-.bc.type-alipay .bcn { color:#4A9EFF; }
-.bc.type-alipay .bcty { color:rgba(74,158,255,0.5); }
-.bc.type-alipay .bcl { background:rgba(22,119,255,0.12); color:#4A9EFF; border:1px solid rgba(22,119,255,0.2); }
-.bc.type-alipay .bcnm { color:rgba(255,255,255,0.4); }
-.bc.type-alipay .bcbl { color:rgba(255,255,255,0.3); }
-.bc.type-alipay .bcv { color:#fff; }
-.bc.type-alipay .bcbn { color:rgba(74,158,255,0.6); }
-.bc.type-alipay .holo svg{stroke:rgba(74,158,255,0.5);}
-
-/* === 3. 微信 - 生机绿 === */
-.bc.type-wechat {
-  background:linear-gradient(145deg,#0a1f12 0%,#0d2818 50%,#061a0e 100%);
-  border:1px solid rgba(7,193,96,0.12);
-  box-shadow:0 20px 60px rgba(0,40,15,0.5), inset 0 1px 0 rgba(7,193,96,0.08);
-}
-.bc.type-wechat::before{content:'';position:absolute;top:-20%;right:-10%;width:180px;height:180px;background:radial-gradient(circle,rgba(7,193,96,0.18) 0%,transparent 60%);border-radius:50%;pointer-events:none;z-index:0;}
-.bc.type-wechat::after{content:'';position:absolute;bottom:-50%;left:-20%;width:220px;height:220px;background:radial-gradient(circle,rgba(7,193,96,0.06) 0%,transparent 60%);border-radius:50%;pointer-events:none;z-index:0;}
-.bc.type-wechat .bcn { color:#2DC770; }
-.bc.type-wechat .bcty { color:rgba(45,199,112,0.5); }
-.bc.type-wechat .bcl { background:rgba(7,193,96,0.12); color:#2DC770; border:1px solid rgba(7,193,96,0.2); }
-.bc.type-wechat .bcnm { color:rgba(255,255,255,0.4); }
-.bc.type-wechat .bcbl { color:rgba(255,255,255,0.3); }
-.bc.type-wechat .bcv { color:#fff; }
-.bc.type-wechat .bcbn { color:rgba(45,199,112,0.6); }
-.bc.type-wechat .holo svg{stroke:rgba(45,199,112,0.5);}
-
-/* === 4. 其他/自定义 - 黑金经典 === */
-.bc.type-other {
-  background:linear-gradient(145deg,#14100a 0%,#0a0804 100%);
-  border:1px solid rgba(212,175,122,0.12);
-  box-shadow:0 20px 60px rgba(20,10,0,0.5), inset 0 1px 0 rgba(212,175,122,0.08);
-}
-.bc.type-other::before{content:'';position:absolute;top:-40%;right:-20%;width:200px;height:200px;background:radial-gradient(circle,rgba(212,175,122,0.1) 0%,transparent 60%);border-radius:50%;pointer-events:none;z-index:0;}
-.bc.type-other::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,122,0.25),transparent);z-index:1;}
-.bc.type-other .bcn { color:var(--gold); opacity:0.9; }
-.bc.type-other .bcty { color:rgba(212,175,122,0.4); }
-.bc.type-other .bcl { background:rgba(212,175,122,0.08); color:var(--gold); border:1px solid rgba(212,175,122,0.15); }
-.bc.type-other .bcnm { color:rgba(255,255,255,0.4); }
-.bc.type-other .bcbl { color:rgba(255,255,255,0.3); }
-.bc.type-other .bcv { color:var(--gold-light); }
-.bc.type-other .bcbn { color:rgba(212,175,122,0.5); }
-
-/* === 自定义颜色卡片 - 使用内联样式，这些是兜底样式 === */
-.bc.bc-custom {
-  box-shadow:0 20px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06);
-}
-.bc.bc-custom .holo svg { stroke:rgba(255,255,255,0.4); }
-.bc.bc-custom .chip::before { border-color:rgba(0,0,0,0.15); }
-.bc.bc-custom .chip::after { background:rgba(0,0,0,0.12); box-shadow:0 6px 0 rgba(0,0,0,0.1),0 -6px 0 rgba(0,0,0,0.1); }
-
-/* === 卡包分组 === */
-.card-group { margin-bottom:28px; }
-.card-group:last-child { margin-bottom:0; }
-.card-group-header { display:flex; align-items:center; gap:8px; margin-bottom:14px; padding:0 2px; }
-.card-group-icon { font-size:16px; width:22px; text-align:center; line-height:1; }
-.card-group-name { font-size:14px; font-weight:600; color:var(--t1); flex:1; }
-.card-group-count { font-size:11px; color:var(--t3); background:var(--card); border:1px solid var(--border); padding:2px 8px; border-radius:8px; font-weight:500; }
-.card-group-bal { font-size:14px; font-weight:700; color:var(--t2); font-family:var(--font-mono); letter-spacing:-0.3px; }
-.cards-grouped { position:relative; margin-bottom:0; min-height:216px; }
-.cards-grouped:has(.empty-state) { min-height:0; }
 
 /* Quick actions */
 .qa { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:20px; }
@@ -589,9 +531,20 @@ textarea.form-i{resize:none;min-height:80px;}
     <div class="hd">
       <div class="ht"><h1>账户</h1><p id="acct-sub">0张卡片</p></div>
     </div>
-    <div class="cards" id="cards-stack"></div>
-    <div id="swipe-hint" style="text-align:center;font-size:11px;color:var(--t3);margin:-8px 0 16px;letter-spacing:0.5px;">↑ 向上拉动卡片查看详情 · 向右滑动切换卡片 →</div>
-    <div id="acct-detail-section" style="display:none;">
+    <div class="wallet-wrap">
+      <div class="wallet-container">
+        <div class="wallet-balance" onclick="toggleBalanceMask()">
+          <div class="wallet-balance-label">TOTAL BALANCE</div>
+          <div class="wallet-balance-value masked" id="wallet-total">
+            <span id="wallet-total-text">****</span>
+            <svg class="wallet-eye" id="wallet-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+          </div>
+        </div>
+        <div class="wallet-cards" id="cards-stack"></div>
+      </div>
+      <div class="wallet-hint" id="swipe-hint" style="display:none;">← 左右滑动切换卡片 · 点击卡片查看详情 →</div>
+    </div>
+    <div id="acct-detail-section">
     <div class="qa">
       <div class="qai" onclick="openAddTx()"><div class="qai2"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div><span class="qal">记一笔</span></div>
       <div class="qai" onclick="toast('转账功能开发中')"><div class="qai2"><svg viewBox="0 0 24 24"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></div><span class="qal">转账</span></div>
@@ -655,14 +608,14 @@ textarea.form-i{resize:none;min-height:80px;}
       <div class="info-r" onclick="if(confirm('确定清除所有数据？此操作不可撤销。')){clearAll();toast('数据已清除');}"><span class="info-l">清除所有数据</span><span class="info-v" style="color:var(--red);">›</span></div>
     </div>
     <div class="info-g">
-      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v1.8.1 ›</span></div>
+      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v1.9.2 ›</span></div>
       <div class="info-r" onclick="showChangelog()"><span class="info-l">更新日志</span><span class="info-v" style="color:var(--gold);">查看 ›</span></div>
       <div class="info-r" onclick="checkUpdate()"><span class="info-l">检查更新</span><span class="info-v" style="color:var(--gold);" id="update-status">›</span></div>
       <div class="info-r"><span class="info-l">数据存储</span><span class="info-v" style="color:var(--t3);">仅本地浏览器</span></div>
     </div>
     <div style="text-align:center;padding:40px 20px;color:var(--t3);font-size:12px;">
       <div style="margin-bottom:8px;font-size:20px;letter-spacing:1px;">SubPilot</div>
-      <div style="margin-bottom:4px;">订阅管家 · v1.8.1 (Build 2026.08.07)</div>
+      <div data-ver-footer style="margin-bottom:4px;">订阅管家 · v1.9.2 (Build 2026.08.08)</div>
       <div>所有数据默认仅保存在本地，开启云同步后加密上传至 Supabase</div>
     </div>
     <input type="file" id="import-file" accept=".json" style="display:none;">

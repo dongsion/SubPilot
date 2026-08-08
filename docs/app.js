@@ -48,24 +48,24 @@ const BRAND_ICONS = {
   meituan: { p: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z', bg: '#FFD101' },
   eleme: { p: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1.5 5v3.5c0 .3-.2.5-.5.5H7c-.3 0-.5-.2-.5-.5V7h1.5v3h1V7h1.5zm5 0v7c0 .3-.2.5-.5.5h-3c-.3 0-.5-.2-.5-.5v-7H14v5.5h1V7h1.5z', bg: '#007AFF' },
   pinduoduo: { p: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 6c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm4 0c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm-6 5c0-1.1 2-2 4-2s4 .9 4 2v1H8v-1z', bg: '#E02E24' },
-  unionpay: { p: 'M4 7h16c1.1 0 2 .9 2 2v6c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V9c0-1.1.9-2 2-2zm2.5 3v4H5v-4h1.5zm4 0l-1.5 4H7.5l1.5-4h1.5zm4 0l-1.5 4H11l1.5-4h2zm4 0h-1.5v4H17l1.5-4z', bg: '#E21836' },
+  unionpay: { p: 'M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z', bg: '#E21836' },
   // 银行类 - 用银行卡图标+品牌色
-  cmb: { p: 'M12 2L2 7v2h20V7L12 2zm-8 9v7h2v-7h3v7h2v-7h2v7h2v-7h3v7h2v-7H4z', bg: '#C8102E' },
-  icbc: { p: 'M12 2L2 7v2h20V7L12 2zm-8 9v7h2v-7h3v7h2v-7h2v7h2v-7h3v7h2v-7H4z', bg: '#B40020' },
-  ccb: { p: 'M12 2L2 7v2h20V7L12 2zm-8 9v7h2v-7h3v7h2v-7h2v7h2v-7h3v7h2v-7H4z', bg: '#003F88' },
-  abc: { p: 'M12 2L2 7v2h20V7L12 2zm-8 9v7h2v-7h3v7h2v-7h2v7h2v-7h3v7h2v-7H4z', bg: '#009A44' },
-  boc: { p: 'M12 2L2 7v2h20V7L12 2zm-8 9v7h2v-7h3v7h2v-7h2v7h2v-7h3v7h2v-7H4z', bg: '#AF272F' },
-  bankcomm: { p: 'M12 2L2 7v2h20V7L12 2zm-8 9v7h2v-7h3v7h2v-7h2v7h2v-7h3v7h2v-7H4z', bg: '#005BAC' },
-  spdb: { p: 'M12 2L2 7v2h20V7L12 2zm-8 9v7h2v-7h3v7h2v-7h2v7h2v-7h3v7h2v-7H4z', bg: '#C8102E' },
-  cmbc: { p: 'M12 2L2 7v2h20V7L12 2zm-8 9v7h2v-7h3v7h2v-7h2v7h2v-7h3v7h2v-7H4z', bg: '#005BAC' },
-  citic: { p: 'M12 2L2 7v2h20V7L12 2zm-8 9v7h2v-7h3v7h2v-7h2v7h2v-7h3v7h2v-7H4z', bg: '#E60012' },
-  ceb: { p: 'M12 2L2 7v2h20V7L12 2zm-8 9v7h2v-7h3v7h2v-7h2v7h2v-7h3v7h2v-7H4z', bg: '#7B2E86' },
-  psbc: { p: 'M12 2L2 7v2h20V7L12 2zm-8 9v7h2v-7h3v7h2v-7h2v7h2v-7h3v7h2v-7H4z', bg: '#007A33' },
+  cmb: { p: 'M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z', bg: '#C8102E' },
+  icbc: { p: 'M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z', bg: '#B40020' },
+  ccb: { p: 'M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z', bg: '#003F88' },
+  abc: { p: 'M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z', bg: '#009A44' },
+  boc: { p: 'M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z', bg: '#AF272F' },
+  bankcomm: { p: 'M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z', bg: '#005BAC' },
+  spdb: { p: 'M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z', bg: '#C8102E' },
+  cmbc: { p: 'M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z', bg: '#005BAC' },
+  citic: { p: 'M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z', bg: '#E60012' },
+  ceb: { p: 'M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z', bg: '#7B2E86' },
+  psbc: { p: 'M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z', bg: '#007A33' },
   // 理财类
-  licaitong: { p: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 5c-2.8 0-5 2.2-5 5 0 .6.1 1.1.3 1.6C6 13.8 5 12.7 5 11.3 5 9 6.8 7 9.2 7c.5 0 .9.1 1.4.3C11.2 5.9 12.5 5 14 5c2.2 0 4 1.8 4 4 0 .3 0 .6-.1.8.4.1.8.3 1.1.5V10c0-2.8-2.2-5-5-5h-2zm0 4c-1.7 0-3 1.3-3 3s1.3 3 3 3 3-1.3 3-3-1.3-3-3-3z', bg: '#FA9D3B' },
-  yuebao: { p: 'M18.5 3H5.5C4.1 3 3 4.1 3 5.5v13C3 19.9 4.1 21 5.5 21h13c1.4 0 2.5-1.1 2.5-2.5V5.5C21 4.1 19.9 3 18.5 3zm-3.7 12.8c-.9-.3-2.2-.9-3.6-1.8-.8 1-1.8 1.8-3.2 1.8-2 0-3.3-1.5-3.2-3 0-1.3 1-2.5 3-2.5.8 0 1.8.3 2.8.7.4-.7.7-1.5.9-2.3H6.3V7.5h4.3v-1h-5V5.7h5v-1h1.7v1h5v.8h-5v1h4.2l-.3.7c-.4 1.3-1 2.4-1.7 3.4 1.2.5 2.4.9 3.3 1.2l-.5 1.3c-.8-.2-2-.5-3.2-1-.9.8-1.9 1.4-3 1.8l.5-1.3zm-5.7-1c-1.3 0-2 .8-2 1.6s.7 1.4 1.8 1.4c1 0 2-.7 2.8-1.8-1-.7-1.9-1.2-2.6-1.2z', bg: '#FF7300' },
+  licaitong: { p: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.83-1.38 2.83-3.12 3.16z', bg: '#FA9D3B' },
+  yuebao: { p: 'M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z', bg: '#FF7300' },
   // 通用钱包图标
-  wallet: { p: 'M21 7H5V5c0-1.1.9-2 2-2h12c1.1 0 2 .9 2 2v2zm0 2v8c0 1.1-.9 2-2 2H5c-1.1 0-2-.9-2-2V9h18zm-5 5c0-1.1-.9-2-2-2s-2 .9-2 2 .9 2 2 2 2-.9 2-2z', bg: '#d4af7a' }
+  wallet: { p: 'M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z', bg: '#d4af7a' }
 };
 
 // ===== Brand Database =====
@@ -522,11 +522,6 @@ function showView(name) {
   // FAB only shows on accounts (card pack) view
   const fab = $('#fab');
   if (fab) fab.style.display = (name === 'accounts') ? 'flex' : 'none';
-  // Reset account detail visibility when navigating
-  if (name === 'accounts') {
-    const detailEl = $('#acct-detail-section');
-    if (detailEl) detailEl.style.display = 'none';
-  }
   render();
   haptic('light');
 }
@@ -1475,59 +1470,174 @@ function renderTx() {
   container.innerHTML = html;
 }
 
-function renderCardHTML(a, origIdx, stackPos, groupKey) {
-  const isOn = stackPos === 0;
-  const stackClass = isOn ? 'on' : (stackPos === 1 ? 'off stack-1' : stackPos === 2 ? 'off stack-2' : 'off stack-3');
+// ===== 钱包余额显示/隐藏 =====
+let balanceMasked = true;
+function toggleBalanceMask() {
+  balanceMasked = !balanceMasked;
+  const totalEl = $('#wallet-total');
+  const textEl = $('#wallet-total-text');
+  const eyeEl = $('#wallet-eye');
+  const totalAssets = state.accounts.filter(a => a.includeInAssets !== false).reduce((s,a)=>s+a.balance,0);
+  if (balanceMasked) {
+    totalEl.classList.add('masked');
+    textEl.textContent = '****';
+    eyeEl.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+  } else {
+    totalEl.classList.remove('masked');
+    textEl.textContent = '¥' + fmt(Math.round(totalAssets));
+    eyeEl.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+  }
+  haptic('light');
+}
+
+// ===== 钱包卡片默认渐变配色（鲜艳风格）=====
+const WALLET_CARD_COLORS = [
+  'linear-gradient(135deg,#1a6dff 0%,#0d3bbf 100%)',  // 蓝 - 银行
+  'linear-gradient(135deg,#1677FF 0%,#0958c9 100%)',  // 支付宝蓝
+  'linear-gradient(135deg,#07C160 0%,#059047 100%)',  // 微信绿
+  'linear-gradient(135deg,#6366f1 0%,#a855f7 100%)',  // 靛紫
+  'linear-gradient(135deg,#f59e0b 0%,#ef4444 100%)',  // 金红
+  'linear-gradient(135deg,#10b981 0%,#06b6d4 100%)',  // 青绿
+  'linear-gradient(135deg,#ec4899 0%,#8b5cf6 100%)',  // 粉紫
+  'linear-gradient(135deg,#0ea5e9 0%,#2563eb 100%)',  // 天蓝
+  'linear-gradient(135deg,#FF7300 0%,#e65c00 100%)',  // 余额宝橙
+  'linear-gradient(135deg,#FA9D3B 0%,#e88a28 100%)',  // 理财通橙
+  'linear-gradient(135deg,#E21836 0%,#b8122c 100%)',  // 银联红
+];
+
+function getWalletCardGradient(a, idx) {
+  // 根据账户类型返回品牌色
+  if (a.type === 'alipay') return WALLET_CARD_COLORS[1];
+  if (a.type === 'wechat') return WALLET_CARD_COLORS[2];
+  if (a.type === 'yuebao') return WALLET_CARD_COLORS[8];
+  if (a.type === 'licaicai') return WALLET_CARD_COLORS[9];
+  if (a.type === 'yunshanfu') return WALLET_CARD_COLORS[10];
+  if (a.type === 'bank') return WALLET_CARD_COLORS[idx % 2 === 0 ? 0 : 4];
+  if (a.type === 'cash' || a.type === 'other') return WALLET_CARD_COLORS[3];
+
+  if (a.color && CARD_THEMES[a.color]) {
+    if (a.color === 'gold') return 'linear-gradient(135deg,#b8860b 0%,#8b6914 100%)';
+    if (a.color === 'blue') return WALLET_CARD_COLORS[0];
+    if (a.color === 'green') return WALLET_CARD_COLORS[5];
+    if (a.color === 'red') return WALLET_CARD_COLORS[4];
+    if (a.color === 'purple') return WALLET_CARD_COLORS[3];
+    if (a.color === 'pink') return WALLET_CARD_COLORS[6];
+    if (a.color === 'orange') return WALLET_CARD_COLORS[8];
+    const theme = CARD_THEMES[a.color];
+    return theme.gradient;
+  }
+  return WALLET_CARD_COLORS[idx % 7];
+}
+
+function renderWalletCard(a, origIdx, stackPos, totalCount, isPulled) {
   let acctTypeKey = a.type;
   if (!ACCOUNT_TYPES[acctTypeKey]) acctTypeKey = 'other';
   const acctType = ACCOUNT_TYPES[acctTypeKey];
-  if (!a.color) a.color = 'gold';
-  const theme = CARD_THEMES[a.color] || CARD_THEMES.gold;
 
-  let logoHtml;
-  let logoClickAttr = '';
-  const brandSlug = a.brandSlug || (a.type === 'alipay' ? 'alipay' : a.type === 'wechat' ? 'wechat' : a.type === 'yunshanfu' ? 'unionpay' : a.type === 'licaicai' ? 'licaicai' : a.type === 'yuebao' ? 'yuebao' : null);
-  if (a.iconUrl) {
-    logoHtml = `<img src="${a.iconUrl}" style="width:100%;height:100%;border-radius:10px;object-fit:cover;" onerror="this.style.opacity=0.3;" />`;
-    logoClickAttr = `onclick="openCardIconPicker('${a.id}')"`;
-  } else if (brandSlug && BRAND_ICONS[brandSlug]) {
-    const bi = BRAND_ICONS[brandSlug];
-    const fg = isLightColor(bi.bg) ? '#000' : '#fff';
-    logoHtml = `<svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:${fg};"><path d="${bi.p}"/></svg>`;
-    logoClickAttr = `onclick="openCardIconPicker('${a.id}')"`;
-  } else {
-    logoHtml = `<svg viewBox="0 0 24 24" width="20" height="20" fill="${theme.accent}"><path d="M12 2L2 7v2h20V7L12 2zm-8 9v7h2v-7h3v7h2v-7h2v7h2v-7h3v7h2v-7H4z"/></svg>`;
-    logoClickAttr = `onclick="openCardIconPicker('${a.id}')"`;
+  const gradient = getWalletCardGradient(a, origIdx);
+  const cardBg = `background:${gradient};`;
+
+  // Logo
+  let brandSlug = a.brandSlug;
+  if (!brandSlug) {
+    if (a.type === 'alipay') brandSlug = 'alipay';
+    else if (a.type === 'wechat') brandSlug = 'wechat';
+    else if (a.type === 'yunshanfu') brandSlug = 'unionpay';
+    else if (a.type === 'licaicai') brandSlug = 'licaicai';
+    else if (a.type === 'yuebao') brandSlug = 'yuebao';
+    else if (a.type === 'bank') brandSlug = 'unionpay';
+    else brandSlug = 'wallet';
   }
 
-  const holoSvg = acctType.hasHolo
-    ? `<div class="holo"><svg viewBox="0 0 24 28"><path d="M8 6c5.5 0 10 4.5 10 10M12 6c3.3 0 6 2.7 6 6M4 6c7.7 0 14 6.3 14 14M8 10c3.3 0 6 2.7 6 6M12 14c1.1 0 2 .9 2 2"/></svg></div>`
-    : '';
-  const chipHtml = acctType.hasChip ? `<div class="chip" style="background:${theme.chipBg};"></div>` : '';
-  const cardIdent = a.cardNumber
-    ? '•••• •••• •••• ' + a.cardNumber
-    : (a.type === 'bank' ? 'BANK CARD' : a.type === 'alipay' ? 'ALIPAY WALLET' : a.type === 'wechat' ? 'WECHAT WALLET' : a.type === 'yunshanfu' ? 'UNIONPAY' : a.type === 'licaicai' ? 'LICAITONG' : a.type === 'yuebao' ? 'YUEBAO' : 'DIGITAL WALLET');
-  const cardStyle = `background:${theme.gradient};border:1px solid ${theme.border};`;
-  const excludedBadge = a.includeInAssets === false ? '<div style="position:absolute;top:8px;right:8px;font-size:9px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,0.08);color:var(--t3);">不计入资产</div>' : '';
+  function getLogoContent(slug, isSmall) {
+    const spanSmall = 'style="font-size:11px;font-weight:800;color:#fff;"';
+    const spanBig = 'style="font-size:14px;font-weight:800;color:#fff;"';
+    const svgSmall = 'style="width:18px;height:14px;fill:#fff;"';
+    const svgBig = 'style="width:24px;height:20px;fill:#fff;"';
+    const rmbSmall = 'style="font-size:14px;font-weight:300;color:#fff;"';
+    const rmbBig = 'style="font-size:20px;font-weight:300;color:#fff;"';
+    if (slug === 'alipay') return `<span ${isSmall ? spanSmall : spanBig}>支</span>`;
+    if (slug === 'wechat') return `<svg viewBox="0 0 24 24" ${isSmall ? svgSmall : svgBig}><path d="M8.7 3C4.5 3 1 5.9 1 9.5c0 2 1.1 3.7 2.9 4.9l-.7 2.2 2.6-1.3c.9.2 1.8.4 2.8.4.5 0 .9 0 1.4-.1-.1-.4-.2-.8-.2-1.2 0-3.2 3.1-5.8 7-5.8h.5C15.9 5.3 12.6 3 8.7 3zM6.3 7.8c.5 0 .9.4.9.9s-.4.9-.9.9-.9-.4-.9-.9.4-.9.9-.9zm4.8 0c.5 0 .9.4.9.9s-.4.9-.9.9-.9-.4-.9-.9.4-.9.9-.9zm5.2 2.2c-3.3 0-6 2.3-6 5.2 0 2.9 2.7 5.2 6 5.2.7 0 1.4-.1 2.1-.3l2 1-.5-1.7c1.5-1 2.4-2.5 2.4-4.2 0-2.9-2.7-5.2-6-5.2zm-2 3.3c.4 0 .7.3.7.7s-.3.7-.7.7-.7-.3-.7-.7.3-.7.7-.7zm3.9 0c.4 0 .7.3.7.7s-.3.7-.7.7-.7-.3-.7-.7.3-.7.7-.7z"/></svg>`;
+    if (slug === 'unionpay' || slug === 'cmb' || slug === 'icbc' || slug === 'ccb' || slug === 'abc' || slug === 'boc') return `<svg viewBox="0 0 24 24" ${isSmall ? svgSmall : svgBig}><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>`;
+    if (slug === 'licaicai' || slug === 'yuebao' || slug === 'wallet') return `<span ${isSmall ? rmbSmall : rmbBig}>￥</span>`;
+    return `<svg viewBox="0 0 24 24" ${isSmall ? svgSmall : svgBig}><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>`;
+  }
 
-  return `<div class="bc bc-custom ${stackClass}" data-idx="${origIdx}" data-stack="${stackPos}" style="${cardStyle}">
-    ${holoSvg}
+  const tabLogoHtml = a.iconUrl
+    ? `<img src="${a.iconUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:5px;" onerror="this.outerHTML='${getLogoContent(brandSlug, true).replace(/'/g, "\\'")}'"/>`
+    : getLogoContent(brandSlug, true);
+  const fullLogoHtml = a.iconUrl
+    ? `<img src="${a.iconUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;" onerror="this.outerHTML='${getLogoContent(brandSlug, false).replace(/'/g, "\\'")}'"/>`
+    : getLogoContent(brandSlug, false);
+
+  const last4 = a.cardNumber || '****';
+  const numDisplay = a.cardNumber ? '•••• •••• •••• ' + a.cardNumber : '•••• •••• •••• ****';
+  const excludedBadge = a.includeInAssets === false ? '<div class="wc-exclude">不计入</div>' : '';
+
+  // 钱包式堆叠：抽出卡片在顶部完整显示，其他卡片紧密堆叠在下方
+  // 每张堆叠卡片高度56px，间距为-16px（即上一张盖住下一张顶部16px），露出40px内容
+  const stackCardH = 56;
+  const overlap = 18;
+  if (isPulled) {
+    var finalStyle = `${cardBg}transform:translateY(0);left:0;right:0;z-index:100;opacity:1;pointer-events:auto;`;
+  } else {
+    const topY = 200 - 4 + (stackPos - 1) * (stackCardH - overlap);
+    const inset = Math.min((stackPos - 1) * 6, 18);
+    const opacity = Math.max(1 - (stackPos - 1) * 0.1, 0.55);
+    var finalStyle = `${cardBg}transform:translateY(${topY}px);left:${inset}px;right:${inset}px;z-index:${50 - stackPos};opacity:${opacity};pointer-events:auto;`;
+  }
+
+  let brandText = acctType.brand;
+  if (brandText === 'UnionPay') brandText = 'UNIONPAY';
+  if (brandText === 'Alipay') brandText = 'ALIPAY';
+  if (brandText === 'WeChat Pay') brandText = 'WECHAT';
+  if (brandText === 'Licaitong') brandText = 'LICAITONG';
+  if (brandText === 'Yuebao') brandText = 'YUEBAO';
+  if (brandText === 'Wallet') brandText = 'WALLET';
+
+  const chipHtml = acctType.hasChip ? '<div class="wc-full-chip"></div>' : '';
+
+  return `<div class="wc ${isPulled ? 'pulled-out' : ''}" data-idx="${origIdx}" data-stack="${stackPos}" style="${finalStyle}">
     ${excludedBadge}
-    <div class="bct">
-      <div class="bcti"><div class="bcn" style="color:${theme.accent};">${a.name}</div><div class="bcty" style="color:${theme.subtext};">${acctType.name}${a.cardNumber ? ' · 尾号'+a.cardNumber : ''}</div></div>
-      <div class="bcl" style="background:rgba(255,255,255,0.04);border:1px solid ${theme.border};" ${logoClickAttr}>${logoHtml}</div>
+    <div class="wc-tab">
+      <div class="wc-tab-logo">${tabLogoHtml}</div>
+      <div class="wc-tab-name">${a.name}</div>
+      <div class="wc-tab-last4">${last4}</div>
     </div>
-    <div style="flex:1;"></div>
-    ${chipHtml}
-    <div class="bcnm" style="color:${theme.subtext};">${cardIdent}</div>
-    <div class="bcb">
-      <div class="bcbn" style="color:${theme.accent};opacity:0.6;">${acctType.brand}</div>
-      <div style="text-align:right;"><div class="bcbl" style="color:${theme.subtext};">可用余额</div><div class="bcv" style="color:${theme.text};">¥${fmt(Math.round(a.balance))}</div></div>
+    <div class="wc-full">
+      <div class="wc-full-top">
+        <div>
+          <div class="wc-full-name" style="color:#fff;">${a.name}</div>
+          <div class="wc-full-type" style="color:rgba(255,255,255,0.55);">${acctType.name}${a.cardNumber ? ' · 尾号'+a.cardNumber : ''}</div>
+        </div>
+        <div class="wc-full-logo">${fullLogoHtml}</div>
+      </div>
+      ${chipHtml}
+      <div class="wc-full-num" style="color:rgba(255,255,255,0.55);">${numDisplay}</div>
+      <div style="flex:1;"></div>
+      <div class="wc-full-bottom">
+        <div class="wc-full-brand" style="color:rgba(255,255,255,0.5);">${brandText}</div>
+        <div style="text-align:right;">
+          <div class="wc-full-bal-label" style="color:rgba(255,255,255,0.4);">AVAILABLE</div>
+          <div class="wc-full-bal" style="color:#fff;">¥${fmt(Math.round(a.balance))}</div>
+        </div>
+      </div>
+      <div class="wc-full-actions">
+        <div class="wc-full-btn" onclick="event.stopPropagation();closePulledCard();openAddTx()">记一笔</div>
+        <div class="wc-full-btn" onclick="event.stopPropagation();toast('转账功能开发中')">转账</div>
+        <div class="wc-full-btn" onclick="event.stopPropagation();closePulledCard();editAccount(${origIdx})">编辑</div>
+      </div>
     </div>
   </div>`;
 }
 
-// ===== Card Overlay (expand view) =====
+function closePulledCard() {
+  state.pulledCardIdx = -1;
+  renderAccounts();
+  haptic('light');
+}
+
+// ===== Card Overlay (保留用于其他功能) =====
 function openCardOverlay(acct) {
   if (!acct) return;
   let acctTypeKey = acct.type;
@@ -1536,7 +1646,6 @@ function openCardOverlay(acct) {
   if (!acct.color) acct.color = 'gold';
   const theme = CARD_THEMES[acct.color] || CARD_THEMES.gold;
 
-  // Logo
   let logoHtml = '';
   const brandSlug = acct.brandSlug || (acct.type === 'alipay' ? 'alipay' : acct.type === 'wechat' ? 'wechat' : acct.type === 'yunshanfu' ? 'unionpay' : acct.type === 'licaicai' ? 'licaicai' : acct.type === 'yuebao' ? 'yuebao' : null);
   if (acct.iconUrl) {
@@ -1601,171 +1710,151 @@ function closeCardOverlay(e) {
 }
 
 function renderAccounts() {
-  // Total assets only counts accounts with includeInAssets !== false
+  // Total assets
   const totalAssets = state.accounts.filter(a => a.includeInAssets !== false).reduce((s,a)=>s+a.balance,0);
   $('#acct-sub').textContent = state.accounts.length > 0 ?
     `${state.accounts.length}张卡片 · ¥${fmt(Math.round(totalAssets))}` :
     '添加银行卡和钱包';
 
-  // Cards stack - grouped by account type
+  // Update wallet total display
+  const totalEl = $('#wallet-total');
+  const textEl = $('#wallet-total-text');
+  const eyeEl = $('#wallet-eye');
+  if (totalEl && textEl) {
+    if (balanceMasked) {
+      totalEl.classList.add('masked');
+      textEl.textContent = '****';
+    } else {
+      totalEl.classList.remove('masked');
+      textEl.textContent = '¥' + fmt(Math.round(totalAssets));
+    }
+  }
+
   const cs = $('#cards-stack');
   const hintEl = $('#swipe-hint');
+
+  if (typeof state.pulledCardIdx === 'undefined') state.pulledCardIdx = -1;
+  if (typeof state.activeWalletCardIdx === 'undefined') state.activeWalletCardIdx = 0;
+
   if (state.accounts.length === 0) {
     if (hintEl) hintEl.style.display = 'none';
-    cs.innerHTML = `<div class="empty-state" style="padding:40px 20px;"><div class="es-icon">💳</div><div class="es-text">暂无账户</div><div class="es-sub">点击 + 添加你的第一张卡</div></div>`;
+    cs.innerHTML = `<div class="empty-state" style="padding:40px 20px 30px;text-align:center;"><div style="font-size:40px;margin-bottom:12px;">💳</div><div style="font-size:15px;color:rgba(255,255,255,0.5);font-weight:500;">暂无卡片</div><div style="font-size:12px;color:rgba(255,255,255,0.25);margin-top:8px;">点击 + 添加你的第一张卡</div></div>`;
+    cs.style.minHeight = '180px';
+    cs.style.height = '180px';
   } else {
-    // Group accounts by type group
-    const groupOrder = ['bank', 'wealth', 'cash'];
-    const grouped = {};
-    state.accounts.forEach((a, idx) => {
-      let typeKey = a.type;
-      if (!ACCOUNT_TYPES[typeKey]) typeKey = 'other';
-      const group = ACCOUNT_TYPES[typeKey].group || 'cash';
-      if (!grouped[group]) grouped[group] = [];
-      grouped[group].push({ acct: a, origIdx: idx });
-    });
+    const n = state.accounts.length;
+    if (state.activeWalletCardIdx >= n) state.activeWalletCardIdx = 0;
+    if (state.activeWalletCardIdx < 0) state.activeWalletCardIdx = n - 1;
 
-    if (hintEl) hintEl.style.display = state.accounts.length > 1 ? 'block' : 'none';
+    // 默认第一张卡片抽出
+    if (state.pulledCardIdx === -1 || state.pulledCardIdx === undefined) {
+      state.pulledCardIdx = state.activeWalletCardIdx;
+    }
+    if (state.pulledCardIdx >= n) state.pulledCardIdx = 0;
+
+    // 容器高度
+    const stackCardH = 56;
+    const overlap = 18;
+    const visibleTabs = Math.min(n - 1, 3);
+    const totalHeight = 200 + visibleTabs * (stackCardH - overlap) + (stackCardH - overlap) + 20;
+    cs.style.minHeight = totalHeight + 'px';
+    cs.style.height = totalHeight + 'px';
+    cs.style.overflow = 'visible';
 
     let html = '';
-    groupOrder.forEach(groupKey => {
-      const items = grouped[groupKey];
-      if (!items || items.length === 0) return;
-      const groupInfo = ACCOUNT_GROUPS[groupKey];
-      const groupBalance = items.reduce((s, item) => s + item.acct.balance, 0);
-      html += `<div class="card-group">`;
-      html += `<div class="card-group-header"><span class="card-group-icon">${groupInfo.icon}</span><span class="card-group-name">${groupInfo.name}</span><span class="card-group-count">${items.length}张</span><span class="card-group-bal">¥${fmt(Math.round(groupBalance))}</span></div>`;
+    // 抽出的卡片在最前
+    const pulledAcct = state.accounts[state.pulledCardIdx];
+    html += renderWalletCard(pulledAcct, state.pulledCardIdx, 0, n, true);
 
-      // Render stacked cards for this group
-      if (!state.activeCardIdxByGroup) state.activeCardIdxByGroup = {};
-      const activeIdx = state.activeCardIdxByGroup[groupKey] || 0;
-      const ordered = [];
-      for (let i = 0; i < items.length; i++) {
-        ordered.push(items[(activeIdx + i) % items.length]);
-      }
-
-      html += `<div class="cards cards-grouped" data-group="${groupKey}">`;
-      ordered.forEach((item, stackPos) => {
-        const a = item.acct;
-        const origIdx = item.origIdx;
-        html += renderCardHTML(a, origIdx, stackPos, groupKey);
-      });
-      html += `</div>`;
-      html += `</div>`;
-    });
+    // 其他卡片按顺序作为卡舌堆叠在抽出卡片下方
+    let tabStackPos = 1;
+    for (let i = 1; i < n && tabStackPos <= 3; i++) {
+      const idx = (state.pulledCardIdx + i) % n;
+      html += renderWalletCard(state.accounts[idx], idx, tabStackPos, n, false);
+      tabStackPos++;
+    }
 
     cs.innerHTML = html;
 
-    // Bind interactions for each group's top card
-    $$('.cards-grouped').forEach(groupCs => {
-      const groupKey = groupCs.dataset.group;
-      const topCard = groupCs.querySelector('.bc[data-stack="0"]');
-      if (!topCard) return;
+    if (hintEl) hintEl.textContent = n > 1 ? '点击卡舌切换卡片' : '';
+    if (hintEl) hintEl.style.display = n > 1 ? 'block' : 'none';
 
-      // Click to toggle detail section
-      topCard.onclick = (e) => {
-        if (e.target.closest('.bcl')) return;
-        if (groupCs.dataset.animating === '1') return;
-        if (groupCs.dataset.dragging === '1') return;
-        const detailEl = $('#acct-detail-section');
-        const isVisible = detailEl.style.display !== 'none';
-        detailEl.style.display = isVisible ? 'none' : 'block';
-        haptic('light');
+    // 绑定交互
+    const allCards = cs.querySelectorAll('.wc');
+    allCards.forEach(card => {
+      const idx = parseInt(card.dataset.idx);
+      const stackPos = parseInt(card.dataset.stack);
+      const isPulled = card.classList.contains('pulled-out');
+
+      card.onclick = (e) => {
+        if (card.dataset.animating === '1') return;
+        if (card.dataset.dragging === '1') return;
+        e.stopPropagation();
+
+        if (!isPulled) {
+          // 点击卡舌，抽出这张卡
+          state.pulledCardIdx = idx;
+          state.activeWalletCardIdx = idx;
+          renderAccounts();
+          haptic('light');
+        } else {
+          // 点击已抽出的卡片，可以收起或切换
+          haptic('light');
+        }
       };
 
-      // Touch interaction: up-swipe to expand, right-swipe to cycle
+      // 触摸滑动 - 在抽出的卡片上左右滑动切换
       let startX = 0, startY = 0, currentX = 0, currentY = 0, isDragging = false, isSwipe = false, swipeDir = null;
-      topCard.addEventListener('touchstart', (e) => {
-        if (e.target.closest('.bcl')) return;
-        if (groupCs.dataset.animating === '1') return;
+      card.addEventListener('touchstart', (e) => {
+        if (card.dataset.animating === '1') return;
+        if (!isPulled) return;
         startX = e.touches[0].clientX;
         startY = e.touches[0].clientY;
         currentX = 0; currentY = 0;
         isDragging = true; isSwipe = false; swipeDir = null;
-        groupCs.dataset.dragging = '';
-        topCard.style.transition = 'none';
+        card.dataset.dragging = '';
+        card.style.transition = 'none';
       }, { passive: true });
 
-      topCard.addEventListener('touchmove', (e) => {
+      card.addEventListener('touchmove', (e) => {
         if (!isDragging) return;
+        if (!isPulled) return;
         currentX = e.touches[0].clientX - startX;
         currentY = e.touches[0].clientY - startY;
 
-        // Determine swipe direction on first significant movement
         if (!swipeDir && (Math.abs(currentX) > 10 || Math.abs(currentY) > 10)) {
-          if (Math.abs(currentY) > Math.abs(currentX) && currentY < 0) {
-            swipeDir = 'up';
-          } else if (currentX > 0 && currentX > Math.abs(currentY)) {
-            swipeDir = 'right';
+          if (Math.abs(currentX) > Math.abs(currentY)) {
+            swipeDir = currentX > 0 ? 'right' : 'left';
+            isSwipe = true;
+            card.dataset.dragging = '1';
           }
         }
-
-        if (swipeDir === 'up') {
-          isSwipe = true;
-          groupCs.dataset.dragging = '1';
-          const pull = Math.abs(currentY);
-          const scale = 1 + Math.min(pull / 800, 0.05);
-          topCard.style.transform = `translateY(${currentY}px) scale(${scale})`;
-          topCard.style.opacity = String(Math.max(1 - pull / 500, 0.3));
-          topCard.style.zIndex = '20';
-        } else if (swipeDir === 'right') {
-          isSwipe = true;
-          topCard.style.transform = `translateX(${currentX}px) rotate(${currentX * 0.04}deg)`;
-          topCard.style.opacity = String(Math.max(1 - currentX / 350, 0.2));
+        if (swipeDir === 'left' || swipeDir === 'right') {
+          card.style.transform = `translateX(${currentX}px) rotate(${currentX * 0.02}deg)`;
+          card.style.opacity = String(Math.max(1 - Math.abs(currentX)/400, 0.2));
         }
       }, { passive: true });
 
-      topCard.addEventListener('touchend', () => {
+      card.addEventListener('touchend', () => {
         if (!isDragging) return;
         isDragging = false;
-        topCard.style.transition = '';
-        delete groupCs.dataset.dragging;
+        card.style.transition = '';
+        delete card.dataset.dragging;
 
-        const groupItems = grouped[groupKey];
-
-        if (swipeDir === 'up' && currentY < -60) {
-          // Up-swipe: fly up and expand
+        if (isPulled && swipeDir === 'left' && currentX < -80 && n > 1) {
           haptic('medium');
-          groupCs.dataset.animating = '1';
-          topCard.classList.add('flying');
-          topCard.style.transform = `translateY(-${window.innerHeight + 100}px) scale(1.1)`;
-          topCard.style.opacity = '0';
-
-          const acctIdx = parseInt(topCard.dataset.idx);
-          const acct = state.accounts[acctIdx];
-          if (acct) {
-            setTimeout(() => {
-              openCardOverlay(acct);
-              topCard.classList.remove('flying');
-              topCard.style.transform = '';
-              topCard.style.opacity = '';
-              topCard.style.zIndex = '';
-              delete groupCs.dataset.animating;
-            }, 350);
-          } else {
-            delete groupCs.dataset.animating;
-          }
-        } else if (swipeDir === 'right' && currentX > 80 && groupItems && groupItems.length > 1) {
-          // Right-swipe: cycle card to back
-          haptic('medium');
-          groupCs.dataset.animating = '1';
-          topCard.classList.add('flying');
-          topCard.classList.remove('on');
-          topCard.style.transform = `translateX(${window.innerWidth + 100}px) rotate(25deg)`;
-          topCard.style.opacity = '0';
-
-          if (!state.activeCardIdxByGroup) state.activeCardIdxByGroup = {};
-          state.activeCardIdxByGroup[groupKey] = ((state.activeCardIdxByGroup[groupKey] || 0) + 1) % groupItems.length;
-          $('#acct-detail-section').style.display = 'none';
+          state.pulledCardIdx = (state.pulledCardIdx + 1) % n;
+          state.activeWalletCardIdx = state.pulledCardIdx;
           save();
-          render();
-
-          setTimeout(() => { delete groupCs.dataset.animating; }, 400);
+          renderAccounts();
+        } else if (isPulled && swipeDir === 'right' && currentX > 80 && n > 1) {
+          haptic('medium');
+          state.pulledCardIdx = (state.pulledCardIdx - 1 + n) % n;
+          state.activeWalletCardIdx = state.pulledCardIdx;
+          save();
+          renderAccounts();
         } else {
-          // Snap back
-          topCard.style.transform = '';
-          topCard.style.opacity = '';
-          topCard.style.zIndex = '';
+          renderAccounts();
         }
       });
     });
@@ -1880,9 +1969,28 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '1.8.3';
+const APP_VERSION = '1.9.2';
 const APP_BUILD = '2026.08.08';
 const CHANGELOG = [
+  { ver: '1.9.2', date: '2026-08-08', items: [
+    '修复版本号不更新问题：版本号改为JS动态设置，不受缓存影响',
+    '检查更新功能重做：点击后清空全部缓存+注销Service Worker+强制刷新页面',
+    'Service Worker改为网络优先策略，确保总是加载最新版本',
+    '检查更新支持检测GitHub远程版本，发现新版可一键更新'
+  ]},
+  { ver: '1.9.1', date: '2026-08-08', items: [
+    '卡包全新钱包式设计：选中卡片完整展示，其他卡片以卡带形式紧密堆叠',
+    '卡带显示品牌logo、卡片名称和尾号，层次分明',
+    '卡带随深度逐级缩进、透明度递减，营造真实钱包质感',
+    '点击任意卡带即可切换到该卡片'
+  ]},
+  { ver: '1.9.0', date: '2026-08-08', items: [
+    '卡包全新设计：默认完整显示当前卡片，取消卡舌抽拉模式',
+    '后方卡片堆叠在下方，带模糊变暗效果，层次更分明',
+    '总资产显示移至卡片上方，视觉更聚焦',
+    '快捷操作按钮（记一笔/转账/提醒/设置）常驻显示',
+    '统计卡片和支出分布图表默认展示'
+  ]},
   { ver: '1.8.3', date: '2026-08-08', items: [
     '新增卡片向上拉飞出动效：向上拉动卡片飞出后放大展示完整信息',
     '放大卡片显示余额、卡号、品牌等全部详情，支持快捷操作按钮',
@@ -2056,31 +2164,81 @@ function showChangelog() {
 async function checkUpdate() {
   const statusEl = $('#update-status');
   statusEl.textContent = '检查中...';
+  statusEl.style.color = 'var(--gold)';
+
   try {
-    const resp = await fetch('https://api.github.com/repos/dongsion/SubPilot/commits/main', { cache: 'no-store' });
-    if (!resp.ok) throw new Error('network');
-    const data = await resp.json();
-    const remoteDate = data.commit?.committer?.date?.slice(0, 10) || '';
-    const localDate = APP_BUILD;
-    if (remoteDate > localDate) {
-      statusEl.textContent = '有新版';
-      statusEl.style.color = 'var(--gold)';
-      alert(`发现新版本！\n\n线上最新更新日期：${remoteDate}\n你的版本构建日期：${localDate}\n\n请访问 GitHub 获取最新版本：\nhttps://dongsion.github.io/SubPilot/`);
+    // 1. 先检查远程是否有新版本（通过GitHub API）
+    let hasNewVersion = false;
+    let remoteInfo = '';
+    try {
+      const resp = await fetch('https://api.github.com/repos/dongsion/SubPilot/commits/main', { cache: 'no-store' });
+      if (resp.ok) {
+        const data = await resp.json();
+        const remoteDate = data.commit?.committer?.date?.slice(0, 10) || '';
+        if (remoteDate > APP_BUILD) {
+          hasNewVersion = true;
+          remoteInfo = `线上最新更新日期：${remoteDate}`;
+        }
+      }
+    } catch(e) { /* 网络检查失败也能强制刷新本地缓存 */ }
+
+    if (hasNewVersion) {
+      statusEl.textContent = '发现新版';
+      statusEl.style.color = '#ff6b6b';
+      // 弹窗确认后强制更新
+      if (confirm(`发现新版本！\n${remoteInfo}\n你的版本：v${APP_VERSION} (Build ${APP_BUILD})\n\n点击「确定」立即更新到最新版本`)) {
+        await forceUpdate();
+      }
     } else {
-      statusEl.textContent = '最新 ✓';
+      statusEl.textContent = '已是最新';
       statusEl.style.color = '#30d158';
-      toast('已是最新版本');
+      // 即使是最新版，也强制刷新一次缓存，确保版本号同步
+      if (confirm(`当前版本：v${APP_VERSION} (Build ${APP_BUILD})\n\n是否强制刷新缓存？\n（可解决版本号不更新、界面显示旧内容的问题）`)) {
+        await forceUpdate();
+      }
     }
   } catch(e) {
     statusEl.textContent = '›';
     statusEl.style.color = 'var(--gold)';
-    alert(`当前版本：v${APP_VERSION} (Build ${APP_BUILD})\n\n无法连接网络检查更新，请手动访问：\nhttps://dongsion.github.io/SubPilot/`);
+    alert(`检查更新失败\n\n当前版本：v${APP_VERSION} (Build ${APP_BUILD})\n\n可尝试强制刷新：清除缓存并重新加载`);
+  }
+}
+
+// 强制更新：清除所有缓存 + 注销Service Worker + 重新加载页面
+async function forceUpdate() {
+  toast('正在清除缓存...');
+  try {
+    // 1. 清除所有Cache Storage
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k => caches.delete(k)));
+    }
+
+    // 2. 注销所有Service Worker
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map(r => r.unregister()));
+    }
+
+    // 3. 短暂延迟后强制刷新（绕过缓存）
+    setTimeout(() => {
+      window.location.reload(true);
+    }, 500);
+  } catch(e) {
+    // 降级方案：直接刷新
+    window.location.reload(true);
   }
 }
 
 // ===== Init =====
 function init() {
   load();
+
+  // 动态设置版本号显示（避免SW缓存导致版本号不更新）
+  const verEl = document.getElementById('ver-display');
+  if (verEl) verEl.textContent = `v${APP_VERSION} ›`;
+  const verFooterEls = document.querySelectorAll('[data-ver-footer]');
+  verFooterEls.forEach(el => { el.textContent = `订阅管家 · v${APP_VERSION} (Build ${APP_BUILD})`; });
 
   // Process auto-deductions after data is loaded
   processAutoDeductions();
