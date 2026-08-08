@@ -2205,9 +2205,21 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '1.9.6';
+const APP_VERSION = '1.9.8';
 const APP_BUILD = '2026.08.08';
 const CHANGELOG = [
+  { ver: '1.9.8', date: '2026-08-08', items: [
+    '密码锁屏重新设计：左侧密码显示 + 右侧滚轮选择器，参考智能手表旋钮交互',
+    '单滚轮逐位输入：滚动选数字，点击滚轮确认，四位密码自动提交',
+    '滚轮右侧刻度标记：靠近中心高亮金色，远离变暗，视觉反馈层次分明',
+    '密码槽位脉冲动画：当前输入位呼吸光效提示',
+    '删除按钮支持回退上一位输入'
+  ]},
+  { ver: '1.9.7', date: '2026-08-08', items: [
+    '卡面右下角眼睛图标：点击切换单卡余额显示/隐藏',
+    '账户分组右侧显示组别总资金，跟随全局遮罩状态',
+    '全局余额切换联动所有卡片和分组总额'
+  ]},
   { ver: '1.9.6', date: '2026-08-08', items: [
     'EchoAI扇形卡面动效：前景卡完全展开，后景卡以彩色条带堆叠露出',
     '弹簧缓动切换：点击后景条带，卡片以cubic-bezier(.34,1.4,.64,1)弹簧动画弹到前台',
@@ -3058,8 +3070,11 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
-// ===== App Lock (Scroll Wheel Password) =====
+// ===== App Lock (Rotary Wheel Password) =====
 const WHEEL_ITEM_H = 44;
+let lockEnteredDigits = [0, 0, 0, 0];
+let lockActiveSlot = 0;
+let lockWheelReady = false;
 
 function hashPassword(pwd) {
   let h = 5381;
@@ -3073,30 +3088,54 @@ function updateLockStatus() {
   el.textContent = state.settings.appPassword ? '已开启 ›' : '未开启 ›';
 }
 
-// Build a single wheel column with digits 0-9 (CSS padding handles centering)
-function buildWheel(initialDigit) {
-  const wheel = document.createElement('div');
-  wheel.className = 'lock-wheel';
-  for (let d = 0; d <= 9; d++) wheel.appendChild(makeWheelItem(String(d)));
-  wheel._initialDigit = initialDigit || 0;
+// Build the rotary wheel with digits 0-9
+function buildRotaryWheel() {
+  const container = $('#lock-rotary');
+  if (!container) return;
+  container.innerHTML = '';
+  for (let d = 0; d <= 9; d++) {
+    const item = document.createElement('div');
+    item.className = 'lock-rotary-item';
+    item.textContent = String(d);
+    container.appendChild(item);
+  }
   let snapTimer = null;
-  wheel.addEventListener('scroll', () => {
-    updateWheelHighlight(wheel);
+  container.addEventListener('scroll', () => {
+    updateRotaryHighlight(container);
     clearTimeout(snapTimer);
-    snapTimer = setTimeout(() => snapWheel(wheel), 120);
+    snapTimer = setTimeout(() => snapRotary(container), 120);
+    // Live update the active slot
+    if (lockActiveSlot < 4) {
+      const digit = getRotaryDigit(container);
+      lockEnteredDigits[lockActiveSlot] = digit;
+      updateLockDots();
+    }
   }, { passive: true });
-  return wheel;
+
+  // Tap to confirm current digit and advance
+  container.addEventListener('click', (e) => {
+    e.stopPropagation();
+    lockConfirmDigit();
+  });
+
+  // Build tick marks
+  buildRotaryTicks();
+  lockWheelReady = true;
 }
 
-function makeWheelItem(text) {
-  const item = document.createElement('div');
-  item.className = 'lock-wheel-item';
-  item.textContent = text;
-  return item;
+function buildRotaryTicks() {
+  const ticksEl = $('#lock-rotary-ticks');
+  if (!ticksEl) return;
+  ticksEl.innerHTML = '';
+  for (let i = 0; i < 10; i++) {
+    const tick = document.createElement('div');
+    tick.className = 'lock-tick';
+    ticksEl.appendChild(tick);
+  }
 }
 
-function updateWheelHighlight(wheel) {
-  const items = wheel.querySelectorAll('.lock-wheel-item');
+function updateRotaryHighlight(wheel) {
+  const items = wheel.querySelectorAll('.lock-rotary-item');
   const center = wheel.scrollTop + wheel.clientHeight / 2;
   items.forEach(item => {
     const itemCenter = item.offsetTop + item.offsetHeight / 2;
@@ -3107,36 +3146,96 @@ function updateWheelHighlight(wheel) {
       item.classList.remove('active');
     }
   });
+  updateRotaryTicks(wheel);
 }
 
-function snapWheel(wheel) {
+function updateRotaryTicks(wheel) {
+  const ticks = $$('#lock-rotary-ticks .lock-tick');
+  const center = wheel.scrollTop + wheel.clientHeight / 2;
+  const items = wheel.querySelectorAll('.lock-rotary-item');
+  ticks.forEach((tick, i) => {
+    const item = items[i];
+    if (!item) return;
+    const itemCenter = item.offsetTop + item.offsetHeight / 2;
+    const dist = Math.abs(center - itemCenter);
+    tick.classList.remove('bright', 'dim');
+    if (dist < WHEEL_ITEM_H * 0.55) {
+      tick.classList.add('bright');
+    } else if (dist < WHEEL_ITEM_H * 1.5) {
+      tick.classList.add('dim');
+    }
+  });
+}
+
+function snapRotary(wheel) {
   const nearest = Math.round(wheel.scrollTop / WHEEL_ITEM_H) * WHEEL_ITEM_H;
   if (Math.abs(wheel.scrollTop - nearest) > 1) {
     wheel.scrollTo({ top: nearest, behavior: 'smooth' });
   }
 }
 
-function getWheelDigit(wheel) {
+function getRotaryDigit(wheel) {
   const idx = Math.round(wheel.scrollTop / WHEEL_ITEM_H);
   return ((idx % 10) + 10) % 10;
 }
 
 function getWheelDigits() {
-  const wheels = $$('#lock-wheels .lock-wheel');
-  return Array.from(wheels).map(getWheelDigit).join('');
+  return lockEnteredDigits.map(d => String(d)).join('');
+}
+
+// Confirm current digit and advance to next slot
+function lockConfirmDigit() {
+  if (lockActiveSlot >= 4) return;
+  haptic('light');
+  lockActiveSlot++;
+  updateLockDots();
+  // Auto-submit when all 4 digits entered
+  if (lockActiveSlot >= 4) {
+    setTimeout(() => confirmLockPassword(), 300);
+  }
+}
+
+// Go back one digit
+function lockBackspace() {
+  if (lockActiveSlot <= 0) return;
+  haptic('light');
+  lockActiveSlot--;
+  updateLockDots();
+}
+
+// Update the password display on the left
+function updateLockDots() {
+  const slots = $$('#lock-pass-display .lock-pass-slot');
+  const wheel = $('#lock-rotary');
+  const currentDigit = wheel ? getRotaryDigit(wheel) : 0;
+  slots.forEach((slot, i) => {
+    slot.classList.remove('active', 'filled');
+    if (i < lockActiveSlot) {
+      slot.classList.add('filled');
+      slot.textContent = String(lockEnteredDigits[i]);
+    } else if (i === lockActiveSlot) {
+      slot.classList.add('active');
+      lockEnteredDigits[i] = currentDigit;
+      slot.textContent = String(currentDigit);
+    } else {
+      slot.textContent = '';
+    }
+  });
+  // Update backspace button state
+  const backBtn = $('#lock-back-btn');
+  if (backBtn) backBtn.disabled = lockActiveSlot <= 0;
 }
 
 function resetWheels() {
-  const container = $('#lock-wheels');
-  container.innerHTML = '';
-  for (let i = 0; i < 4; i++) {
-    container.appendChild(buildWheel(0));
+  lockEnteredDigits = [0, 0, 0, 0];
+  lockActiveSlot = 0;
+  if (!lockWheelReady) buildRotaryWheel();
+  const wheel = $('#lock-rotary');
+  if (wheel) {
+    wheel.scrollTop = 0;
+    updateRotaryHighlight(wheel);
   }
-  // Set initial scroll positions AFTER DOM insertion so clientHeight is correct
-  $$('#lock-wheels .lock-wheel').forEach(wheel => {
-    wheel.scrollTop = (wheel._initialDigit || 0) * WHEEL_ITEM_H;
-    updateWheelHighlight(wheel);
-  });
+  updateLockDots();
 }
 
 // Lock screen mode: 'unlock' | 'set' | 'confirm' | 'remove'
@@ -3149,11 +3248,13 @@ function showLockScreen() {
   const subtitle = $('#lock-subtitle');
   const confirmBtn = $('#lock-confirm-btn');
   const cancelBtn = $('#lock-cancel-btn');
-  subtitle.textContent = '滚动输入密码解锁';
+  const backBtn = $('#lock-back-btn');
+  subtitle.textContent = '滚动选择数字，点击确认';
   subtitle.classList.remove('error');
   confirmBtn.style.display = 'block';
   confirmBtn.textContent = '解锁';
   cancelBtn.style.display = 'none';
+  if (backBtn) backBtn.style.display = 'flex';
   resetWheels();
   overlay.classList.add('on');
   haptic('medium');
@@ -3169,19 +3270,19 @@ function openLockSettings() {
     const choice = confirm('应用密码已开启\n\n确定 = 修改密码\n取消 = 关闭密码');
     if (choice) {
       // Verify old password first
-      lockMode = 'set';
+      lockMode = 'verify-old';
       const subtitle = $('#lock-subtitle');
       const confirmBtn = $('#lock-confirm-btn');
       const cancelBtn = $('#lock-cancel-btn');
+      const backBtn = $('#lock-back-btn');
       subtitle.textContent = '请先输入当前密码';
       subtitle.classList.remove('error');
       confirmBtn.style.display = 'block';
       confirmBtn.textContent = '确认';
       cancelBtn.style.display = 'block';
+      if (backBtn) backBtn.style.display = 'flex';
       resetWheels();
       $('#lock-screen').classList.add('on');
-      // Temporarily set mode to verify-old
-      lockMode = 'verify-old';
     } else {
       // Remove password
       state.settings.appPassword = null;
@@ -3197,11 +3298,13 @@ function openLockSettings() {
   const subtitle = $('#lock-subtitle');
   const confirmBtn = $('#lock-confirm-btn');
   const cancelBtn = $('#lock-cancel-btn');
+  const backBtn = $('#lock-back-btn');
   subtitle.textContent = '滚动设置4位数字密码';
   subtitle.classList.remove('error');
   confirmBtn.style.display = 'block';
   confirmBtn.textContent = '下一步';
   cancelBtn.style.display = 'block';
+  if (backBtn) backBtn.style.display = 'flex';
   resetWheels();
   $('#lock-screen').classList.add('on');
 }
@@ -3224,7 +3327,7 @@ function confirmLockPassword() {
       haptic('error');
       resetWheels();
       setTimeout(() => {
-        subtitle.textContent = '滚动输入密码解锁';
+        subtitle.textContent = '滚动选择数字，点击确认';
         subtitle.classList.remove('error');
       }, 1500);
     }
