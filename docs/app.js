@@ -209,6 +209,7 @@ let state = {
   acctIncludeInAssets: true,
   editingAcctIdx: -1,
   activeCardByGroup: {}, // 每个分组当前展示的卡片索引: {groupKey: accountId}
+  collapsedGroups: {}, // 折叠的分组: {groupKey: true}
   currentSubId: null,
   fetchedAppIcon: null,
   editSubId: null,
@@ -2782,20 +2783,21 @@ function renderAccounts() {
       state.activeCardByGroup[gk] = activeId;
     }
 
-    // Calculate stack height: front card 130px + peek strips for remaining cards
+    const isCollapsed = !!state.collapsedGroups[gk];
     const peekH = 28; // visible strip per behind card
     const behindH = 36; // actual behind card element height
     const overlap = 8; // overlap between cards
     const stackH = 130 + (groupAccounts.length - 1) * peekH + 8;
 
-    html += `<div class="card-group" data-group="${gk}">`;
-    html += `<div class="card-group-header">
+    html += `<div class="card-group${isCollapsed ? ' collapsed' : ''}" data-group="${gk}">`;
+    html += `<div class="card-group-header" onclick="toggleGroupCollapse('${gk.replace(/'/g,"\\'")}')">
+      <span class="card-group-toggle">${isCollapsed ? '▶' : '▼'}</span>
       <span class="card-group-icon">${groupIcon}</span>
       <span class="card-group-name">${groupName}</span>
       <span class="card-group-count">${groupAccounts.length}张</span>
       <span class="card-group-total">${balanceMasked ? '****' : curSyms.CNY + fmt(groupTotal)}</span>
     </div>`;
-    html += `<div class="card-group-stack" style="min-height:${stackH}px;" data-group="${gk}">`;
+    html += `<div class="card-group-stack${isCollapsed ? ' collapsed' : ''}" style="${isCollapsed ? '' : `min-height:${stackH}px;`}" data-group="${gk}">`;
 
     // Order cards: active first, then rest
     const activeIdx = groupAccounts.findIndex(({a}) => a.id === activeId);
@@ -2891,6 +2893,18 @@ function renderAccounts() {
       }, { passive: true });
     });
   });
+}
+
+// 折叠/展开卡面分组
+function toggleGroupCollapse(gk) {
+  if (state.collapsedGroups[gk]) {
+    delete state.collapsedGroups[gk];
+  } else {
+    state.collapsedGroups[gk] = true;
+  }
+  save();
+  renderAccounts();
+  haptic('light');
 }
 
 function render() {

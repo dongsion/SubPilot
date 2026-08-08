@@ -161,12 +161,14 @@ input { font-family:inherit; }
 .card-group-stack { position:relative; min-height:130px; padding-bottom:8px; }
 
 /* 卡片分组标题 */
-.card-group-header { display:flex; align-items:center; gap:8px; padding:18px 4px 10px; margin-top:4px; }
+.card-group-header { display:flex; align-items:center; gap:8px; padding:18px 4px 10px; margin-top:4px; cursor:pointer; }
 .card-group-header:first-child { padding-top:6px; margin-top:0; }
+.card-group-toggle { font-size:10px; color:var(--t3); transition:transform .2s ease; width:14px; flex-shrink:0; }
 .card-group-icon { font-size:16px; }
 .card-group-name { font-size:15px; font-weight:700; color:var(--t1); }
 .card-group-count { font-size:11px; color:var(--t3); font-weight:500; }
 .card-group-total { margin-left:auto; font-size:13px; font-weight:600; color:var(--gold); font-family:var(--font-mono); }
+.card-group-stack.collapsed { display:none; }
 
 /* 单张卡片 - EchoAI扇形堆叠模式 */
 .wc { position:absolute; left:0; right:0; border-radius:18px; overflow:hidden; cursor:pointer; display:flex; flex-direction:column; padding:0; will-change:transform,top,height; -webkit-tap-highlight-color:transparent; box-shadow:0 6px 24px rgba(0,0,0,0.35); height:130px; transition:top .45s cubic-bezier(.34,1.4,.64,1), transform .45s cubic-bezier(.34,1.4,.64,1), height .45s cubic-bezier(.34,1.4,.64,1), box-shadow .3s ease, opacity .4s ease; opacity:0; transform:scale(0.96); }
