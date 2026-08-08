@@ -2347,6 +2347,10 @@ function bringCardToFront(stackEl, clickedCard) {
   const clickedIdx = cards.indexOf(clickedCard);
   if (clickedIdx <= 0) return;
 
+  // Suppress clicks briefly to prevent ghost click after DOM reorder on touch devices
+  stackEl._suppressClick = true;
+  setTimeout(() => { stackEl._suppressClick = false; }, 400);
+
   // Reorder DOM: move clicked card to first position
   stackEl.insertBefore(clickedCard, stackEl.firstChild);
 
@@ -2360,11 +2364,11 @@ function bringCardToFront(stackEl, clickedCard) {
     card.style.animationDelay = '';
     if (pos === 0) {
       card.style.top = '0px';
-      card.classList.add('wc-front');
+      card.classList.add('wc-front', 'wc-visible');
     } else {
       const topPos = 130 - overlap + (pos - 1) * peekH;
       card.style.top = topPos + 'px';
-      card.classList.add('wc-behind');
+      card.classList.add('wc-behind', 'wc-visible');
       if (pos === 2) card.classList.add('wc-behind-2');
       else if (pos === 3) card.classList.add('wc-behind-3');
       else if (pos === 4) card.classList.add('wc-behind-4');
@@ -2373,7 +2377,7 @@ function bringCardToFront(stackEl, clickedCard) {
     // Rebind click handler with new position
     card.onclick = (e) => {
       e.stopPropagation();
-      if (stackEl._swipeTriggered) { stackEl._swipeTriggered = false; return; }
+      if (stackEl._suppressClick || stackEl._swipeTriggered) { stackEl._swipeTriggered = false; return; }
       const idx = parseInt(card.dataset.idx);
       const newPos = Array.from(stackEl.querySelectorAll('.wc')).indexOf(card);
       if (newPos === 0) {
@@ -2523,7 +2527,7 @@ function renderAccounts() {
         // Click handler
         card.onclick = (e) => {
           e.stopPropagation();
-          if (groupEl._swipeTriggered) { groupEl._swipeTriggered = false; return; }
+          if (groupEl._suppressClick || groupEl._swipeTriggered) { groupEl._swipeTriggered = false; return; }
           const idx = parseInt(card.dataset.idx);
           if (pos === 0) {
             // Front card -> open detail
@@ -2675,9 +2679,13 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '2.0.5';
+const APP_VERSION = '2.0.6';
 const APP_BUILD = '2026.08.08';
 const CHANGELOG = [
+  { ver: '2.0.6', date: '2026-08-08', items: [
+    '修复卡面切换后无法点击的问题：DOM重排后ghost click被抑制400ms',
+    '修复bringCardToFront中wc-visible类丢失导致卡片不可见的问题'
+  ]},
   { ver: '2.0.5', date: '2026-08-08', items: [
     '修复滑动切换导致界面无法点击的问题：加入swipeTriggered标志防止touchend后的click事件误触发',
     '提高滑动手势识别门槛，避免误触'
