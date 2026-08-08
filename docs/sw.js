@@ -1,4 +1,4 @@
-const CACHE_NAME = 'subpilot-v1.9.4';
+const CACHE_NAME = 'subpilot-v1.9.5';
 const ASSETS = ['./', './index.html', './app.js', './manifest.json', './icons/icon.svg'];
 
 // 安装：预缓存核心资源 + 立即激活

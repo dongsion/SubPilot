@@ -310,19 +310,20 @@ const CARD_THEMES = {
 
 // Account type config
 const ACCOUNT_TYPES = {
-  bank: { name: '储蓄卡', brand: 'UnionPay', hasChip: true, hasHolo: true, group: 'bank' },
-  alipay: { name: '支付宝', brand: 'Alipay', hasChip: false, hasHolo: false, group: 'cash' },
-  wechat: { name: '微信零钱', brand: 'WeChat Pay', hasChip: false, hasHolo: false, group: 'cash' },
-  yunshanfu: { name: '云闪付', brand: 'UnionPay', hasChip: false, hasHolo: false, group: 'bank' },
+  bank: { name: '储蓄卡', brand: 'UnionPay', hasChip: true, hasHolo: true, group: 'funding' },
+  alipay: { name: '支付宝', brand: 'Alipay', hasChip: false, hasHolo: false, group: 'funding' },
+  wechat: { name: '微信零钱', brand: 'WeChat Pay', hasChip: false, hasHolo: false, group: 'funding' },
+  yunshanfu: { name: '云闪付', brand: 'UnionPay', hasChip: false, hasHolo: false, group: 'funding' },
   licaicai: { name: '理财通', brand: 'Licaitong', hasChip: false, hasHolo: false, group: 'wealth' },
   yuebao: { name: '余额宝', brand: 'Yuebao', hasChip: false, hasHolo: false, group: 'wealth' },
-  other: { name: '钱包', brand: 'Wallet', hasChip: false, hasHolo: false, group: 'cash' }
+  cash: { name: '现金', brand: 'Cash', hasChip: false, hasHolo: false, group: 'cash' },
+  other: { name: '钱包', brand: 'Wallet', hasChip: false, hasHolo: false, group: 'funding' }
 };
 
 const ACCOUNT_GROUPS = {
-  bank: { name: '银行卡', icon: '🏦' },
-  wealth: { name: '理财', icon: '📈' },
-  cash: { name: '现金/电子钱包', icon: '💰' }
+  funding: { name: '资金账户', icon: '💳' },
+  wealth: { name: '理财账户', icon: '📈' },
+  cash: { name: '纸币现金', icon: '💵' }
 };
 
 // ===== Storage =====
@@ -946,6 +947,7 @@ function openAddAccount() {
   $('#acct-balance').value = '0';
   $('#acct-num').value = '';
   $('#acct-currency').value = 'CNY';
+  $('#acct-custom-group').value = '';
   state.selectedAcctType = 'bank';
   state.selectedCardColor = 'gold';
   state.acctIncludeInAssets = true;
@@ -965,6 +967,7 @@ function editAccount(idx) {
   $('#acct-balance').value = a.balance != null ? String(a.balance) : '0';
   $('#acct-num').value = a.cardNumber || '';
   $('#acct-currency').value = a.currency || 'CNY';
+  $('#acct-custom-group').value = a.customGroup || '';
   state.selectedAcctType = a.type || 'bank';
   state.selectedCardColor = a.color || 'gold';
   state.acctIncludeInAssets = a.includeInAssets !== false;
@@ -981,6 +984,7 @@ function saveAccount() {
   const balance = parseFloat($('#acct-balance').value) || 0;
   const cardNumber = $('#acct-num').value.trim();
   const currency = $('#acct-currency').value || 'CNY';
+  const customGroup = $('#acct-custom-group').value.trim() || null;
 
   // Auto-detect account type from name (only for new accounts)
   let acctType = state.selectedAcctType;
@@ -1015,6 +1019,7 @@ function saveAccount() {
     a.type = acctType;
     a.color = acctColor;
     a.includeInAssets = state.acctIncludeInAssets !== false;
+    a.customGroup = customGroup;
     state.editingAcctIdx = -1;
     save();
     closeSheet('sheet-acct');
@@ -1028,6 +1033,7 @@ function saveAccount() {
       id: genId(), name, type: acctType, balance,
       cardNumber, currency, color: acctColor, brandSlug: brand?.slug || null,
       includeInAssets: state.acctIncludeInAssets !== false,
+      customGroup,
       createdAt: new Date().toISOString()
     };
     state.accounts.push(acct);
@@ -1246,7 +1252,7 @@ function renderOverview() {
   const subExpense = monthTx.filter(t => t.isSubscription).reduce((s,t) => s + t.amount, 0);
 
   $('#hero-total').textContent = fmt(Math.round(monthExpense));
-  $('#overview-sub').textContent = `${month.label} · ${state.subscriptions.length}项订阅`;
+  $('#overview-sub').textContent = `${month.label} · ${state.transactions.length}笔流水`;
 
   const delta = Math.round(monthIncome - monthExpense);
   $('#hero-meta').innerHTML = `
@@ -1276,19 +1282,38 @@ function renderOverview() {
   }
   bars.innerHTML = html;
 
-  // Upcoming subscriptions (next 3)
-  const sorted = [...state.subscriptions].sort((a,b) => new Date(a.nextDate) - new Date(b.nextDate));
-  const upcoming = sorted.slice(0, 3);
-  const container = $('#upcoming-subs');
-  if (state.subscriptions.length === 0) {
-    container.innerHTML = `<div class="empty-state"><div class="es-icon">📋</div><div class="es-text">暂无订阅</div><div class="es-sub">点击 + 添加你的第一个订阅</div></div>`;
+  // 最近流水（最近5条）
+  const container = $('#overview-tx');
+  const recentTx = [...state.transactions].sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 5);
+  if (recentTx.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="es-icon">📝</div><div class="es-text">暂无流水记录</div><div class="es-sub">点击 + 记一笔</div></div>`;
     return;
   }
-  container.innerHTML = upcoming.map(sub => renderSubCard(sub)).join('');
-  // Bind click
-  container.querySelectorAll('.sc2').forEach(el => {
-    el.onclick = () => { state.currentSubId = el.dataset.id; showView('subdetail'); };
-  });
+  const catColors = { food:'#f59e0b',shopping:'#ec4899',transport:'#0ea5e9',home:'#10b981',entertainment:'#a855f7',medical:'#ef4444',study:'#3b82f6',other:'#6b7280',salary:'#10b981',bonus:'#f59e0b',invest:'#8b5cf6',other_in:'#6b7280',sub:'#d4af37' };
+  const catBgColors = { food:'rgba(245,158,11,0.12)',shopping:'rgba(236,72,153,0.12)',transport:'rgba(14,165,233,0.12)',home:'rgba(16,185,129,0.12)',entertainment:'rgba(168,85,247,0.12)',medical:'rgba(239,68,68,0.12)',study:'rgba(59,130,246,0.12)',other:'rgba(107,114,128,0.12)',salary:'rgba(16,185,129,0.12)',bonus:'rgba(245,158,11,0.12)',invest:'rgba(139,92,246,0.12)',other_in:'rgba(107,114,128,0.12)',sub:'rgba(212,175,55,0.12)' };
+
+  container.innerHTML = recentTx.map(t => {
+    const acct = state.accounts.find(a => a.id === t.accountId);
+    const theme = acct ? (CARD_THEMES[acct.color] || CARD_THEMES.gold) : CARD_THEMES.gold;
+    const acctColor = theme.accent;
+    const isSub = t.isSubscription;
+    const catKey = isSub ? 'sub' : t.category;
+    const iconColor = catColors[catKey] || catColors.other;
+    const iconBg = catBgColors[catKey] || catBgColors.other;
+    const iconContent = isSub ? txIconSvg('sub') : txIconSvg(t.category);
+    const badge = isSub ? '<span class="tx-badge">订阅</span>' : '';
+    const amtClass = t.type === 'income' ? 'in' : 'out';
+    return `<div class="tx-item" onclick="openTxDetail('${t.id}')">
+      <div class="tx-item-icon" style="background:${iconBg};">
+        <svg viewBox="0 0 24 24" style="stroke:${iconColor};">${iconContent.match(/<svg[^>]*>([\s\S]*)<\/svg>/)?.[1] || ''}</svg>
+      </div>
+      <div class="tx-item-body">
+        <div class="tx-item-name">${t.categoryName} ${badge}</div>
+        <div class="tx-item-meta"><span class="tx-acct-dot" style="background:${acctColor};"></span>${acct?.name || '未知'} · ${t.time}</div>
+      </div>
+      <div class="tx-item-amt ${amtClass}">${t.type==='income'?'+':'-'}¥${fmt(t.amount)}</div>
+    </div>`;
+  }).join('');
 }
 
 function renderSubCard(sub) {
@@ -1468,7 +1493,21 @@ function renderTx() {
     return;
   }
 
-  // Group by date
+  // 分类颜色映射
+  const catColors = {
+    food: '#f59e0b', shopping: '#ec4899', transport: '#0ea5e9', home: '#10b981',
+    entertainment: '#a855f7', medical: '#ef4444', study: '#3b82f6', other: '#6b7280',
+    salary: '#10b981', bonus: '#f59e0b', invest: '#8b5cf6', other_in: '#6b7280', sub: '#d4af37'
+  };
+  const catBgColors = {
+    food: 'rgba(245,158,11,0.12)', shopping: 'rgba(236,72,153,0.12)', transport: 'rgba(14,165,233,0.12)',
+    home: 'rgba(16,185,129,0.12)', entertainment: 'rgba(168,85,247,0.12)', medical: 'rgba(239,68,68,0.12)',
+    study: 'rgba(59,130,246,0.12)', other: 'rgba(107,114,128,0.12)',
+    salary: 'rgba(16,185,129,0.12)', bonus: 'rgba(245,158,11,0.12)', invest: 'rgba(139,92,246,0.12)',
+    other_in: 'rgba(107,114,128,0.12)', sub: 'rgba(212,175,55,0.12)'
+  };
+
+  // Group by date - 时间轴卡片
   const groups = {};
   txs.forEach(t => {
     const key = t.date;
@@ -1476,38 +1515,62 @@ function renderTx() {
     groups[key].push(t);
   });
 
-  let html = '';
+  let html = '<div class="tx-timeline">';
   const sortedDates = Object.keys(groups).sort((a,b) => new Date(b) - new Date(a));
   sortedDates.forEach(date => {
     const d = new Date(date);
     const isToday = date === today();
-    const label = isToday ? `今天 · ${d.getMonth()+1}月${d.getDate()}日` :
-      date === addDays(today(), -1) ? `昨天 · ${d.getMonth()+1}月${d.getDate()}日` :
-      `${d.getMonth()+1}月${d.getDate()}日`;
+    const isYesterday = date === addDays(today(), -1);
+    const label = isToday ? '今天' : isYesterday ? '昨天' : `${d.getMonth()+1}月${d.getDate()}日`;
+    const weekDay = ['日','一','二','三','四','五','六'][d.getDay()];
     const dayExp = groups[date].filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
     const dayInc = groups[date].filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+    // 日卡片颜色点：有支出用红色，纯收入用绿色
+    const dotColor = dayExp > 0 ? 'var(--red)' : 'var(--green)';
     let sumText = '';
     if (dayInc > 0) sumText += `<span style="color:var(--green);">+${fmt(Math.round(dayInc))}</span>`;
     if (dayExp > 0) sumText += (sumText ? ' · ' : '') + `<span style="color:var(--red);">-${fmt(Math.round(dayExp))}</span>`;
-    html += `<div class="mh"><span class="mht">${label}</span><span class="mht">${sumText}</span></div>`;
+
+    html += `<div class="tx-day-card">
+      <div class="tx-day-header">
+        <div class="tx-day-date">
+          <span class="tx-day-dot" style="background:${dotColor};"></span>
+          <div>
+            <div class="tx-day-label">${label}</div>
+            <div class="tx-day-sub">周${weekDay} · ${groups[date].length}笔</div>
+          </div>
+        </div>
+        <div class="tx-day-sum">${sumText}</div>
+      </div>
+      <div class="tx-day-items">`;
+
     groups[date].forEach(t => {
       const acct = state.accounts.find(a => a.id === t.accountId);
       const theme = acct ? (CARD_THEMES[acct.color] || CARD_THEMES.gold) : CARD_THEMES.gold;
       const acctColor = theme.accent;
       const isSub = t.isSubscription;
-      const icClass = isSub ? 'txi is' : (t.type === 'income' ? 'txi is2' : 'txi');
+      const catKey = isSub ? 'sub' : (t.type === 'income' ? t.category : t.category);
+      const iconColor = catColors[catKey] || catColors.other;
+      const iconBg = catBgColors[catKey] || catBgColors.other;
       const iconContent = isSub ? txIconSvg('sub') : txIconSvg(t.category);
-      const badge = isSub ? '<span class="badge">订阅</span>' : '';
-      html += `<div class="tx">
-        <div class="${icClass}">${iconContent}</div>
-        <div class="tx2">
-          <div class="txn">${t.categoryName} ${badge}</div>
-          <div class="txm"><span class="ad" style="background:${acctColor};"></span>${acct?.name || '未知'} · ${t.time}</div>
+      const badge = isSub ? '<span class="tx-badge">订阅</span>' : '';
+      const amtClass = t.type === 'income' ? 'in' : 'out';
+
+      html += `<div class="tx-item" onclick="openTxDetail('${t.id}')">
+        <div class="tx-item-icon" style="background:${iconBg};">
+          <svg viewBox="0 0 24 24" style="stroke:${iconColor};">${iconContent.match(/<svg[^>]*>([\s\S]*)<\/svg>/)?.[1] || ''}</svg>
         </div>
-        <div class="txa ${t.type==='income'?'in':''}">${t.type==='income'?'+':'-'}¥${fmt(t.amount)}</div>
+        <div class="tx-item-body">
+          <div class="tx-item-name">${t.categoryName} ${badge}</div>
+          <div class="tx-item-meta"><span class="tx-acct-dot" style="background:${acctColor};"></span>${acct?.name || '未知'} · ${t.time}</div>
+        </div>
+        <div class="tx-item-amt ${amtClass}">${t.type==='income'?'+':'-'}¥${fmt(t.amount)}</div>
       </div>`;
     });
+
+    html += `</div></div>`;
   });
+  html += '</div>';
   container.innerHTML = html;
 }
 
@@ -1865,11 +1928,48 @@ function renderAccounts() {
     cs.style.minHeight = '180px';
   } else {
     cs.style.minHeight = '';
-    // 所有卡片一列排列
+    // 按分组分类显示卡片
     let html = '';
-    state.accounts.forEach((acct, idx) => {
-      html += renderWalletCard(acct, idx);
+    const groupOrder = ['funding', 'wealth', 'cash'];
+    // 收集自定义分组
+    const customGroups = [];
+    state.accounts.forEach(a => {
+      if (a.customGroup && !groupOrder.includes(a.customGroup) && !customGroups.includes(a.customGroup)) {
+        customGroups.push(a.customGroup);
+      }
     });
+    const allGroups = [...groupOrder, ...customGroups];
+
+    allGroups.forEach(gk => {
+      const groupAccounts = state.accounts.map((a, i) => ({a, i})).filter(({a}) => {
+        const at = ACCOUNT_TYPES[a.type];
+        const grp = a.customGroup || (at ? at.group : 'funding');
+        return grp === gk;
+      });
+      if (groupAccounts.length === 0) return;
+
+      let groupName, groupIcon;
+      if (ACCOUNT_GROUPS[gk]) {
+        groupName = ACCOUNT_GROUPS[gk].name;
+        groupIcon = ACCOUNT_GROUPS[gk].icon;
+      } else {
+        groupName = gk;
+        groupIcon = '📂';
+      }
+      const groupTotal = groupAccounts.filter(({a}) => a.includeInAssets !== false).reduce((s,{a}) => s + a.balance, 0);
+      const curSyms = { CNY:'¥', USD:'$', EUR:'€', GBP:'£', JPY:'¥', HKD:'HK$', TWD:'NT$' };
+
+      html += `<div class="card-group-header">
+        <span class="card-group-icon">${groupIcon}</span>
+        <span class="card-group-name">${groupName}</span>
+        <span class="card-group-count">${groupAccounts.length}张</span>
+        <span class="card-group-total">${curSyms.CNY}${fmt(Math.round(groupTotal))}</span>
+      </div>`;
+      groupAccounts.forEach(({a, i}) => {
+        html += renderWalletCard(a, i);
+      });
+    });
+
     cs.innerHTML = html;
 
     // 绑定点击事件 - 点击卡片弹出详情
@@ -1951,9 +2051,16 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '1.9.4';
+const APP_VERSION = '1.9.5';
 const APP_BUILD = '2026.08.08';
 const CHANGELOG = [
+  { ver: '1.9.5', date: '2026-08-08', items: [
+    '卡面分组分类：资金账户/理财账户/纸币现金三大类，支持自定义分组',
+    '概览页移除即将续费区域，改为最近流水预览，概览与流水合并展示',
+    '流水页时间轴卡片重构：参考行云Soar设计，按日期分组卡片+分类色彩图标',
+    '流水点击展开详情弹窗：显示金额/分类/账户/备注，支持删除',
+    '概览页流水预览与流水页统一卡片样式和分类配色'
+  ]},
   { ver: '1.9.4', date: '2026-08-08', items: [
     '修复编辑按钮无反应：新增editAccount函数，支持编辑余额/名称/卡号/币种/颜色/计入资产',
     '新增币种选择：支持CNY/USD/EUR/GBP/JPY/HKD/TWD七种货币',
@@ -2415,6 +2522,56 @@ function renderAIMessages() {
     }
   }).join('');
   container.scrollTop = container.scrollHeight;
+}
+
+// 流水详情弹窗
+function openTxDetail(txId) {
+  const t = state.transactions.find(x => x.id === txId);
+  if (!t) return;
+  const account = state.accounts.find(a => a.id === t.accountId);
+  const allCats = [...EXPENSE_CATS, ...INCOME_CATS];
+  const catInfo = allCats.find(c => c.id === t.category);
+  const typeText = t.type === 'income' ? '收入' : '支出';
+  const acctColor = account ? (CARD_THEMES[account.color]?.accent || 'var(--gold)') : 'var(--gold)';
+
+  const overlay = $('#card-detail-overlay');
+  const content = $('#card-detail-content');
+  content.innerHTML = `
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:18px;padding:20px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <span style="font-size:12px;padding:4px 10px;border-radius:8px;background:${t.type==='income'?'rgba(82,204,130,0.12)':'rgba(239,68,68,0.12)'};color:${t.type==='income'?'var(--green)':'var(--red)'};font-weight:600;">${typeText}</span>
+        <span style="font-size:11px;color:var(--t3);">${t.date} ${t.time}</span>
+      </div>
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="font-size:32px;font-weight:700;font-family:var(--font-mono);color:${t.type==='income'?'var(--green)':'var(--t1)'};">${t.type==='income'?'+':'-'}¥${fmt(t.amount)}</div>
+        <div style="font-size:14px;color:var(--t2);margin-top:6px;">${t.categoryName || catInfo?.name || '未分类'}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:13px;color:var(--t3);">账户</span>
+          <span style="font-size:13px;color:var(--t1);display:flex;align-items:center;gap:6px;"><span style="width:6px;height:6px;border-radius:50%;background:${acctColor};"></span>${account?.name || '未选择'}</span>
+        </div>
+        ${t.note ? `<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:var(--t3);">备注</span><span style="font-size:13px;color:var(--t1);">${t.note}</span></div>` : ''}
+        ${t.isSubscription ? `<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:var(--t3);">类型</span><span style="font-size:12px;padding:2px 8px;border-radius:6px;background:var(--gold-bg);color:var(--gold);font-weight:600;">订阅自动扣款</span></div>` : ''}
+      </div>
+    </div>
+    <div class="card-detail-actions">
+      <div class="card-detail-btn" onclick="event.stopPropagation();closeCardDetail();toast('编辑功能开发中')">编辑</div>
+      <div class="card-detail-btn" onclick="event.stopPropagation();deleteTx('${t.id}')">删除</div>
+    </div>
+  `;
+  overlay.classList.add('active');
+  haptic('light');
+}
+
+function deleteTx(txId) {
+  if (!confirm('确定删除这笔流水？')) return;
+  state.transactions = state.transactions.filter(t => t.id !== txId);
+  save();
+  closeCardDetail();
+  toast('已删除');
+  haptic('success');
+  render();
 }
 
 function renderTxPreview(tx) {

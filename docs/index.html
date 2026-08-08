@@ -104,6 +104,14 @@ input { font-family:inherit; }
 .wallet-cards { position:relative; padding:6px 0 0; overflow:visible; display:flex; flex-direction:column; gap:0; }
 .wallet-cards:has(.empty-state) { min-height:0; padding-top:0; overflow:hidden; gap:12px; }
 
+/* 卡片分组标题 */
+.card-group-header { display:flex; align-items:center; gap:8px; padding:18px 4px 8px; margin-top:4px; }
+.card-group-header:first-child { padding-top:6px; margin-top:0; }
+.card-group-icon { font-size:16px; }
+.card-group-name { font-size:15px; font-weight:700; color:var(--t1); }
+.card-group-count { font-size:11px; color:var(--t3); font-weight:500; }
+.card-group-total { margin-left:auto; font-size:13px; font-weight:600; color:var(--gold); font-family:var(--font-mono); }
+
 /* 单张卡片 - 堆叠展示模式 */
 .wc { position:relative; left:auto; right:auto; border-radius:18px; overflow:hidden; cursor:pointer; display:flex; flex-direction:column; padding:0; transition:transform .25s cubic-bezier(.34,1.3,.64,1), box-shadow .25s ease, margin-top .3s ease; will-change:transform; -webkit-tap-highlight-color:transparent; box-shadow:0 6px 24px rgba(0,0,0,0.35); height:130px; opacity:0; transform:translateY(24px) scale(0.96); animation:wcEnter .45s cubic-bezier(.22,1,.36,1) forwards; margin-top:-38px; }
 .wc:first-child { margin-top:0; }
@@ -237,6 +245,29 @@ input { font-family:inherit; }
 .tx2 { flex:1; min-width:0; }
 .txn { font-size:14px; font-weight:500; display:flex; align-items:center; gap:6px; }
 .txm { font-size:11px; color:var(--t3); margin-top:3px; display:flex; align-items:center; gap:6px; }
+
+/* 流水时间轴卡片 */
+.tx-timeline { position:relative; padding-left:0; }
+.tx-day-card { background:var(--card); border:1px solid var(--border); border-radius:18px; margin-bottom:12px; overflow:hidden; transition:transform .2s ease; }
+.tx-day-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid var(--border); }
+.tx-day-date { display:flex; align-items:center; gap:8px; }
+.tx-day-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.tx-day-label { font-size:14px; font-weight:700; color:var(--t1); }
+.tx-day-sub { font-size:11px; color:var(--t3); margin-top:1px; }
+.tx-day-sum { font-size:13px; font-weight:600; font-family:var(--font-mono); text-align:right; }
+.tx-day-items { padding:6px 8px 8px; }
+.tx-item { display:flex; align-items:center; gap:12px; padding:10px 10px; border-radius:14px; transition:background .15s; cursor:pointer; }
+.tx-item:active { background:rgba(255,255,255,0.03); }
+.tx-item-icon { width:38px; height:38px; border-radius:11px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.tx-item-icon svg { width:17px; height:17px; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.tx-item-body { flex:1; min-width:0; }
+.tx-item-name { font-size:14px; font-weight:500; color:var(--t1); display:flex; align-items:center; gap:6px; }
+.tx-item-meta { font-size:11px; color:var(--t3); margin-top:2px; display:flex; align-items:center; gap:6px; }
+.tx-item-amt { font-size:15px; font-weight:600; font-family:var(--font-mono); text-align:right; letter-spacing:-0.3px; }
+.tx-item-amt.in { color:var(--green); }
+.tx-item-amt.out { color:var(--t1); }
+.tx-badge { font-size:9px; padding:2px 6px; border-radius:5px; background:var(--gold-bg); color:var(--gold); font-weight:600; border:1px solid var(--gold-bd); }
+.tx-acct-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
 .ad { width:6px; height:6px; border-radius:50%; display:inline-block; }
 .txa { font-size:15px; font-weight:600; font-family:var(--font-mono); text-align:right; letter-spacing:-0.3px; }
 .txa.in{color:var(--green);}
@@ -484,8 +515,8 @@ textarea.form-i{resize:none;min-height:80px;}
       <div class="cht"><span class="ctt">近7天支出</span><span class="ctp">本周</span></div>
       <div class="cbars" id="chart-bars"></div>
     </div>
-    <div class="sec"><span class="st">即将续费</span><span class="sa2" onclick="showView('subs')">全部 ›</span></div>
-    <div id="upcoming-subs"></div>
+    <div class="sec"><span class="st">最近流水</span><span class="sa2" onclick="showView('tx')">全部 ›</span></div>
+    <div id="overview-tx"></div>
     <div style="height:20px;"></div>
   </div>
 </div>
@@ -616,14 +647,14 @@ textarea.form-i{resize:none;min-height:80px;}
       <div class="info-r" onclick="if(confirm('确定清除所有数据？此操作不可撤销。')){clearAll();toast('数据已清除');}"><span class="info-l">清除所有数据</span><span class="info-v" style="color:var(--red);">›</span></div>
     </div>
     <div class="info-g">
-      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v1.9.4 ›</span></div>
+      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v1.9.5 ›</span></div>
       <div class="info-r" onclick="showChangelog()"><span class="info-l">更新日志</span><span class="info-v" style="color:var(--gold);">查看 ›</span></div>
       <div class="info-r" onclick="checkUpdate()"><span class="info-l">检查更新</span><span class="info-v" style="color:var(--gold);" id="update-status">›</span></div>
       <div class="info-r"><span class="info-l">数据存储</span><span class="info-v" style="color:var(--t3);">仅本地浏览器</span></div>
     </div>
     <div style="text-align:center;padding:40px 20px;color:var(--t3);font-size:12px;">
       <div style="margin-bottom:8px;font-size:20px;letter-spacing:1px;">SubPilot</div>
-      <div data-ver-footer style="margin-bottom:4px;">订阅管家 · v1.9.4 (Build 2026.08.08)</div>
+      <div data-ver-footer style="margin-bottom:4px;">订阅管家 · v1.9.5 (Build 2026.08.08)</div>
       <div>所有数据默认仅保存在本地，开启云同步后加密上传至 Supabase</div>
     </div>
     <input type="file" id="import-file" accept=".json" style="display:none;">
@@ -920,6 +951,10 @@ textarea.form-i{resize:none;min-height:80px;}
     <div class="form-g">
       <label class="form-l">卡号末四位</label>
       <input type="text" class="form-i" id="acct-num" placeholder="如：8821" maxlength="4">
+    </div>
+    <div class="form-g">
+      <label class="form-l">自定义分组（可选）</label>
+      <input type="text" class="form-i" id="acct-custom-group" placeholder="留空按类型自动分组，如：公积金、股票账户">
     </div>
     <div class="form-g">
       <div style="display:flex;align-items:center;justify-content:space-between;">
