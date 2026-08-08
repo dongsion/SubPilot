@@ -1071,6 +1071,9 @@ function openAddAccount() {
   // Hide icon picker section for new accounts
   const iconSection = $('#acct-icon-section');
   if (iconSection) iconSection.style.display = 'none';
+  // Hide bg image section for new accounts
+  const bgSection = $('#acct-bgimage-section');
+  if (bgSection) bgSection.style.display = 'none';
   openSheet('sheet-acct');
 }
 
@@ -1107,6 +1110,12 @@ function editAccount(idx) {
       if (thumb) thumb.textContent = '🎨';
       if (label) label.textContent = '设置卡面图标';
     }
+  }
+  // Show bg image section in edit mode
+  const bgSection = $('#acct-bgimage-section');
+  if (bgSection) {
+    bgSection.style.display = 'block';
+    updateBgImagePreview(a.bgImage);
   }
   openSheet('sheet-acct');
 }
@@ -1361,6 +1370,86 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
+// ===== Card Background Image Picker =====
+function updateBgImagePreview(bgImage) {
+  const thumb = $('#acct-bgimage-thumb');
+  const label = $('#acct-bgimage-label');
+  const clearBtn = $('#acct-bgimage-clear');
+  if (bgImage) {
+    if (thumb) thumb.innerHTML = `<img src="${bgImage}" style="width:100%;height:100%;border-radius:6px;object-fit:cover;" onerror="this.style.display='none';" />`;
+    if (label) label.textContent = '点击更换背景图';
+    if (clearBtn) clearBtn.style.display = 'block';
+  } else {
+    if (thumb) thumb.textContent = '🖼️';
+    if (label) label.textContent = '从相册选择';
+    if (clearBtn) clearBtn.style.display = 'none';
+  }
+}
+
+function pickCardBgImage() {
+  const fileInput = $('#acct-bgimage-file');
+  if (!fileInput) return;
+  fileInput.value = '';
+  fileInput.click();
+}
+
+// Handle file selection
+document.addEventListener('DOMContentLoaded', () => {
+  const fileInput = $('#acct-bgimage-file');
+  if (fileInput) {
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) {
+        toast('图片不能超过5MB');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const dataUrl = ev.target.result;
+        // Compress image to keep localStorage manageable
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const maxW = 800, maxH = 400;
+          let w = img.width, h = img.height;
+          if (w > maxW) { h = h * maxW / w; w = maxW; }
+          if (h > maxH) { w = w * maxH / h; h = maxH; }
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          const compressed = canvas.toDataURL('image/jpeg', 0.85);
+          // Save to account
+          if (state.editingAcctIdx >= 0) {
+            const a = state.accounts[state.editingAcctIdx];
+            a.bgImage = compressed;
+            save();
+          }
+          updateBgImagePreview(compressed);
+          render();
+          toast('背景图已设置');
+          haptic('success');
+        };
+        img.src = dataUrl;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+});
+
+function clearCardBgImage() {
+  if (state.editingAcctIdx >= 0) {
+    const a = state.accounts[state.editingAcctIdx];
+    a.bgImage = null;
+    save();
+    render();
+  }
+  updateBgImagePreview(null);
+  toast('背景图已移除');
+  haptic('light');
+}
 
 // ===== Subscription Auto-Deduction =====
 function processAutoDeductions() {
@@ -2122,7 +2211,9 @@ function renderWalletCard(a, origIdx) {
   const acctType = ACCOUNT_TYPES[acctTypeKey];
 
   const gradient = getWalletCardGradient(a, origIdx);
-  const cardBg = `background:${gradient};`;
+  const cardBg = a.bgImage
+    ? `background:url('${a.bgImage}') center/cover no-repeat;`
+    : `background:${gradient};`;
 
   // Logo
   let brandSlug = a.brandSlug;
@@ -2173,7 +2264,9 @@ function renderWalletCard(a, origIdx) {
   const cardStyle = `${cardBg}`;
 
   const peekName = (a.name || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  const bgOverlay = a.bgImage ? '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,0,0,0.45) 0%,rgba(0,0,0,0.15) 50%,rgba(0,0,0,0.55) 100%);z-index:5;pointer-events:none;"></div>' : '';
   return `<div class="wc" data-idx="${origIdx}" data-card-id="${a.id}" data-peek-name="${peekName}" style="${cardStyle}">
+    ${bgOverlay}
     ${excludedBadge}
     <div class="wc-face">
       <div class="wc-face-top">
@@ -2253,7 +2346,8 @@ function openCardDetail(idx) {
 
   const content = $('#card-detail-content');
   content.innerHTML = `
-    <div class="card-detail-card" style="background:${gradient};">
+    <div class="card-detail-card" style="${a.bgImage ? `background:url('${a.bgImage}') center/cover no-repeat;` : `background:${gradient};`}">
+      ${a.bgImage ? '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,0,0,0.45) 0%,rgba(0,0,0,0.15) 50%,rgba(0,0,0,0.55) 100%);z-index:1;pointer-events:none;"></div>' : ''}
       ${excludedBadge}
       <div class="card-detail-top">
         <div>
@@ -2706,9 +2800,15 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '2.0.7';
+const APP_VERSION = '2.1.0';
 const APP_BUILD = '2026.08.08';
 const CHANGELOG = [
+  { ver: '2.1.0', date: '2026-08-08', items: [
+    '新增卡面背景图功能：从手机相册选择图片作为卡面背景，优先于配色',
+    '背景图自动压缩至800x400以内，保证存储和加载性能',
+    '背景图叠加半透明渐变遮罩，确保卡面文字清晰可读',
+    '支持随时移除背景图恢复配色卡面'
+  ]},
   { ver: '2.0.7', date: '2026-08-08', items: [
     '修复编辑账户时无法设置卡面图标的问题：编辑面板新增图标入口按钮',
     '支持粘贴App Store链接自动获取应用图标作为卡面图标',

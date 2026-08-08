@@ -936,14 +936,14 @@ textarea.form-i{resize:none;min-height:80px;}
       <div class="info-r" onclick="if(confirm('确定清除所有数据？此操作不可撤销。')){clearAll();toast('数据已清除');}"><span class="info-l">清除所有数据</span><span class="info-v" style="color:var(--red);">›</span></div>
     </div>
     <div class="info-g">
-      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v2.0.7 ›</span></div>
+      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v2.1.0 ›</span></div>
       <div class="info-r" onclick="showChangelog()"><span class="info-l">更新日志</span><span class="info-v" style="color:var(--gold);">查看 ›</span></div>
       <div class="info-r" onclick="checkUpdate()"><span class="info-l">检查更新</span><span class="info-v" style="color:var(--gold);" id="update-status">›</span></div>
       <div class="info-r"><span class="info-l">数据存储</span><span class="info-v" style="color:var(--t3);">仅本地浏览器</span></div>
     </div>
     <div style="text-align:center;padding:40px 20px;color:var(--t3);font-size:12px;">
       <div style="margin-bottom:8px;font-size:20px;letter-spacing:1px;">Countra</div>
-      <div data-ver-footer style="margin-bottom:4px;">转便数快 · v2.0.7 (Build 2026.08.08)</div>
+      <div data-ver-footer style="margin-bottom:4px;">转便数快 · v2.1.0 (Build 2026.08.08)</div>
       <div>所有数据默认仅保存在本地，开启云同步后加密上传至 Supabase</div>
     </div>
     <input type="file" id="import-file" accept=".json" style="display:none;">
@@ -1421,6 +1421,17 @@ textarea.form-i{resize:none;min-height:80px;}
         <span id="acct-icon-thumb" style="width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:14px;">🎨</span>
         <span id="acct-icon-label" style="flex:1;font-size:13px;">替换卡面图标</span>
       </button>
+    </div>
+    <div class="form-g" id="acct-bgimage-section" style="display:none;">
+      <label class="form-l">卡面背景图 <span style="font-size:11px;color:var(--t3);font-weight:400;">（从相册选择，优先于配色）</span></label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="btn btn-outline" id="acct-bgimage-btn" onclick="pickCardBgImage()" style="flex:1;text-align:left;display:flex;align-items:center;gap:10px;">
+          <span id="acct-bgimage-thumb" style="width:48px;height:32px;border-radius:6px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">🖼️</span>
+          <span id="acct-bgimage-label" style="flex:1;font-size:13px;">从相册选择</span>
+        </button>
+        <button class="btn btn-danger" id="acct-bgimage-clear" onclick="clearCardBgImage()" style="display:none;font-size:13px;padding:10px 14px;white-space:nowrap;">移除</button>
+      </div>
+      <input type="file" id="acct-bgimage-file" accept="image/*" style="display:none;">
     </div>
     <div class="form-g">
       <div style="display:flex;align-items:center;justify-content:space-between;">
