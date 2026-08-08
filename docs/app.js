@@ -2211,9 +2211,9 @@ function renderWalletCard(a, origIdx) {
   const acctType = ACCOUNT_TYPES[acctTypeKey];
 
   const gradient = getWalletCardGradient(a, origIdx);
-  const cardBg = a.bgImage
-    ? `background:url('${a.bgImage}') center/cover no-repeat;`
-    : `background:${gradient};`;
+  // 底层始终使用配色渐变，背景图用img标签contain完整显示在卡面范围内
+  const cardBg = `background:${gradient};`;
+  const bgImgLayer = a.bgImage ? `<img src="${a.bgImage}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:4;pointer-events:none;" onerror="this.style.display='none';" />` : '';
 
   // Logo
   let brandSlug = a.brandSlug;
@@ -2266,6 +2266,7 @@ function renderWalletCard(a, origIdx) {
   const peekName = (a.name || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   const bgOverlay = a.bgImage ? '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,0,0,0.45) 0%,rgba(0,0,0,0.15) 50%,rgba(0,0,0,0.55) 100%);z-index:5;pointer-events:none;"></div>' : '';
   return `<div class="wc" data-idx="${origIdx}" data-card-id="${a.id}" data-peek-name="${peekName}" style="${cardStyle}">
+    ${bgImgLayer}
     ${bgOverlay}
     ${excludedBadge}
     <div class="wc-face">
@@ -2346,7 +2347,8 @@ function openCardDetail(idx) {
 
   const content = $('#card-detail-content');
   content.innerHTML = `
-    <div class="card-detail-card" style="${a.bgImage ? `background:url('${a.bgImage}') center/cover no-repeat;` : `background:${gradient};`}">
+    <div class="card-detail-card" style="background:${gradient};">
+      ${a.bgImage ? `<img src="${a.bgImage}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:0;pointer-events:none;" onerror="this.style.display='none';" />` : ''}
       ${a.bgImage ? '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,0,0,0.45) 0%,rgba(0,0,0,0.15) 50%,rgba(0,0,0,0.55) 100%);z-index:1;pointer-events:none;"></div>' : ''}
       ${excludedBadge}
       <div class="card-detail-top">
