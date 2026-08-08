@@ -467,6 +467,7 @@ textarea.form-i{resize:none;min-height:80px;}
 .type-opt.on{background:var(--t1);color:var(--bg);}
 .type-opt.on.exp{background:rgba(255,92,72,0.85);color:#fff;}
 .type-opt.on.inc{background:rgba(82,204,130,0.85);color:#fff;}
+.type-opt.on.transfer{background:rgba(100,160,255,0.85);color:#fff;}
 .cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px 8px;margin-bottom:8px;}
 .cat-i{display:flex;flex-direction:column;align-items:center;gap:6px;}
 .cat-ic{width:48px;height:48px;border-radius:14px;background:rgba(255,255,255,0.04);display:flex;align-items:center;justify-content:center;font-size:22px;border:1px solid var(--border);transition:all .15s;}
@@ -843,6 +844,7 @@ textarea.form-i{resize:none;min-height:80px;}
       <button class="pl on" data-f="all">全部</button>
       <button class="pl off" data-f="expense">支出</button>
       <button class="pl off" data-f="income">收入</button>
+      <button class="pl off" data-f="transfer">转账</button>
       <button class="pl off" data-f="sub">订阅</button>
       <button class="pl off" id="tx-tag-pill" onclick="toggleTagFilter(event)">标签</button>
     </div>
@@ -1252,7 +1254,25 @@ textarea.form-i{resize:none;min-height:80px;}
     <div class="type-toggle" id="tx-type">
       <button class="type-opt on exp" data-t="expense">支出</button>
       <button class="type-opt" data-t="income">收入</button>
+      <button class="type-opt" data-t="transfer">转账</button>
     </div>
+    <!-- 转账专用区域 -->
+    <div id="tx-transfer-section" style="display:none;">
+      <div class="form-g">
+        <label class="form-l">转出账户</label>
+        <div class="row-pick" id="tx-from-pick"></div>
+      </div>
+      <div class="form-g">
+        <label class="form-l">转入账户</label>
+        <div class="row-pick" id="tx-to-pick"></div>
+      </div>
+      <div class="form-g">
+        <label class="form-l">手续费（可选）</label>
+        <input type="text" class="form-i" id="tx-fee-input" placeholder="0.00" inputmode="decimal">
+      </div>
+    </div>
+    <!-- 支出/收入专用区域 -->
+    <div id="tx-normal-section">
     <input type="text" class="amt-big" id="tx-amt-input" placeholder="0.00" inputmode="decimal">
     <div class="form-g">
       <label class="form-l">分类</label>
@@ -1261,6 +1281,7 @@ textarea.form-i{resize:none;min-height:80px;}
     <div class="form-g">
       <label class="form-l">账户</label>
       <div class="row-pick" id="tx-acct-pick"></div>
+    </div>
     </div>
     <div class="form-g">
       <label class="form-l">备注</label>

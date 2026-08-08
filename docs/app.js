@@ -574,15 +574,55 @@ function openAddTx(prefill) {
   $('#tx-tags').value = '';
   $('#tx-tag-chips').innerHTML = '';
   $('#tx-date').value = today();
+  $('#tx-fee-input').value = '';
   // Type toggle
   $$('#tx-type .type-opt').forEach(b => {
-    b.classList.remove('on', 'exp', 'inc');
-    if (b.dataset.t === state.txType) b.classList.add('on', state.txType === 'expense' ? 'exp' : 'inc');
+    b.classList.remove('on', 'exp', 'inc', 'transfer');
+    if (b.dataset.t === state.txType) b.classList.add('on', 'exp');
   });
+  updateTxTypeUI();
   renderCatGrid();
   renderTxAcctPick();
+  renderTxTransferPick();
   openSheet('sheet-tx');
   setTimeout(() => $('#tx-amt-input').focus(), 300);
+}
+
+function updateTxTypeUI() {
+  const isTransfer = state.txType === 'transfer';
+  const normalSection = $('#tx-normal-section');
+  const transferSection = $('#tx-transfer-section');
+  if (normalSection) normalSection.style.display = isTransfer ? 'none' : 'block';
+  if (transferSection) transferSection.style.display = isTransfer ? 'block' : 'none';
+}
+
+function renderTxTransferPick() {
+  const html = state.accounts.map(a => {
+    return `<button class="pick" data-id="${a.id}">${a.name}</button>`;
+  }).join('');
+  const fromPick = $('#tx-from-pick');
+  const toPick = $('#tx-to-pick');
+  if (fromPick) {
+    fromPick.innerHTML = html || '<div style="font-size:12px;color:var(--t3);padding:8px 0;">请先添加账户</div>';
+    // 默认选中第一个
+    const firstFrom = fromPick.querySelector('.pick');
+    if (firstFrom) firstFrom.classList.add('on');
+    $$('#tx-from-pick .pick').forEach(b => b.onclick = () => {
+      $$('#tx-from-pick .pick').forEach(x => x.classList.remove('on'));
+      b.classList.add('on');
+    });
+  }
+  if (toPick) {
+    toPick.innerHTML = html || '<div style="font-size:12px;color:var(--t3);padding:8px 0;">请先添加账户</div>';
+    // 默认选中第二个（如果有的话）
+    const picks = toPick.querySelectorAll('.pick');
+    if (picks.length > 1) picks[1].classList.add('on');
+    else if (picks.length > 0) picks[0].classList.add('on');
+    $$('#tx-to-pick .pick').forEach(b => b.onclick = () => {
+      $$('#tx-to-pick .pick').forEach(x => x.classList.remove('on'));
+      b.classList.add('on');
+    });
+  }
 }
 
 function renderCatGrid() {
@@ -612,20 +652,55 @@ function saveTx() {
   const amt = parseFloat($('#tx-amt-input').value);
   if (!amt || amt <= 0) { toast('请输入金额'); return; }
   if (state.accounts.length === 0) { toast('请先添加账户'); return; }
-  const acctBtn = document.querySelector('#tx-acct-pick .pick.on');
-  const acctId = acctBtn ? acctBtn.dataset.id : state.accounts[0].id;
   const note = $('#tx-note').value.trim();
   const date = $('#tx-date').value || today();
   const tags = parseTxTags($('#tx-tags').value);
+  const now = new Date();
+  const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+  // ===== 转账逻辑 =====
+  if (state.txType === 'transfer') {
+    const fromBtn = document.querySelector('#tx-from-pick .pick.on');
+    const toBtn = document.querySelector('#tx-to-pick .pick.on');
+    if (!fromBtn || !toBtn) { toast('请选择转出和转入账户'); return; }
+    const fromId = fromBtn.dataset.id;
+    const toId = toBtn.dataset.id;
+    if (fromId === toId) { toast('转出和转入账户不能相同'); return; }
+    const fee = parseFloat($('#tx-fee-input').value) || 0;
+    const fromAcct = state.accounts.find(a => a.id === fromId);
+    const toAcct = state.accounts.find(a => a.id === toId);
+    if (fromAcct) fromAcct.balance -= (amt + fee);
+    if (toAcct) toAcct.balance += amt;
+    // 如果有手续费，从转出账户额外扣除（已包含在上面），手续费作为一笔支出记录
+    const tx = {
+      id: genId(), type: 'transfer', amount: amt,
+      category: 'transfer', categoryName: '转账', categoryIcon: '💸',
+      note, accountId: fromId, toAccountId: toId, fee, date,
+      tags,
+      time: timeStr,
+      timestamp: now.toISOString(),
+      isSubscription: false
+    };
+    state.transactions.unshift(tx);
+    save();
+    closeSheet('sheet-tx');
+    toast('转账成功');
+    haptic('success');
+    render();
+    return;
+  }
+
+  // ===== 支出/收入逻辑 =====
+  const acctBtn = document.querySelector('#tx-acct-pick .pick.on');
+  const acctId = acctBtn ? acctBtn.dataset.id : state.accounts[0].id;
   const cats = state.txType === 'expense' ? EXPENSE_CATS : INCOME_CATS;
   const cat = cats.find(c => c.id === state.selectedCat) || cats[0];
-  const now = new Date();
   const tx = {
     id: genId(), type: state.txType, amount: amt,
     category: cat.id, categoryName: cat.name, categoryIcon: cat.icon,
     note, accountId: acctId, date,
     tags,
-    time: `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`,
+    time: timeStr,
     timestamp: now.toISOString(),
     isSubscription: false
   };
@@ -646,10 +721,12 @@ function saveTx() {
 $$('#tx-type .type-opt').forEach(b => {
   b.onclick = () => {
     state.txType = b.dataset.t;
-    state.selectedCat = state.txType === 'expense' ? 'food' : 'salary';
-    $$('#tx-type .type-opt').forEach(x => { x.classList.remove('on','exp','inc'); });
-    b.classList.add('on', state.txType === 'expense' ? 'exp' : 'inc');
-    renderCatGrid();
+    $$('#tx-type .type-opt').forEach(x => { x.classList.remove('on','exp','inc','transfer'); });
+    if (state.txType === 'expense') b.classList.add('on', 'exp');
+    else if (state.txType === 'income') { b.classList.add('on', 'inc'); state.selectedCat = 'salary'; }
+    else b.classList.add('on', 'transfer');
+    updateTxTypeUI();
+    if (state.txType !== 'transfer') renderCatGrid();
   };
 });
 
@@ -1843,24 +1920,28 @@ function renderOverview() {
 
   container.innerHTML = recentTx.map(t => {
     const acct = state.accounts.find(a => a.id === t.accountId);
+    const toAcct = t.toAccountId ? state.accounts.find(a => a.id === t.toAccountId) : null;
     const theme = acct ? (CARD_THEMES[acct.color] || CARD_THEMES.gold) : CARD_THEMES.gold;
     const acctColor = theme.accent;
     const isSub = t.isSubscription;
-    const catKey = isSub ? 'sub' : t.category;
-    const iconColor = catColors[catKey] || catColors.other;
-    const iconBg = catBgColors[catKey] || catBgColors.other;
-    const iconContent = isSub ? txIconSvg('sub') : txIconSvg(t.category);
-    const badge = isSub ? '<span class="tx-badge">订阅</span>' : '';
-    const amtClass = t.type === 'income' ? 'in' : 'out';
+    const isTransfer = t.type === 'transfer';
+    const catKey = isSub ? 'sub' : (isTransfer ? 'transfer' : t.category);
+    const iconColor = isTransfer ? '#64a0ff' : (catColors[catKey] || catColors.other);
+    const iconBg = isTransfer ? 'rgba(100,160,255,0.15)' : (catBgColors[catKey] || catBgColors.other);
+    const iconContent = isSub ? txIconSvg('sub') : (isTransfer ? '<path d="M7 7h10M7 7l3-3M7 7l3 3M17 17H7M17 17l-3 3M17 17l-3-3"/>' : txIconSvg(t.category));
+    const badge = isSub ? '<span class="tx-badge">订阅</span>' : (isTransfer ? '<span class="tx-badge" style="background:rgba(100,160,255,0.2);color:#64a0ff;">转账</span>' : '');
+    const amtClass = isTransfer ? '' : (t.type === 'income' ? 'in' : 'out');
+    const acctLabel = isTransfer ? `${acct?.name || '未知'} → ${toAcct?.name || '未知'}` : `${acct?.name || '未知'}`;
+    const amtLabel = isTransfer ? `¥${fmt(t.amount)}` : `${t.type==='income'?'+':'-'}¥${fmt(t.amount)}`;
     return `<div class="tx-item" onclick="openTxDetail('${t.id}')">
       <div class="tx-item-icon" style="background:${iconBg};">
-        <svg viewBox="0 0 24 24" style="stroke:${iconColor};">${iconContent.match(/<svg[^>]*>([\s\S]*)<\/svg>/)?.[1] || ''}</svg>
+        <svg viewBox="0 0 24 24" style="stroke:${iconColor};fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;">${iconContent.match(/<svg[^>]*>([\s\S]*)<\/svg>/)?.[1] || iconContent}</svg>
       </div>
       <div class="tx-item-body">
         <div class="tx-item-name">${t.categoryName} ${badge}</div>
-        <div class="tx-item-meta"><span class="tx-acct-dot" style="background:${acctColor};"></span>${acct?.name || '未知'} · ${t.time}</div>
+        <div class="tx-item-meta"><span class="tx-acct-dot" style="background:${acctColor};"></span>${acctLabel} · ${t.time}</div>
       </div>
-      <div class="tx-item-amt ${amtClass}">${t.type==='income'?'+':'-'}¥${fmt(t.amount)}</div>
+      <div class="tx-item-amt ${amtClass}" style="${isTransfer ? 'color:var(--t2);' : ''}">${amtLabel}</div>
     </div>`;
   }).join('');
 }
@@ -2033,6 +2114,7 @@ function renderTx() {
   let txs = monthTx;
   if (filter === 'expense') txs = txs.filter(t => t.type === 'expense');
   if (filter === 'income') txs = txs.filter(t => t.type === 'income');
+  if (filter === 'transfer') txs = txs.filter(t => t.type === 'transfer');
   if (filter === 'sub') txs = txs.filter(t => t.isSubscription);
   if (state.tagFilter) txs = txs.filter(t => Array.isArray(t.tags) && t.tags.includes(state.tagFilter));
   txs.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
@@ -2097,29 +2179,39 @@ function renderTx() {
 
     groups[date].forEach(t => {
       const acct = state.accounts.find(a => a.id === t.accountId);
+      const toAcct = t.toAccountId ? state.accounts.find(a => a.id === t.toAccountId) : null;
       const theme = acct ? (CARD_THEMES[acct.color] || CARD_THEMES.gold) : CARD_THEMES.gold;
       const acctColor = theme.accent;
       const isSub = t.isSubscription;
-      const catKey = isSub ? 'sub' : (t.type === 'income' ? t.category : t.category);
+      const isTransfer = t.type === 'transfer';
+      const catKey = isSub ? 'sub' : (isTransfer ? 'transfer' : t.category);
       const iconColor = catColors[catKey] || catColors.other;
       const iconBg = catBgColors[catKey] || catBgColors.other;
-      const iconContent = isSub ? txIconSvg('sub') : txIconSvg(t.category);
-      const badge = isSub ? '<span class="tx-badge">订阅</span>' : '';
-      const amtClass = t.type === 'income' ? 'in' : 'out';
+      const iconContent = isSub ? txIconSvg('sub') : (isTransfer ? '<path d="M7 7h10M7 7l3-3M7 7l3 3M17 17H7M17 17l-3 3M17 17l-3-3"/>' : txIconSvg(t.category));
+      const badge = isSub ? '<span class="tx-badge">订阅</span>' : (isTransfer ? '<span class="tx-badge" style="background:rgba(100,160,255,0.2);color:#64a0ff;">转账</span>' : '');
+      const amtClass = isTransfer ? '' : (t.type === 'income' ? 'in' : 'out');
       const tagsHtml = (Array.isArray(t.tags) && t.tags.length > 0)
         ? `<div class="tx-item-tags">${t.tags.map(tg => `<span class="tx-item-tag">#${escapeHtml(tg)}</span>`).join('')}</div>`
         : '';
 
+      // 转账显示：转出账户 → 转入账户
+      const acctLabel = isTransfer
+        ? `${acct?.name || '未知'} → ${toAcct?.name || '未知'}`
+        : `${acct?.name || '未知'}`;
+      const amtLabel = isTransfer
+        ? `¥${fmt(t.amount)}${t.fee ? ' <span style="font-size:11px;color:var(--t3);">+手续费¥' + fmt(t.fee) + '</span>' : ''}`
+        : `${t.type==='income'?'+':'-'}¥${fmt(t.amount)}`;
+
       html += `<div class="tx-item" onclick="openTxDetail('${t.id}')">
-        <div class="tx-item-icon" style="background:${iconBg};">
-          <svg viewBox="0 0 24 24" style="stroke:${iconColor};">${iconContent.match(/<svg[^>]*>([\s\S]*)<\/svg>/)?.[1] || ''}</svg>
+        <div class="tx-item-icon" style="background:${isTransfer ? 'rgba(100,160,255,0.15)' : iconBg};">
+          <svg viewBox="0 0 24 24" style="stroke:${isTransfer ? '#64a0ff' : iconColor};fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;">${iconContent.match(/<svg[^>]*>([\s\S]*)<\/svg>/)?.[1] || iconContent}</svg>
         </div>
         <div class="tx-item-body">
           <div class="tx-item-name">${t.categoryName} ${badge}</div>
-          <div class="tx-item-meta"><span class="tx-acct-dot" style="background:${acctColor};"></span>${acct?.name || '未知'} · ${t.time}</div>
+          <div class="tx-item-meta"><span class="tx-acct-dot" style="background:${acctColor};"></span>${acctLabel} · ${t.time}</div>
           ${tagsHtml}
         </div>
-        <div class="tx-item-amt ${amtClass}">${t.type==='income'?'+':'-'}¥${fmt(t.amount)}</div>
+        <div class="tx-item-amt ${amtClass}" style="${isTransfer ? 'color:var(--t2);' : ''}">${amtLabel}</div>
       </div>`;
     });
 
