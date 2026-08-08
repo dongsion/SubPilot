@@ -2643,9 +2643,14 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '2.0.0';
+const APP_VERSION = '2.0.1';
 const APP_BUILD = '2026.08.08';
 const CHANGELOG = [
+  { ver: '2.0.1', date: '2026-08-08', items: [
+    '密码滚轮交互优化：每滚完一个数字点"下一步"确认，滚完四位后按钮自动变为"解锁"',
+    '移除滚轮点击确认，改为按钮操作，交互更清晰',
+    '滚轮在确认每位数字后自动归零，方便输入下一位'
+  ]},
   { ver: '2.0.0', date: '2026-08-08', items: [
     '预算管理：按分类设置月度预算，实时追踪支出进度与剩余额度',
     '储蓄目标：创建梦想储蓄计划，记录存入/取出，可视化进度条',
@@ -3764,12 +3769,6 @@ function buildRotaryWheel() {
     }
   }, { passive: true });
 
-  // Tap to confirm current digit and advance
-  container.addEventListener('click', (e) => {
-    e.stopPropagation();
-    lockConfirmDigit();
-  });
-
   // Build tick marks
   buildRotaryTicks();
   lockWheelReady = true;
@@ -3840,10 +3839,32 @@ function lockConfirmDigit() {
   if (lockActiveSlot >= 4) return;
   haptic('light');
   lockActiveSlot++;
+  // Reset wheel to 0 for next digit
+  const wheel = $('#lock-rotary');
+  if (wheel && lockActiveSlot < 4) {
+    wheel.scrollTop = 0;
+    updateRotaryHighlight(wheel);
+  }
   updateLockDots();
-  // Auto-submit when all 4 digits entered
+}
+
+// Button action: advance slot or submit password
+function lockConfirmAction() {
+  if (lockActiveSlot < 4) {
+    lockConfirmDigit();
+  } else {
+    confirmLockPassword();
+  }
+}
+
+// Update confirm button text based on progress and mode
+function updateLockButton() {
+  const btn = $('#lock-confirm-btn');
+  if (!btn) return;
   if (lockActiveSlot >= 4) {
-    setTimeout(() => confirmLockPassword(), 300);
+    btn.textContent = (lockMode === 'unlock') ? '解锁' : (lockMode === 'set') ? '下一步' : '确认';
+  } else {
+    btn.textContent = '下一步';
   }
 }
 
@@ -3876,6 +3897,8 @@ function updateLockDots() {
   // Update backspace button state
   const backBtn = $('#lock-back-btn');
   if (backBtn) backBtn.disabled = lockActiveSlot <= 0;
+  // Update confirm button text
+  updateLockButton();
 }
 
 function resetWheels() {
@@ -3901,10 +3924,10 @@ function showLockScreen() {
   const confirmBtn = $('#lock-confirm-btn');
   const cancelBtn = $('#lock-cancel-btn');
   const backBtn = $('#lock-back-btn');
-  subtitle.textContent = '滚动选择数字，点击确认';
+  subtitle.textContent = '滚动选择数字，点击下一步';
   subtitle.classList.remove('error');
   confirmBtn.style.display = 'block';
-  confirmBtn.textContent = '解锁';
+  confirmBtn.textContent = '下一步';
   cancelBtn.style.display = 'none';
   if (backBtn) backBtn.style.display = 'flex';
   resetWheels();
@@ -3930,7 +3953,7 @@ function openLockSettings() {
       subtitle.textContent = '请先输入当前密码';
       subtitle.classList.remove('error');
       confirmBtn.style.display = 'block';
-      confirmBtn.textContent = '确认';
+      confirmBtn.textContent = '下一步';
       cancelBtn.style.display = 'block';
       if (backBtn) backBtn.style.display = 'flex';
       resetWheels();
@@ -3979,7 +4002,7 @@ function confirmLockPassword() {
       haptic('error');
       resetWheels();
       setTimeout(() => {
-        subtitle.textContent = '滚动选择数字，点击确认';
+        subtitle.textContent = '滚动选择数字，点击下一步';
         subtitle.classList.remove('error');
       }, 1500);
     }
@@ -4006,7 +4029,7 @@ function confirmLockPassword() {
     lockMode = 'confirm';
     subtitle.textContent = '请再次滚动输入确认';
     subtitle.classList.remove('error');
-    confirmBtn.textContent = '确认';
+    confirmBtn.textContent = '下一步';
     resetWheels();
   } else if (lockMode === 'confirm') {
     if (entered === pendingPassword) {
