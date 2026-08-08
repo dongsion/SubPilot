@@ -1976,7 +1976,7 @@ function renderTx() {
 }
 
 // ===== 钱包余额显示/隐藏 =====
-let balanceMasked = true;
+let balanceMasked = false;
 const revealedCards = new Set();
 
 function toggleBalanceMask() {
@@ -2643,9 +2643,12 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '2.0.2';
+const APP_VERSION = '2.0.3';
 const APP_BUILD = '2026.08.08';
 const CHANGELOG = [
+  { ver: '2.0.3', date: '2026-08-08', items: [
+    '卡面余额默认显示，点眼睛图标可隐藏'
+  ]},
   { ver: '2.0.2', date: '2026-08-08', items: [
     '修复卡面堆叠显示问题：增大后面卡片露出高度，堆叠效果更清晰可见',
     '后面卡片条带显示卡名文字，字体加大更易辨认'
