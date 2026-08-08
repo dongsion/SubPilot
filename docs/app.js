@@ -200,6 +200,7 @@ let state = {
   selectedAcctType: 'bank',
   selectedCardColor: 'gold',
   acctIncludeInAssets: true,
+  editingAcctIdx: -1,
   currentSubId: null,
   fetchedAppIcon: null,
   editSubId: null,
@@ -937,17 +938,40 @@ $('#sub-name').addEventListener('input', () => {
   }
 });
 
-// ===== Add Account =====
+// ===== Add/Edit Account =====
 function openAddAccount() {
+  state.editingAcctIdx = -1;
+  $('#sheet-acct-title').textContent = '添加账户';
   $('#acct-name').value = '';
   $('#acct-balance').value = '0';
   $('#acct-num').value = '';
+  $('#acct-currency').value = 'CNY';
   state.selectedAcctType = 'bank';
   state.selectedCardColor = 'gold';
   state.acctIncludeInAssets = true;
   $$('#acct-type-pick .pick').forEach(p => p.classList.toggle('on', p.dataset.t === 'bank'));
   $$('#acct-color-pick .color-pick').forEach(p => p.classList.toggle('on', p.dataset.c === 'gold'));
   $('#acct-include-assets').classList.add('on');
+  $('#acct-save-btn').textContent = '保存';
+  openSheet('sheet-acct');
+}
+
+function editAccount(idx) {
+  const a = state.accounts[idx];
+  if (!a) return;
+  state.editingAcctIdx = idx;
+  $('#sheet-acct-title').textContent = '编辑账户';
+  $('#acct-name').value = a.name || '';
+  $('#acct-balance').value = a.balance != null ? String(a.balance) : '0';
+  $('#acct-num').value = a.cardNumber || '';
+  $('#acct-currency').value = a.currency || 'CNY';
+  state.selectedAcctType = a.type || 'bank';
+  state.selectedCardColor = a.color || 'gold';
+  state.acctIncludeInAssets = a.includeInAssets !== false;
+  $$('#acct-type-pick .pick').forEach(p => p.classList.toggle('on', p.dataset.t === (a.type || 'bank')));
+  $$('#acct-color-pick .color-pick').forEach(p => p.classList.toggle('on', p.dataset.c === (a.color || 'gold')));
+  $('#acct-include-assets').classList.toggle('on', a.includeInAssets !== false);
+  $('#acct-save-btn').textContent = '保存修改';
   openSheet('sheet-acct');
 }
 
@@ -956,43 +980,63 @@ function saveAccount() {
   if (!name) { toast('请输入账户名称'); return; }
   const balance = parseFloat($('#acct-balance').value) || 0;
   const cardNumber = $('#acct-num').value.trim();
-  
-  // Auto-detect account type from name
+  const currency = $('#acct-currency').value || 'CNY';
+
+  // Auto-detect account type from name (only for new accounts)
   let acctType = state.selectedAcctType;
   let acctColor = state.selectedCardColor;
-  const brand = matchBrand(name);
-  if (brand) {
-    // Map brand to account type
-    if (brand.slug === 'alipay') acctType = 'alipay';
-    else if (brand.slug === 'wechat') acctType = 'wechat';
-    else if (brand.slug === 'unionpay') acctType = 'yunshanfu';
-    else if (brand.slug === 'licaicai') acctType = 'licaicai';
-    else if (brand.slug === 'yuebao') acctType = 'yuebao';
-    else if (['cmb','icbc','ccb','abc','boc','bankcomm','spdb','cmbc','citic','ceb','psbc','cib','pab','cgb','hxb'].includes(brand.slug)) {
-      acctType = 'bank';
-      // Use brand color for bank cards
-      const bi = BRAND_ICONS[brand.slug];
-      if (bi) {
-        // Map brand bg color to closest theme
-        if (bi.bg.includes('003F88') || bi.bg.includes('005BAC') || bi.bg.includes('007A33')) acctColor = 'blue';
-        else if (bi.bg.includes('009A44') || bi.bg.includes('007A33')) acctColor = 'green';
-        else if (bi.bg.includes('B40020') || bi.bg.includes('C8102E') || bi.bg.includes('AF272F') || bi.bg.includes('E60012') || bi.bg.includes('7B2E86')) acctColor = 'red';
+  if (state.editingAcctIdx < 0) {
+    const brand = matchBrand(name);
+    if (brand) {
+      if (brand.slug === 'alipay') acctType = 'alipay';
+      else if (brand.slug === 'wechat') acctType = 'wechat';
+      else if (brand.slug === 'unionpay') acctType = 'yunshanfu';
+      else if (brand.slug === 'licaicai') acctType = 'licaicai';
+      else if (brand.slug === 'yuebao') acctType = 'yuebao';
+      else if (['cmb','icbc','ccb','abc','boc','bankcomm','spdb','cmbc','citic','ceb','psbc','cib','pab','cgb','hxb'].includes(brand.slug)) {
+        acctType = 'bank';
+        const bi = BRAND_ICONS[brand.slug];
+        if (bi) {
+          if (bi.bg.includes('003F88') || bi.bg.includes('005BAC') || bi.bg.includes('007A33')) acctColor = 'blue';
+          else if (bi.bg.includes('009A44') || bi.bg.includes('007A33')) acctColor = 'green';
+          else if (bi.bg.includes('B40020') || bi.bg.includes('C8102E') || bi.bg.includes('AF272F') || bi.bg.includes('E60012') || bi.bg.includes('7B2E86')) acctColor = 'red';
+        }
       }
     }
   }
-  
-  const acct = {
-    id: genId(), name, type: acctType, balance,
-    cardNumber, color: acctColor, brandSlug: brand?.slug || null,
-    includeInAssets: state.acctIncludeInAssets !== false,
-    createdAt: new Date().toISOString()
-  };
-  state.accounts.push(acct);
-  save();
-  closeSheet('sheet-acct');
-  toast('账户已添加');
-  haptic('success');
-  render();
+
+  if (state.editingAcctIdx >= 0) {
+    // 编辑模式：更新现有账户
+    const a = state.accounts[state.editingAcctIdx];
+    a.name = name;
+    a.balance = balance;
+    a.cardNumber = cardNumber;
+    a.currency = currency;
+    a.type = acctType;
+    a.color = acctColor;
+    a.includeInAssets = state.acctIncludeInAssets !== false;
+    state.editingAcctIdx = -1;
+    save();
+    closeSheet('sheet-acct');
+    toast('账户已更新');
+    haptic('success');
+    render();
+  } else {
+    // 添加模式：创建新账户
+    const brand = matchBrand(name);
+    const acct = {
+      id: genId(), name, type: acctType, balance,
+      cardNumber, currency, color: acctColor, brandSlug: brand?.slug || null,
+      includeInAssets: state.acctIncludeInAssets !== false,
+      createdAt: new Date().toISOString()
+    };
+    state.accounts.push(acct);
+    save();
+    closeSheet('sheet-acct');
+    toast('账户已添加');
+    haptic('success');
+    render();
+  }
 }
 
 $$('#acct-type-pick .pick').forEach(p => p.onclick = () => {
@@ -1003,12 +1047,9 @@ $$('#acct-type-pick .pick').forEach(p => p.onclick = () => {
 
 $$('#acct-color-pick .color-pick').forEach(p => p.onclick = () => {
   state.selectedCardColor = p.dataset.c;
-  $$('#acct-color-pick .color-pick').forEach(x => {
-    x.classList.remove('on');
-    x.style.boxShadow = '';
-    x.style.borderColor = 'transparent';
-  });
+  $$('#acct-color-pick .color-pick').forEach(x => x.classList.remove('on'));
   p.classList.add('on');
+  haptic('light');
 });
 
 // Auto-detect type when typing account name
@@ -1506,7 +1547,26 @@ const WALLET_CARD_COLORS = [
 ];
 
 function getWalletCardGradient(a, idx) {
-  // 根据账户类型返回品牌色
+  // 用户手动选择的颜色优先
+  if (a.color) {
+    const colorMap = {
+      gold: 'linear-gradient(135deg,#b8860b 0%,#8b6914 100%)',
+      blue: 'linear-gradient(135deg,#1a6dff 0%,#0d3bbf 100%)',
+      green: 'linear-gradient(135deg,#10b981 0%,#06b6d4 100%)',
+      red: 'linear-gradient(135deg,#f59e0b 0%,#ef4444 100%)',
+      purple: 'linear-gradient(135deg,#6366f1 0%,#a855f7 100%)',
+      pink: 'linear-gradient(135deg,#ec4899 0%,#8b5cf6 100%)',
+      orange: 'linear-gradient(135deg,#FF7300 0%,#e65c00 100%)',
+      sky: 'linear-gradient(135deg,#0ea5e9 0%,#2563eb 100%)',
+      teal: 'linear-gradient(135deg,#14b8a6 0%,#0d9488 100%)',
+      indigo: 'linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%)',
+      rose: 'linear-gradient(135deg,#f43f5e 0%,#e11d48 100%)',
+      dark: 'linear-gradient(145deg,#141416 0%,#0a0a0c 100%)',
+    };
+    if (colorMap[a.color]) return colorMap[a.color];
+  }
+
+  // 根据账户类型返回品牌色（仅在没有手动选色时）
   if (a.type === 'alipay') return WALLET_CARD_COLORS[1];
   if (a.type === 'wechat') return WALLET_CARD_COLORS[2];
   if (a.type === 'yuebao') return WALLET_CARD_COLORS[8];
@@ -1515,17 +1575,6 @@ function getWalletCardGradient(a, idx) {
   if (a.type === 'bank') return WALLET_CARD_COLORS[idx % 2 === 0 ? 0 : 4];
   if (a.type === 'cash' || a.type === 'other') return WALLET_CARD_COLORS[3];
 
-  if (a.color && CARD_THEMES[a.color]) {
-    if (a.color === 'gold') return 'linear-gradient(135deg,#b8860b 0%,#8b6914 100%)';
-    if (a.color === 'blue') return WALLET_CARD_COLORS[0];
-    if (a.color === 'green') return WALLET_CARD_COLORS[5];
-    if (a.color === 'red') return WALLET_CARD_COLORS[4];
-    if (a.color === 'purple') return WALLET_CARD_COLORS[3];
-    if (a.color === 'pink') return WALLET_CARD_COLORS[6];
-    if (a.color === 'orange') return WALLET_CARD_COLORS[8];
-    const theme = CARD_THEMES[a.color];
-    return theme.gradient;
-  }
   return WALLET_CARD_COLORS[idx % 7];
 }
 
@@ -1588,10 +1637,13 @@ function renderWalletCard(a, origIdx) {
   if (brandText === 'Yuebao') brandText = 'YUEBAO';
   if (brandText === 'Wallet') brandText = 'WALLET';
 
-  const balText = balanceMasked ? '****' : '¥' + fmt(Math.round(a.balance));
+  const curSyms = { CNY:'¥', USD:'$', EUR:'€', GBP:'£', JPY:'¥', HKD:'HK$', TWD:'NT$' };
+  const curSym = curSyms[a.currency || 'CNY'] || '¥';
+  const balText = balanceMasked ? '****' : curSym + fmt(Math.round(a.balance));
 
   const animDelay = Math.min(origIdx * 0.06, 0.42);
-  const cardStyle = `${cardBg}animation-delay:${animDelay}s;`;
+  const zIdx = 100 - origIdx;
+  const cardStyle = `${cardBg}animation-delay:${animDelay}s;z-index:${zIdx};`;
 
   return `<div class="wc" data-idx="${origIdx}" style="${cardStyle}">
     ${excludedBadge}
@@ -1662,8 +1714,11 @@ function openCardDetail(idx) {
 
   const numDisplay = a.cardNumber ? '•••• •••• •••• ' + a.cardNumber : '•••• •••• •••• ****';
   const chipHtml = acctType.hasChip ? '<div class="card-detail-chip"></div>' : '';
-  const balText = balanceMasked ? '****' : '¥' + fmt(Math.round(a.balance));
+  const curSyms = { CNY:'¥', USD:'$', EUR:'€', GBP:'£', JPY:'¥', HKD:'HK$', TWD:'NT$' };
+  const curSym = curSyms[a.currency || 'CNY'] || '¥';
+  const balText = balanceMasked ? '****' : curSym + fmt(Math.round(a.balance));
   const excludedBadge = a.includeInAssets === false ? '<div class="wc-exclude">不计入</div>' : '';
+  const currencyLabel = a.currency && a.currency !== 'CNY' ? ' · ' + a.currency : '';
 
   const content = $('#card-detail-content');
   content.innerHTML = `
@@ -1672,7 +1727,7 @@ function openCardDetail(idx) {
       <div class="card-detail-top">
         <div>
           <div class="card-detail-name">${a.name}</div>
-          <div class="card-detail-type">${acctType.name}${a.cardNumber ? ' · 尾号'+a.cardNumber : ''}</div>
+          <div class="card-detail-type">${acctType.name}${a.cardNumber ? ' · 尾号'+a.cardNumber : ''}${currencyLabel}</div>
         </div>
         <div class="card-detail-logo">${logoHtml}</div>
       </div>
@@ -1896,9 +1951,16 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '1.9.3';
+const APP_VERSION = '1.9.4';
 const APP_BUILD = '2026.08.08';
 const CHANGELOG = [
+  { ver: '1.9.4', date: '2026-08-08', items: [
+    '修复编辑按钮无反应：新增editAccount函数，支持编辑余额/名称/卡号/币种/颜色/计入资产',
+    '新增币种选择：支持CNY/USD/EUR/GBP/JPY/HKD/TWD七种货币',
+    '卡面配色扩充至12种：新增天蓝/青绿/靛蓝/玫瑰红，配色预览改为鲜艳渐变',
+    '用户选色优先于自动品牌色匹配',
+    '恢复卡片堆叠视觉效果：卡片间-38px重叠，z-index递减营造钱包层次感'
+  ]},
   { ver: '1.9.3', date: '2026-08-08', items: [
     '卡片入场动效：错落渐入+上滑动画，切换更流畅自然',
     '底部详情弹窗优化：卡片弹出+操作按钮分层动画',
