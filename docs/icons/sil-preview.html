@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>剪影图标预览 - Countra</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a0a;
+    color: #e0d5c0;
+    font-family: -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif;
+    min-height: 100vh;
+    padding: 40px 20px;
+  }
+  h1 {
+    text-align: center;
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, #f5d99b, #d4af7a, #b8893e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .subtitle {
+    text-align: center;
+    font-size: 14px;
+    color: #888;
+    margin-bottom: 40px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 24px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .card {
+    background: #151515;
+    border-radius: 20px;
+    padding: 24px;
+    text-align: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    border: 1px solid #222;
+    position: relative;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(212, 175, 122, 0.15);
+    border-color: #d4af7a44;
+  }
+  .card.selected {
+    border-color: #d4af7a;
+    box-shadow: 0 0 0 2px #d4af7a55;
+  }
+  .card .badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: #d4af7a22;
+    color: #d4af7a;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+  .card img {
+    width: 120px;
+    height: 120px;
+    border-radius: 26px;
+    display: block;
+    margin: 0 auto 16px;
+  }
+  .card .num {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 4px;
+  }
+  .card .desc {
+    font-size: 14px;
+    color: #ccc;
+    font-weight: 500;
+  }
+  .section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #d4af7a;
+    margin: 40px auto 20px;
+    max-width: 1100px;
+    padding-left: 8px;
+  }
+  .section-title:first-of-type { margin-top: 0; }
+</style>
+</head>
+<body>
+  <h1>Countra 剪影图标</h1>
+  <p class="subtitle">20款极简剪影风格 · 纯色块 + 零线条 · 点击选择你喜欢的</p>
+
+  <div class="section-title">第一批（No.1 - No.10）</div>
+  <div class="grid">
+    <div class="card" onclick="selectIcon(1)">
+      <img src="sil-1.svg" alt="sil-1">
+      <div class="num">No.1</div>
+      <div class="desc">金币圆盘 + C镂空</div>
+    </div>
+    <div class="card" onclick="selectIcon(2)">
+      <img src="sil-2.svg" alt="sil-2">
+      <div class="num">No.2</div>
+      <div class="desc">纯C形 + ¥黑刻</div>
+    </div>
+    <div class="card" onclick="selectIcon(3)">
+      <img src="sil-3.svg" alt="sil-3">
+      <div class="num">No.3</div>
+      <div class="desc">圆角方块币 + C</div>
+    </div>
+    <div class="card" onclick="selectIcon(4)">
+      <img src="sil-4.svg" alt="sil-4">
+      <div class="num">No.4</div>
+      <div class="desc">粗环C + ¥黑刻</div>
+    </div>
+    <div class="card" onclick="selectIcon(5)">
+      <img src="sil-5.svg" alt="sil-5">
+      <div class="num">No.5</div>
+      <div class="desc">纯圆 + 大¥（无C）</div>
+    </div>
+    <div class="card" onclick="selectIcon(6)">
+      <img src="sil-6.svg" alt="sil-6">
+      <div class="num">No.6</div>
+      <div class="desc">超粗C环 + ¥</div>
+    </div>
+    <div class="card" onclick="selectIcon(7)">
+      <img src="sil-7.svg" alt="sil-7">
+      <div class="num">No.7</div>
+      <div class="desc">六边形币 + C</div>
+    </div>
+    <div class="card" onclick="selectIcon(8)">
+      <img src="sil-8.svg" alt="sil-8">
+      <div class="num">No.8</div>
+      <div class="desc">极简弧C + ¥</div>
+    </div>
+    <div class="card" onclick="selectIcon(9)">
+      <img src="sil-9.svg" alt="sil-9">
+      <div class="num">No.9</div>
+      <div class="desc">超椭圆币 + C</div>
+    </div>
+    <div class="card" onclick="selectIcon(10)">
+      <img src="sil-10.svg" alt="sil-10">
+      <div class="num">No.10</div>
+      <div class="desc">金币圆 + 粗C镂空</div>
+    </div>
+  </div>
+
+  <div class="section-title">第二批（No.11 - No.20 · 新增）</div>
+  <div class="grid">
+    <div class="card" onclick="selectIcon(11)">
+      <img src="sil-11.svg" alt="sil-11">
+      <div class="num">No.11</div>
+      <div class="desc">钻石菱形币 + C</div>
+    </div>
+    <div class="card" onclick="selectIcon(12)">
+      <img src="sil-12.svg" alt="sil-12">
+      <div class="num">No.12</div>
+      <div class="desc">月牙粗C + ¥</div>
+    </div>
+    <div class="card" onclick="selectIcon(13)">
+      <img src="sil-13.svg" alt="sil-13">
+      <div class="num">No.13</div>
+      <div class="desc">竖椭圆币 + C</div>
+    </div>
+    <div class="card" onclick="selectIcon(14)">
+      <img src="sil-14.svg" alt="sil-14">
+      <div class="num">No.14</div>
+      <div class="desc">盾牌币 + C</div>
+    </div>
+    <div class="card" onclick="selectIcon(15)">
+      <img src="sil-15.svg" alt="sil-15">
+      <div class="num">No.15</div>
+      <div class="desc">三层叠币 + ¥</div>
+    </div>
+    <div class="card" onclick="selectIcon(16)">
+      <img src="sil-16.svg" alt="sil-16">
+      <div class="num">No.16</div>
+      <div class="desc">八边形币 + C</div>
+    </div>
+    <div class="card" onclick="selectIcon(17)">
+      <img src="sil-17.svg" alt="sil-17">
+      <div class="num">No.17</div>
+      <div class="desc">C + ¥几何融合</div>
+    </div>
+    <div class="card" onclick="selectIcon(18)">
+      <img src="sil-18.svg" alt="sil-18">
+      <div class="num">No.18</div>
+      <div class="desc">圆底三角 + C</div>
+    </div>
+    <div class="card" onclick="selectIcon(19)">
+      <img src="sil-19.svg" alt="sil-19">
+      <div class="num">No.19</div>
+      <div class="desc">胶囊竖币 + C</div>
+    </div>
+    <div class="card" onclick="selectIcon(20)">
+      <img src="sil-20.svg" alt="sil-20">
+      <div class="num">No.20</div>
+      <div class="desc">方块C + 大¥</div>
+    </div>
+  </div>
+
+  <script>
+    let selected = null;
+    function selectIcon(n) {
+      document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+      event.currentTarget.classList.add('selected');
+      selected = n;
+      console.log('Selected: No.' + n);
+    }
+  </script>
+</body>
+</html>

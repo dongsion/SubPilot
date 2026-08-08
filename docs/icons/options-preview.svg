@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 850">
+  <defs>
+    <linearGradient id="pbg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0a0a"/>
+      <stop offset="100%" stop-color="#1a1510"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="850" fill="url(#pbg)"/>
+  <text x="600" y="60" font-family="-apple-system,sans-serif" font-size="32" font-weight="700" fill="#d4af7a" text-anchor="middle">Countra 图标设计方案</text>
+
+  <!-- Option 1 -->
+  <g transform="translate(130, 120)">
+    <image href="option-1.svg" x="0" y="0" width="200" height="200"/>
+    <text x="100" y="240" font-family="-apple-system,sans-serif" font-size="18" font-weight="600" fill="#f5d99b" text-anchor="middle">方案 1</text>
+    <text x="100" y="265" font-family="-apple-system,sans-serif" font-size="13" fill="#999" text-anchor="middle">银行卡 · 余额</text>
+  </g>
+
+  <!-- Option 2 -->
+  <g transform="translate(420, 120)">
+    <image href="option-2.svg" x="0" y="0" width="200" height="200"/>
+    <text x="100" y="240" font-family="-apple-system,sans-serif" font-size="18" font-weight="600" fill="#f5d99b" text-anchor="middle">方案 2</text>
+    <text x="100" y="265" font-family="-apple-system,sans-serif" font-size="13" fill="#999" text-anchor="middle">柱状图 · ¥</text>
+  </g>
+
+  <!-- Option 3 -->
+  <g transform="translate(710, 120)">
+    <image href="option-3.svg" x="0" y="0" width="200" height="200"/>
+    <text x="100" y="240" font-family="-apple-system,sans-serif" font-size="18" font-weight="600" fill="#f5d99b" text-anchor="middle">方案 3</text>
+    <text x="100" y="265" font-family="-apple-system,sans-serif" font-size="13" fill="#999" text-anchor="middle">金币堆 · C</text>
+  </g>
+
+  <!-- Option 4 -->
+  <g transform="translate(275, 460)">
+    <image href="option-4.svg" x="0" y="0" width="200" height="200"/>
+    <text x="100" y="240" font-family="-apple-system,sans-serif" font-size="18" font-weight="600" fill="#f5d99b" text-anchor="middle">方案 4</text>
+    <text x="100" y="265" font-family="-apple-system,sans-serif" font-size="13" fill="#999" text-anchor="middle">算盘 · 计数</text>
+  </g>
+
+  <!-- Option 5 -->
+  <g transform="translate(565, 460)">
+    <image href="option-5.svg" x="0" y="0" width="200" height="200"/>
+    <text x="100" y="240" font-family="-apple-system,sans-serif" font-size="18" font-weight="600" fill="#f5d99b" text-anchor="middle">方案 5</text>
+    <text x="100" y="265" font-family="-apple-system,sans-serif" font-size="13" fill="#999" text-anchor="middle">C · ¥ 极简</text>
+  </g>
+
+  <!-- Current icon -->
+  <g transform="translate(855, 460)">
+    <image href="icon.svg" x="0" y="0" width="200" height="200"/>
+    <text x="100" y="240" font-family="-apple-system,sans-serif" font-size="18" font-weight="600" fill="#666" text-anchor="middle">当前版本</text>
+    <text x="100" y="265" font-family="-apple-system,sans-serif" font-size="13" fill="#666" text-anchor="middle">C · 趋势线</text>
+  </g>
+</svg>

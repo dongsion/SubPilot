@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="r10bg" cx="50%" cy="40%" r="65%">
+      <stop offset="0%" stop-color="#0d0a06"/><stop offset="100%" stop-color="#000"/>
+    </radialGradient>
+    <radialGradient id="r10coin" cx="33%" cy="25%" r="80%">
+      <stop offset="0%" stop-color="#fff5d6"/>
+      <stop offset="15%" stop-color="#fce8b8"/>
+      <stop offset="40%" stop-color="#e8c886"/>
+      <stop offset="65%" stop-color="#c4a050"/>
+      <stop offset="88%" stop-color="#9a7030"/>
+      <stop offset="100%" stop-color="#5a3810"/>
+    </radialGradient>
+    <radialGradient id="r10face" cx="38%" cy="30%" r="65%">
+      <stop offset="0%" stop-color="#f5e0a8"/>
+      <stop offset="50%" stop-color="#d4af7a"/>
+      <stop offset="100%" stop-color="#9a7030"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#r10bg)"/>
+  <!-- Ambient glow -->
+  <circle cx="256" cy="256" r="175" fill="#d4af7a" opacity="0.03"/>
+  <ellipse cx="256" cy="420" rx="125" ry="11" fill="#000" opacity="0.45"/>
+  <!-- Most detailed coin -->
+  <circle cx="256" cy="252" r="158" fill="url(#r10coin)"/>
+  <!-- Outer edge highlight -->
+  <circle cx="256" cy="252" r="158" fill="none" stroke="#5a3810" stroke-width="2" opacity="0.6"/>
+  <circle cx="256" cy="250" r="157" fill="none" stroke="#fff5d6" stroke-width="0.5" opacity="0.2"/>
+  <!-- Milled edge pattern (vertical lines around rim) -->
+  <g stroke="#5a3810" stroke-width="1.5" opacity="0.2">
+    <line x1="256" y1="96" x2="256" y2="106"/>
+    <line x1="290" y1="100" x2="288" y2="110"/>
+    <line x1="322" y1="112" x2="318" y2="122"/>
+    <line x1="352" y1="132" x2="346" y2="140"/>
+    <line x1="376" y1="160" x2="368" y2="166"/>
+    <line x1="394" y1="194" x2="386" y2="198"/>
+    <line x1="404" y1="232" x2="396" y2="234"/>
+    <line x1="406" y1="272" x2="398" y2="270"/>
+    <line x1="400" y1="312" x2="392" y2="308"/>
+    <line x1="384" y1="348" x2="376" y2="342"/>
+    <line x1="360" y1="378" x2="352" y2="370"/>
+    <line x1="330" y1="400" x2="324" y2="390"/>
+    <line x1="294" y1="414" x2="290" y2="404"/>
+    <line x1="256" y1="416" x2="256" y2="406"/>
+    <line x1="218" y1="414" x2="222" y2="404"/>
+    <line x1="182" y1="400" x2="188" y2="390"/>
+    <line x1="152" y1="378" x2="160" y2="370"/>
+    <line x1="128" y1="348" x2="136" y2="342"/>
+    <line x1="112" y1="312" x2="120" y2="308"/>
+    <line x1="106" y1="272" x2="114" y2="270"/>
+    <line x1="108" y1="232" x2="116" y2="234"/>
+    <line x1="118" y1="194" x2="126" y2="198"/>
+    <line x1="136" y1="160" x2="144" y2="166"/>
+    <line x1="160" y1="132" x2="166" y2="140"/>
+    <line x1="190" y1="112" x2="194" y2="122"/>
+    <line x1="222" y1="100" x2="224" y2="110"/>
+  </g>
+  <!-- Double groove -->
+  <circle cx="256" cy="252" r="145" fill="none" stroke="#5a3810" stroke-width="1" opacity="0.3"/>
+  <circle cx="256" cy="252" r="140" fill="none" stroke="#fce8b8" stroke-width="0.5" opacity="0.1"/>
+  <!-- Inner face -->
+  <circle cx="256" cy="252" r="130" fill="url(#r10face)"/>
+  <!-- Decorative inner rings -->
+  <circle cx="256" cy="252" r="117" fill="none" stroke="#9a7030" stroke-width="0.5" opacity="0.12"/>
+  <circle cx="256" cy="252" r="103" fill="none" stroke="#9a7030" stroke-width="0.5" opacity="0.08"/>
+  <!-- C with 3D layers -->
+  <path d="M 330 160 A 96 96 0 1 0 330 344 L 330 310 A 62 62 0 1 1 330 194 Z" fill="#3a2a10" opacity="0.3" transform="translate(2,3)"/>
+  <path d="M 330 160 A 96 96 0 1 0 330 344 L 330 310 A 62 62 0 1 1 330 194 Z" fill="#1a1208"/>
+  <path d="M 330 160 A 96 96 0 0 0 170 200" fill="none" stroke="#fce8b8" stroke-width="2" opacity="0.25"/>
+  <path d="M 330 344 A 96 96 0 0 0 170 304" fill="none" stroke="#5a3810" stroke-width="1" opacity="0.2"/>
+  <!-- ¥ (bright gold) -->
+  <text x="256" y="278" font-family="-apple-system,sans-serif" font-size="54" font-weight="800" fill="#fff5d6" text-anchor="middle">¥</text>
+  <!-- Specular highlights -->
+  <ellipse cx="190" cy="145" rx="65" ry="20" fill="#fff" opacity="0.1" transform="rotate(-30 190 145)"/>
+  <circle cx="170" cy="130" r="10" fill="#fff" opacity="0.06"/>
+</svg>

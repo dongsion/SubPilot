@@ -203,6 +203,7 @@ let state = {
   txType: 'expense',
   selectedCat: 'food',
   debtDir: 'owed',
+  debtSettled: false,
   selectedCycle: 'month',
   selectedAcctType: 'bank',
   selectedCardColor: 'gold',
@@ -572,6 +573,7 @@ function openAddTx(prefill) {
   state.txType = 'expense';
   state.selectedCat = 'food';
   state.debtDir = 'owed';
+  state.debtSettled = false;
   $('#tx-amt-input').value = '';
   $('#tx-note').value = '';
   $('#tx-tags').value = '';
@@ -586,6 +588,8 @@ function openAddTx(prefill) {
   });
   // Reset debt direction
   $$('#tx-debt-dir-pick .pick').forEach(b => b.classList.toggle('on', b.dataset.dir === 'owed'));
+  // Reset debt settled
+  $$('#tx-debt-settled-pick .pick').forEach(b => b.classList.toggle('on', b.dataset.settled === 'false'));
   updateTxTypeUI();
   renderCatGrid();
   renderTxAcctPick();
@@ -625,6 +629,14 @@ function renderTxDebtPick() {
       $$('#tx-debt-dir-pick .pick').forEach(x => x.classList.remove('on'));
       b.classList.add('on');
       state.debtDir = b.dataset.dir;
+    };
+  });
+  // Debt settled toggle
+  $$('#tx-debt-settled-pick .pick').forEach(b => {
+    b.onclick = () => {
+      $$('#tx-debt-settled-pick .pick').forEach(x => x.classList.remove('on'));
+      b.classList.add('on');
+      state.debtSettled = b.dataset.settled === 'true';
     };
   });
 }
@@ -727,6 +739,7 @@ function saveTx() {
     const person = $('#tx-debt-person').value.trim();
     if (!person) { toast('请输入对方姓名'); return; }
     const dir = state.debtDir || 'owed';
+    const alreadySettled = state.debtSettled;
     const debtAcctBtn = document.querySelector('#tx-debt-acct-pick .pick.on');
     const acctId = debtAcctBtn ? debtAcctBtn.dataset.id : null;
     const isOwed = dir === 'owed'; // true = 我欠别人, false = 别人欠我
@@ -739,17 +752,19 @@ function saveTx() {
       time: timeStr,
       timestamp: now.toISOString(),
       isSubscription: false,
-      settled: false
+      settled: alreadySettled,
+      settledDate: alreadySettled ? date : null
     };
     state.transactions.unshift(tx);
     // 如果关联了账户：我欠别人则账户余额减少，别人欠我则暂不变化（等还款时再记）
-    if (acctId) {
+    // 但如果已标记为已还款，则不调整余额（因为已经还了）
+    if (acctId && !alreadySettled) {
       const acct = state.accounts.find(a => a.id === acctId);
       if (acct && isOwed) acct.balance -= amt;
     }
     save();
     closeSheet('sheet-tx');
-    toast(isOwed ? '已记录欠款' : '已记录应收款');
+    toast(alreadySettled ? '已记录欠款（已还款）' : (isOwed ? '已记录欠款' : '已记录应收款'));
     haptic('success');
     render();
     return;
@@ -2005,10 +2020,11 @@ function renderOverview() {
         <svg viewBox="0 0 24 24" style="stroke:${iconColor};fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;">${iconContent.match(/<svg[^>]*>([\s\S]*)<\/svg>/)?.[1] || iconContent}</svg>
       </div>
       <div class="tx-item-body">
-        <div class="tx-item-name">${t.categoryName} ${badge}</div>
+        <div class="tx-item-name">${t.categoryName} ${badge} ${isDebt && t.settled ? '<span class="tx-badge" style="background:rgba(82,204,130,0.12);color:var(--green);">已还</span>' : ''}</div>
         <div class="tx-item-meta"><span class="tx-acct-dot" style="background:${acctColor};"></span>${acctLabel} · ${t.time}</div>
       </div>
       <div class="tx-item-amt ${amtClass}" style="${isTransfer ? 'color:var(--t2);' : (isDebt ? (t.debtDir === 'owed' ? '' : 'color:var(--green);') : '')}">${amtLabel}</div>
+      ${isDebt && !t.settled ? `<button class="tx-repay-btn" onclick="event.stopPropagation();settleDebt('${t.id}')">还款</button>` : ''}
     </div>`;
   }).join('');
 }
@@ -2276,11 +2292,12 @@ function renderTx() {
           <svg viewBox="0 0 24 24" style="stroke:${iconColor};fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;">${iconContent.match(/<svg[^>]*>([\s\S]*)<\/svg>/)?.[1] || iconContent}</svg>
         </div>
         <div class="tx-item-body">
-          <div class="tx-item-name">${t.categoryName} ${badge}</div>
+          <div class="tx-item-name">${t.categoryName} ${badge} ${isDebt && t.settled ? '<span class="tx-badge" style="background:rgba(82,204,130,0.12);color:var(--green);">已还</span>' : ''}</div>
           <div class="tx-item-meta"><span class="tx-acct-dot" style="background:${acctColor};"></span>${acctLabel} · ${t.time}</div>
           ${tagsHtml}
         </div>
         <div class="tx-item-amt ${amtClass}" style="${isTransfer ? 'color:var(--t2);' : (isDebt ? (t.debtDir === 'owed' ? '' : 'color:var(--green);') : '')}">${amtLabel}</div>
+        ${isDebt && !t.settled ? `<button class="tx-repay-btn" onclick="event.stopPropagation();settleDebt('${t.id}')">还款</button>` : ''}
       </div>`;
     });
 
@@ -3012,9 +3029,48 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '2.1.0';
-const APP_BUILD = '2026.08.08';
+const APP_VERSION = '2.3.0';
+const APP_BUILD = '2026-08-08';
 const CHANGELOG = [
+  { ver: '2.3.0', date: '2026-08-08', items: [
+    '新增AI图片扫描记账：点击相机图标上传微信/支付宝支付截图，自动识别金额、日期、时间、商户',
+    'OCR引擎使用Tesseract.js，支持中英文混合识别，自动推断消费分类',
+    '新增欠款还款状态选择：创建欠款时可标记为已还款',
+    '流水列表中欠款项新增快捷还款按钮，一键标记还款',
+    '欠款详情新增还款日期显示，支持取消还款标记',
+    '修复日期输入框在浅色主题下显示歪斜的问题'
+  ]},
+  { ver: '2.2.2', date: '2026-08-08', items: [
+    'AI对话新增图片扫描功能入口，支持上传支付截图',
+    '优化AI输入区布局，新增相机扫描按钮'
+  ]},
+  { ver: '2.2.1', date: '2026-08-08', items: [
+    '修复日期输入框对齐问题',
+    '优化表单输入样式'
+  ]},
+  { ver: '2.2.0', date: '2026-08-08', items: [
+    '优化金额输入框样式，增大字体加金色边框更醒目',
+    '修复弹窗界面左右晃动问题'
+  ]},
+  { ver: '2.1.9', date: '2026-08-08', items: [
+    '新增卡面分组折叠功能，点击三角按钮一键展开/收起'
+  ]},
+  { ver: '2.1.8', date: '2026-08-08', items: [
+    '新增欠款记账类型：支持记录我欠别人/别人欠我',
+    '关联账户自动调整余额，支持标记已还款'
+  ]},
+  { ver: '2.1.7', date: '2026-08-08', items: [
+    '修复卡面滚动时与总额区域重叠的问题'
+  ]},
+  { ver: '2.1.6', date: '2026-08-08', items: [
+    '新增转账功能：支持账户间互转，可选手续费'
+  ]},
+  { ver: '2.1.5', date: '2026-08-08', items: [
+    '流水页面新增添加交易浮动按钮'
+  ]},
+  { ver: '2.1.4', date: '2026-08-08', items: [
+    '新增账户分组快捷选择，历史分组一键点选'
+  ]},
   { ver: '2.1.0', date: '2026-08-08', items: [
     '新增卡面背景图功能：从手机相册选择图片作为卡面背景，优先于配色',
     '背景图自动压缩至800x400以内，保证存储和加载性能',
@@ -3708,7 +3764,7 @@ function renderAIMessages() {
     // Welcome message
     aiState.messages.push({
       role: 'bot',
-      text: '你好！我是AI记账助手，可以用一句话帮你记账。试试说：\n• 今天用微信花了20元吃饭\n• 支付宝收到工资8000元\n• 招行卡扣了Netflix订阅68元',
+      text: '你好！我是AI记账助手，可以用一句话帮你记账。试试说：\n• 今天用微信花了20元吃饭\n• 支付宝收到工资8000元\n• 招行卡扣了Netflix订阅68元\n\n💡 也可以点左下角相机图标，扫描微信/支付宝支付截图自动记账',
       isWelcome: true
     });
   }
@@ -3726,6 +3782,7 @@ function renderAIMessages() {
           <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
         </div>
         <div class="ai-msg-bubble">
+          ${msg.imagePreview ? `<img src="${msg.imagePreview}" class="ai-scan-preview" />` : ''}
           ${msg.text}
           ${msg.txPreview ? renderTxPreview(msg.txPreview) : ''}
         </div>
@@ -3740,40 +3797,95 @@ function openTxDetail(txId) {
   const t = state.transactions.find(x => x.id === txId);
   if (!t) return;
   const account = state.accounts.find(a => a.id === t.accountId);
+  const toAcct = t.toAccountId ? state.accounts.find(a => a.id === t.toAccountId) : null;
   const allCats = [...EXPENSE_CATS, ...INCOME_CATS];
   const catInfo = allCats.find(c => c.id === t.category);
-  const typeText = t.type === 'income' ? '收入' : '支出';
+  const isDebt = t.type === 'debt';
+  const isTransfer = t.type === 'transfer';
+  const typeText = isDebt ? (t.debtDir === 'owed' ? '我欠别人' : '别人欠我') : (isTransfer ? '转账' : (t.type === 'income' ? '收入' : '支出'));
+  const typeBg = isDebt ? 'rgba(255,165,0,0.12)' : (isTransfer ? 'rgba(100,160,255,0.12)' : (t.type==='income'?'rgba(82,204,130,0.12)':'rgba(239,68,68,0.12)'));
+  const typeColor = isDebt ? '#ffa500' : (isTransfer ? '#64a0ff' : (t.type==='income'?'var(--green)':'var(--red)'));
   const acctColor = account ? (CARD_THEMES[account.color]?.accent || 'var(--gold)') : 'var(--gold)';
+  const amtSign = isTransfer ? '' : (isDebt ? (t.debtDir === 'owed' ? '-' : '+') : (t.type==='income'?'+':'-'));
+  const amtColor = isTransfer ? 'var(--t2)' : (isDebt ? (t.debtDir === 'owed' ? 'var(--t1)' : 'var(--green)') : (t.type==='income'?'var(--green)':'var(--t1)'));
 
   const overlay = $('#card-detail-overlay');
   const content = $('#card-detail-content');
   content.innerHTML = `
     <div style="background:var(--card);border:1px solid var(--border);border-radius:18px;padding:20px;margin-bottom:16px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-        <span style="font-size:12px;padding:4px 10px;border-radius:8px;background:${t.type==='income'?'rgba(82,204,130,0.12)':'rgba(239,68,68,0.12)'};color:${t.type==='income'?'var(--green)':'var(--red)'};font-weight:600;">${typeText}</span>
+        <span style="font-size:12px;padding:4px 10px;border-radius:8px;background:${typeBg};color:${typeColor};font-weight:600;">${typeText}</span>
         <span style="font-size:11px;color:var(--t3);">${t.date} ${t.time}</span>
       </div>
       <div style="text-align:center;margin-bottom:20px;">
-        <div style="font-size:32px;font-weight:700;font-family:var(--font-mono);color:${t.type==='income'?'var(--green)':'var(--t1)'};">${t.type==='income'?'+':'-'}¥${fmt(t.amount)}</div>
+        <div style="font-size:32px;font-weight:700;font-family:var(--font-mono);color:${amtColor};">${amtSign}¥${fmt(t.amount)}</div>
         <div style="font-size:14px;color:var(--t2);margin-top:6px;">${t.categoryName || catInfo?.name || '未分类'}</div>
+        ${isDebt && t.settled ? '<div style="margin-top:8px;font-size:12px;padding:4px 12px;border-radius:8px;background:rgba(82,204,130,0.12);color:var(--green);font-weight:600;display:inline-block;">✓ 已还款</div>' : ''}
       </div>
       <div style="display:flex;flex-direction:column;gap:12px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-size:13px;color:var(--t3);">账户</span>
-          <span style="font-size:13px;color:var(--t1);display:flex;align-items:center;gap:6px;"><span style="width:6px;height:6px;border-radius:50%;background:${acctColor};"></span>${account?.name || '未选择'}</span>
-        </div>
+        ${isDebt ? `<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:var(--t3);">对方</span><span style="font-size:13px;color:var(--t1);font-weight:600;">${t.debtPerson || '未知'}</span></div>` : ''}
+        ${isDebt && t.settled ? `<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:var(--t3);">还款日期</span><span style="font-size:13px;color:var(--green);font-weight:600;">${t.settledDate || '未记录'}</span></div>` : ''}
+        ${isTransfer ? `<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:var(--t3);">转出</span><span style="font-size:13px;color:var(--t1);display:flex;align-items:center;gap:6px;"><span style="width:6px;height:6px;border-radius:50%;background:${acctColor};"></span>${account?.name || '未选择'}</span></div><div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:var(--t3);">转入</span><span style="font-size:13px;color:var(--t1);display:flex;align-items:center;gap:6px;"><span style="width:6px;height:6px;border-radius:50%;background:${toAcct ? (CARD_THEMES[toAcct.color]?.accent || 'var(--gold)') : 'var(--gold)'};"></span>${toAcct?.name || '未选择'}</span></div>${t.fee ? `<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:var(--t3);">手续费</span><span style="font-size:13px;color:var(--red);">¥${fmt(t.fee)}</span></div>` : ''}` : `<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:var(--t3);">账户</span><span style="font-size:13px;color:var(--t1);display:flex;align-items:center;gap:6px;"><span style="width:6px;height:6px;border-radius:50%;background:${acctColor};"></span>${account?.name || '未选择'}</span></div>`}
         ${t.note ? `<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:var(--t3);">备注</span><span style="font-size:13px;color:var(--t1);">${t.note}</span></div>` : ''}
         ${t.isSubscription ? `<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:var(--t3);">类型</span><span style="font-size:12px;padding:2px 8px;border-radius:6px;background:var(--gold-bg);color:var(--gold);font-weight:600;">订阅自动扣款</span></div>` : ''}
         ${(Array.isArray(t.tags) && t.tags.length > 0) ? `<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;"><span style="font-size:13px;color:var(--t3);flex-shrink:0;">标签</span><span style="font-size:12px;display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;">${t.tags.map(tg => `<span style="padding:3px 9px;border-radius:8px;background:var(--card2);color:var(--gold);border:1px solid var(--gold-bd);font-weight:500;">#${escapeHtml(tg)}</span>`).join('')}</span></div>` : ''}
       </div>
     </div>
     <div class="card-detail-actions">
+      ${isDebt && !t.settled ? `<div class="card-detail-btn" style="background:var(--gold);color:#000;font-weight:700;" onclick="event.stopPropagation();settleDebt('${t.id}')">标记已还款</div>` : ''}
+      ${isDebt && t.settled ? `<div class="card-detail-btn" style="background:rgba(255,165,0,0.12);color:#ffa500;font-weight:700;" onclick="event.stopPropagation();unsettleDebt('${t.id}')">取消还款标记</div>` : ''}
       <div class="card-detail-btn" onclick="event.stopPropagation();closeCardDetail();toast('编辑功能开发中')">编辑</div>
       <div class="card-detail-btn" onclick="event.stopPropagation();deleteTx('${t.id}')">删除</div>
     </div>
   `;
   overlay.classList.add('active');
   haptic('light');
+}
+
+// 标记欠款已还款
+function settleDebt(txId) {
+  const t = state.transactions.find(x => x.id === txId);
+  if (!t) return;
+  t.settled = true;
+  t.settledDate = today();
+  // 如果是别人欠我，还款时加回关联账户
+  if (t.debtDir === 'owe-me' && t.accountId) {
+    const acct = state.accounts.find(a => a.id === t.accountId);
+    if (acct) acct.balance += t.amount;
+  }
+  // 如果是我欠别人且关联了账户，还款时账户余额加回
+  if (t.debtDir === 'owed' && t.accountId) {
+    const acct = state.accounts.find(a => a.id === t.accountId);
+    if (acct) acct.balance += t.amount;
+  }
+  save();
+  closeCardDetail();
+  toast('已标记为已还款');
+  haptic('success');
+  render();
+}
+
+// 取消还款标记
+function unsettleDebt(txId) {
+  const t = state.transactions.find(x => x.id === txId);
+  if (!t) return;
+  t.settled = false;
+  t.settledDate = null;
+  // 如果是别人欠我，取消还款则减回关联账户
+  if (t.debtDir === 'owe-me' && t.accountId) {
+    const acct = state.accounts.find(a => a.id === t.accountId);
+    if (acct) acct.balance -= t.amount;
+  }
+  // 如果是我欠别人且关联了账户，取消还款则账户余额再次减少
+  if (t.debtDir === 'owed' && t.accountId) {
+    const acct = state.accounts.find(a => a.id === t.accountId);
+    if (acct) acct.balance -= t.amount;
+  }
+  save();
+  closeCardDetail();
+  toast('已取消还款标记');
+  haptic('success');
+  render();
 }
 
 function deleteTx(txId) {
@@ -3794,9 +3906,11 @@ function renderTxPreview(tx) {
   return `<div class="ai-tx-card">
     <div class="ai-tx-row"><span class="ai-tx-label">类型</span><span class="ai-tx-value">${typeText}</span></div>
     <div class="ai-tx-row"><span class="ai-tx-label">金额</span><span class="ai-tx-value" style="color:${tx.type==='income'?'#30d158':'var(--red)'};">${tx.type==='income'?'+':'-'}¥${fmt(tx.amount)}</span></div>
+    ${tx.platform ? `<div class="ai-tx-row"><span class="ai-tx-label">支付平台</span><span class="ai-tx-value">${tx.platform}</span></div>` : ''}
+    ${tx.merchant ? `<div class="ai-tx-row"><span class="ai-tx-label">商户/地点</span><span class="ai-tx-value">${tx.merchant}</span></div>` : ''}
     <div class="ai-tx-row"><span class="ai-tx-label">分类</span><span class="ai-tx-value">${catInfo?.name || tx.categoryName}</span></div>
     <div class="ai-tx-row"><span class="ai-tx-label">账户</span><span class="ai-tx-value">${account?.name || '未选择'}</span></div>
-    <div class="ai-tx-row"><span class="ai-tx-label">日期</span><span class="ai-tx-value">${tx.date}</span></div>
+    <div class="ai-tx-row"><span class="ai-tx-label">日期</span><span class="ai-tx-value">${tx.date}${tx.time ? ' ' + tx.time : ''}</span></div>
     ${tx.note ? `<div class="ai-tx-row"><span class="ai-tx-label">备注</span><span class="ai-tx-value">${tx.note}</span></div>` : ''}
     <div class="ai-actions">
       <button class="ai-action-btn" onclick="cancelAITx()">取消</button>
@@ -4056,7 +4170,7 @@ function confirmAITx() {
     accountId: tx.accountId,
     note: tx.note,
     date: tx.date,
-    time: `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`,
+    time: tx.time || `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`,
     isSubscription: false,
     createdAt: now.toISOString()
   };
@@ -4099,6 +4213,245 @@ function cancelAITx() {
   aiState.pendingTx = null;
   renderAIMessages();
   renderQuickReplies();
+}
+
+// ===== 扫描支付截图 =====
+let _tesseractLoaded = false;
+
+async function scanReceiptImage() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // 显示用户上传的图片
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      const imgDataUrl = ev.target.result;
+      // 添加用户消息（带图片预览）
+      aiState.messages.push({
+        role: 'user',
+        text: '<div style="font-size:13px;">扫描支付截图</div>',
+        imagePreview: imgDataUrl
+      });
+      renderAIMessages();
+
+      // 添加扫描中消息
+      const scanMsgIdx = aiState.messages.length;
+      aiState.messages.push({
+        role: 'bot',
+        text: '<div style="font-size:14px;">📷 正在识别图片内容...</div><div class="ai-scan-progress" id="scan-progress">正在加载OCR引擎...</div>',
+        isScanning: true
+      });
+      renderAIMessages();
+
+      const scanBtn = document.querySelector('.ai-scan-btn');
+      if (scanBtn) scanBtn.classList.add('scanning');
+
+      try {
+        // 动态加载 Tesseract.js
+        if (!_tesseractLoaded) {
+          await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
+          _tesseractLoaded = true;
+        }
+
+        const progressEl = document.getElementById('scan-progress');
+        
+        // 执行OCR识别
+        const worker = await Tesseract.createWorker('chi_sim+eng', 1, {
+          logger: m => {
+            if (m.status === 'recognizing text' && progressEl) {
+              progressEl.textContent = `正在识别文字... ${Math.round(m.progress * 100)}%`;
+            } else if (progressEl) {
+              progressEl.textContent = `正在识别文字...`;
+            }
+          }
+        });
+
+        const result = await worker.recognize(imgDataUrl);
+        await worker.terminate();
+
+        const rawText = result.data.text;
+        console.log('OCR Result:', rawText);
+
+        // 解析识别结果
+        const parsed = parseReceiptText(rawText);
+
+        // 移除扫描中消息
+        aiState.messages.splice(scanMsgIdx, 1);
+
+        if (parsed.amount) {
+          // 显示识别结果
+          aiState.pendingTx = parsed;
+          aiState.messages.push({
+            role: 'bot',
+            text: `已识别到支付信息：\n${parsed.platform || ''} ${parsed.merchant ? '· ' + parsed.merchant : ''}\n金额：¥${parsed.amount}\n日期：${parsed.date} ${parsed.time || ''}\n\n请确认是否记账：`,
+            txPreview: parsed
+          });
+        } else {
+          // 识别失败
+          aiState.messages.push({
+            role: 'bot',
+            text: `未能从图片中识别到支付信息。\n\n识别到的文字：\n${rawText.substring(0, 200)}${rawText.length > 200 ? '...' : ''}\n\n请尝试使用更清晰的截图，或手动输入记账。`
+          });
+        }
+        renderAIMessages();
+      } catch (err) {
+        console.error('OCR Error:', err);
+        aiState.messages.splice(scanMsgIdx, 1);
+        aiState.messages.push({
+          role: 'bot',
+          text: '图片识别失败，请检查网络连接后重试，或手动输入记账。'
+        });
+        renderAIMessages();
+      } finally {
+        if (scanBtn) scanBtn.classList.remove('scanning');
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+}
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) {
+      resolve();
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = src;
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+}
+
+// 解析支付截图OCR文本
+function parseReceiptText(text) {
+  const result = {
+    amount: null,
+    type: 'expense',
+    category: 'other',
+    categoryName: '其他',
+    note: '',
+    date: today(),
+    time: null,
+    merchant: '',
+    platform: '',
+    confidence: 0
+  };
+
+  if (!text || text.trim().length === 0) return result;
+
+  // 检测支付平台
+  if (/微信支付|微信付款|WeChat/i.test(text)) {
+    result.platform = '微信支付';
+    result.note = '微信支付';
+    result.confidence += 20;
+  } else if (/支付宝|Alipay|蚂蚁.*付款/i.test(text)) {
+    result.platform = '支付宝';
+    result.note = '支付宝';
+    result.confidence += 20;
+  }
+
+  // 提取金额 - 支持多种格式
+  // 格式1: ¥12.34 / ￥12.34
+  let amtMatch = text.match(/[¥￥]\s*(\d+[.,]\d{1,2})/);
+  // 格式2: 金额 12.34 / 金额：12.34
+  if (!amtMatch) amtMatch = text.match(/金额[：:\s]*(\d+[.,]\d{1,2})/);
+  // 格式3: 12.34元
+  if (!amtMatch) amtMatch = text.match(/(\d+[.,]\d{1,2})\s*元/);
+  // 格式4: 实付 12.34 / 实付款 12.34
+  if (!amtMatch) amtMatch = text.match(/实付[款]?[：:\s]*(\d+[.,]\d{1,2})/);
+  // 格式5: 单独的数字带小数点（最后尝试）
+  if (!amtMatch) {
+    const allAmounts = text.match(/(\d+[.,]\d{2})/g);
+    if (allAmounts && allAmounts.length > 0) {
+      // 取最大的金额（通常是支付金额）
+      const maxAmt = allAmounts.reduce((max, v) => {
+        const n = parseFloat(v.replace(',', '.'));
+        return n > max ? n : max;
+      }, 0);
+      if (maxAmt > 0) {
+        result.amount = maxAmt;
+        result.confidence += 30;
+      }
+    }
+  }
+  if (amtMatch && !result.amount) {
+    result.amount = parseFloat(amtMatch[1].replace(',', '.'));
+    result.confidence += 40;
+  }
+
+  // 提取日期和时间
+  // 格式: 2026-08-08 14:23 / 2026/08/08 14:23 / 2026年08月08日 14:23
+  const dateTimeMatch = text.match(/(\d{4})[年\-\/.](\d{1,2})[月\-\/.](\d{1,2})[日]?[\s]*(\d{1,2}[:：]\d{2})?/);
+  if (dateTimeMatch) {
+    result.date = `${dateTimeMatch[1]}-${String(dateTimeMatch[2]).padStart(2,'0')}-${String(dateTimeMatch[3]).padStart(2,'0')}`;
+    if (dateTimeMatch[4]) {
+      result.time = dateTimeMatch[4].replace('：', ':');
+    }
+    result.confidence += 20;
+  } else {
+    // 尝试只匹配时间
+    const timeMatch = text.match(/(\d{1,2}[:：]\d{2})/);
+    if (timeMatch) {
+      result.time = timeMatch[1].replace('：', ':');
+    }
+    // 尝试匹配今天/昨天
+    if (/今天/.test(text)) {
+      result.date = today();
+      result.confidence += 10;
+    }
+  }
+
+  // 提取商户/地点
+  // 微信: 付款给XXX / 收款方XXX
+  // 支付宝: 交易对象XXX / 商户XXX / 付款给XXX
+  let merchantMatch = text.match(/(?:付款给|收款方|交易对象|商户名称|商家|对方)[：:\s]*([^\n\r,，。]{2,20})/);
+  if (!merchantMatch) {
+    // 尝试匹配常见的商户名格式
+    merchantMatch = text.match(/(?:麦当劳|肯德基|星巴克|美团|饿了么|滴滴|淘宝|京东|拼多多|天猫|盒马|永辉|沃尔玛|便利店|超市|餐厅|咖啡|奶茶|火锅|烧烤|快递|加油站|停车场|地铁|公交|出租|酒店|机票|电影|医院|药店|书店|理发|美容|健身|游泳|网球|篮球|足球|羽毛球|高尔夫|台球|保龄球|游乐园|景点|门票|演唱会|音乐会|话剧|展览|博物馆|图书馆|学校|培训|课程|学费|书费|网课|知识付费)/);
+  }
+  if (merchantMatch) {
+    result.merchant = merchantMatch[1] || merchantMatch[0];
+    result.merchant = result.merchant.trim();
+    result.note = result.platform ? `${result.platform} · ${result.merchant}` : result.merchant;
+    result.confidence += 15;
+
+    // 根据商户名推断分类
+    const catMap = {
+      '麦当劳': 'food', '肯德基': 'food', '星巴克': 'food', '美团': 'food', '饿了么': 'food',
+      '餐厅': 'food', '咖啡': 'food', '奶茶': 'food', '火锅': 'food', '烧烤': 'food',
+      '超市': 'home', '便利店': 'home', '永辉': 'home', '沃尔玛': 'home', '盒马': 'home',
+      '滴滴': 'transport', '地铁': 'transport', '公交': 'transport', '出租': 'transport', '加油站': 'transport', '停车场': 'transport',
+      '机票': 'other', '酒店': 'other',
+      '电影': 'entertainment', '演唱会': 'entertainment', '游戏': 'entertainment',
+      '医院': 'medical', '药店': 'medical',
+      '书': 'study', '课程': 'study', '培训': 'study', '网课': 'study', '学费': 'study',
+      '淘宝': 'shopping', '京东': 'shopping', '拼多多': 'shopping', '天猫': 'shopping'
+    };
+    for (const [key, cat] of Object.entries(catMap)) {
+      if (result.merchant.includes(key)) {
+        result.category = cat;
+        const allCats = [...EXPENSE_CATS, ...INCOME_CATS];
+        const catInfo = allCats.find(c => c.id === cat);
+        result.categoryName = catInfo ? catInfo.name : '其他';
+        break;
+      }
+    }
+  }
+
+  // 检测退款/收入
+  if (/退款|退回|返还|收入|收到/.test(text)) {
+    result.type = 'income';
+    result.confidence += 10;
+  }
+
+  return result;
 }
 
 // Lock on visibility change (return from background)

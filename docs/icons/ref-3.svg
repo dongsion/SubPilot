@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="r3bg" cx="50%" cy="40%" r="70%">
+      <stop offset="0%" stop-color="#15120a"/><stop offset="100%" stop-color="#000"/>
+    </radialGradient>
+    <radialGradient id="r3coin" cx="35%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#fff0c8"/>
+      <stop offset="25%" stop-color="#f5d99b"/>
+      <stop offset="55%" stop-color="#d4af7a"/>
+      <stop offset="85%" stop-color="#a07830"/>
+      <stop offset="100%" stop-color="#7a5810"/>
+    </radialGradient>
+    <radialGradient id="r3face" cx="42%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#f5e0a8"/>
+      <stop offset="60%" stop-color="#e0c078"/>
+      <stop offset="100%" stop-color="#c0a050"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#r3bg)"/>
+  <!-- Coin shadow -->
+  <ellipse cx="256" cy="410" rx="125" ry="12" fill="#000" opacity="0.45"/>
+  <!-- Outer thick rim -->
+  <circle cx="256" cy="252" r="158" fill="url(#r3coin)"/>
+  <!-- Beveled edge rings -->
+  <circle cx="256" cy="252" r="158" fill="none" stroke="#7a5810" stroke-width="2" opacity="0.6"/>
+  <circle cx="256" cy="252" r="148" fill="none" stroke="#fce8b8" stroke-width="1" opacity="0.3"/>
+  <circle cx="256" cy="252" r="140" fill="none" stroke="#7a5810" stroke-width="1.5" opacity="0.3"/>
+  <!-- Inner face -->
+  <circle cx="256" cy="252" r="128" fill="url(#r3face)"/>
+  <!-- Tiny decorative dots around inner ring (minted coin detail) -->
+  <g fill="#7a5810" opacity="0.25">
+    <circle cx="256" cy="140" r="2"/><circle cx="290" cy="145" r="2"/><circle cx="322" cy="160" r="2"/>
+    <circle cx="350" cy="182" r="2"/><circle cx="368" cy="210" r="2"/><circle cx="375" cy="252" r="2"/>
+    <circle cx="368" cy="294" r="2"/><circle cx="350" cy="322" r="2"/><circle cx="322" cy="344" r="2"/>
+    <circle cx="290" cy="359" r="2"/><circle cx="256" cy="364" r="2"/><circle cx="222" cy="359" r="2"/>
+    <circle cx="190" cy="344" r="2"/><circle cx="162" cy="322" r="2"/><circle cx="144" cy="294" r="2"/>
+    <circle cx="137" cy="252" r="2"/><circle cx="144" cy="210" r="2"/><circle cx="162" cy="182" r="2"/>
+    <circle cx="190" cy="160" r="2"/><circle cx="222" cy="145" r="2"/>
+  </g>
+  <!-- C embossed (deep, with bevel) -->
+  <path d="M 325 165 A 95 95 0 1 0 325 339 L 325 305 A 61 61 0 1 1 325 199 Z" fill="#1a1208"/>
+  <!-- C bevel highlight (top edge) -->
+  <path d="M 325 165 A 95 95 0 1 0 220 350" fill="none" stroke="#fce8b8" stroke-width="1.5" opacity="0.4"/>
+  <!-- C bevel shadow (bottom edge) -->
+  <path d="M 325 339 A 95 95 0 1 0 220 154" fill="none" stroke="#5a4010" stroke-width="1" opacity="0.3"/>
+  <!-- ¥ in C (bright gold, small) -->
+  <text x="256" y="278" font-family="-apple-system,sans-serif" font-size="50" font-weight="800" fill="#fff0c8" text-anchor="middle">¥</text>
+  <!-- ¥ subtle glow -->
+  <text x="256" y="278" font-family="-apple-system,sans-serif" font-size="50" font-weight="800" fill="#fce8b8" text-anchor="middle" opacity="0.3">¥</text>
+  <!-- Large specular highlight (top-left) -->
+  <ellipse cx="195" cy="155" rx="65" ry="22" fill="#fff" opacity="0.1" transform="rotate(-30 195 155)"/>
+  <!-- Small specular dot -->
+  <circle cx="180" cy="145" r="8" fill="#fff" opacity="0.08"/>
+</svg>

@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="g7bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0a0a"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </linearGradient>
+    <linearGradient id="g7gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f5d99b"/>
+      <stop offset="50%" stop-color="#d4af7a"/>
+      <stop offset="100%" stop-color="#b8893e"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#g7bg)"/>
+
+  <!-- Speedometer/gauge arc forming a C -->
+  <!-- Outer thick arc -->
+  <path d="M 385 160
+           A 150 150 0 1 0 385 352
+           L 355 320
+           A 108 108 0 1 1 355 192
+           Z"
+        fill="url(#g7gold)"/>
+
+  <!-- Tick marks on the arc -->
+  <g stroke="#0a0a0a" stroke-width="3" stroke-linecap="round">
+    <line x1="256" y1="120" x2="256" y2="138"/>
+    <line x1="155" y1="155" x2="168" y2="168"/>
+    <line x1="120" y1="256" x2="138" y2="256"/>
+    <line x1="155" y1="357" x2="168" y2="344"/>
+    <line x1="256" y1="392" x2="256" y2="374"/>
+  </g>
+
+  <!-- Needle pointing to upper right (fast zone) -->
+  <line x1="256" y1="256" x2="340" y2="175" stroke="url(#g7gold)" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="256" cy="256" r="12" fill="url(#g7gold)"/>
+
+  <!-- ¥ at needle tip area -->
+  <text x="365" y="160" font-family="-apple-system,sans-serif" font-size="44" font-weight="800" fill="url(#g7gold)" text-anchor="middle">¥</text>
+
+  <!-- Speed lines behind needle -->
+  <line x1="220" y1="230" x2="240" y2="235" stroke="#d4af7a" stroke-width="3" stroke-linecap="round" opacity="0.3"/>
+  <line x1="210" y1="250" x2="235" y2="252" stroke="#d4af7a" stroke-width="3" stroke-linecap="round" opacity="0.2"/>
+</svg>

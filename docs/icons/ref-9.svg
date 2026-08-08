@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="r9bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0a0a0a"/><stop offset="100%" stop-color="#000"/>
+    </radialGradient>
+    <radialGradient id="r9coin" cx="35%" cy="30%" r="72%">
+      <stop offset="0%" stop-color="#fff0c8"/>
+      <stop offset="30%" stop-color="#f0d090"/>
+      <stop offset="60%" stop-color="#d4af7a"/>
+      <stop offset="90%" stop-color="#9a7030"/>
+      <stop offset="100%" stop-color="#6a4810"/>
+    </radialGradient>
+    <radialGradient id="r9face" cx="42%" cy="35%" r="55%">
+      <stop offset="0%" stop-color="#f5e0a8"/>
+      <stop offset="100%" stop-color="#b8893e"/>
+    </radialGradient>
+    <filter id="r9inner"><feGaussianBlur stdDeviation="1.5"/></filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#r9bg)"/>
+  <ellipse cx="256" cy="415" rx="118" ry="10" fill="#000" opacity="0.4"/>
+  <!-- Coin with inset/recessed face -->
+  <circle cx="256" cy="252" r="154" fill="url(#r9coin)"/>
+  <circle cx="256" cy="252" r="154" fill="none" stroke="#6a4810" stroke-width="2" opacity="0.5"/>
+  <!-- Raised rim (lighter ring) -->
+  <circle cx="256" cy="250" r="150" fill="none" stroke="#fff0c8" stroke-width="2" opacity="0.15"/>
+  <circle cx="256" cy="254" r="146" fill="none" stroke="#6a4810" stroke-width="1.5" opacity="0.3"/>
+  <!-- Recessed inner face (darker, with shadow ring) -->
+  <circle cx="256" cy="254" r="132" fill="#6a4810" opacity="0.2" filter="url(#r9inner)"/>
+  <circle cx="256" cy="252" r="130" fill="url(#r9face)"/>
+  <circle cx="256" cy="252" r="130" fill="none" stroke="#6a4810" stroke-width="1" opacity="0.3"/>
+  <!-- Inner ring -->
+  <circle cx="256" cy="252" r="112" fill="none" stroke="#9a7030" stroke-width="0.5" opacity="0.15"/>
+  <!-- C (raised/embossed effect) -->
+  <path d="M 325 168 A 90 90 0 1 0 325 336 L 325 304 A 58 58 0 1 1 325 200 Z" fill="#1a1208"/>
+  <!-- C highlight on top edge -->
+  <path d="M 325 168 A 90 90 0 0 0 170 210" fill="none" stroke="#fce8b8" stroke-width="1.5" opacity="0.3"/>
+  <!-- ¥ -->
+  <text x="256" y="278" font-family="-apple-system,sans-serif" font-size="50" font-weight="800" fill="#fff0c8" text-anchor="middle">¥</text>
+  <!-- Rim highlight (top arc) -->
+  <path d="M 120 210 A 154 154 0 0 1 392 210" fill="none" stroke="#fff" stroke-width="2.5" opacity="0.12" stroke-linecap="round"/>
+  <!-- Face specular -->
+  <ellipse cx="200" cy="160" rx="55" ry="16" fill="#fff" opacity="0.08" transform="rotate(-25 200 160)"/>
+</svg>

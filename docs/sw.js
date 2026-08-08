@@ -1,5 +1,5 @@
-const CACHE_NAME = 'countra-v2.1.0';
-const ASSETS = ['./', './index.html', './app.js', './manifest.json', './icons/icon.svg'];
+const CACHE_NAME = 'countra-v2.3.0';
+const ASSETS = ['./', './index.html', './app.js', './manifest.json', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 
 // 安装：预缓存核心资源 + 立即激活
 self.addEventListener('install', e => {

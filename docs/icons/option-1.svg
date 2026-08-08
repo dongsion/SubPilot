@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="g1bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="100%" stop-color="#0a0a0a"/>
+    </linearGradient>
+    <linearGradient id="g1gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f5d99b"/>
+      <stop offset="50%" stop-color="#d4af7a"/>
+      <stop offset="100%" stop-color="#b8893e"/>
+    </linearGradient>
+    <linearGradient id="g1card" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2a2a3e"/>
+      <stop offset="100%" stop-color="#1a1a2e"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="512" height="512" rx="112" fill="url(#g1bg)"/>
+  <!-- Card 1 (back, slightly rotated) -->
+  <rect x="120" y="140" width="280" height="180" rx="24" fill="url(#g1card)" stroke="#d4af7a" stroke-width="2" opacity="0.4" transform="rotate(-8 256 256)"/>
+  <!-- Card 2 (front) -->
+  <rect x="110" y="170" width="290" height="180" rx="24" fill="url(#g1card)" stroke="url(#g1gold)" stroke-width="3"/>
+  <!-- Chip on card -->
+  <rect x="140" y="200" width="48" height="36" rx="8" fill="url(#g1gold)" opacity="0.85"/>
+  <!-- Gold contact lines on chip -->
+  <line x1="148" y1="210" x2="180" y2="210" stroke="#9a7030" stroke-width="1.5" opacity="0.5"/>
+  <line x1="148" y1="218" x2="180" y2="218" stroke="#9a7030" stroke-width="1.5" opacity="0.5"/>
+  <line x1="148" y1="226" x2="180" y2="226" stroke="#9a7030" stroke-width="1.5" opacity="0.5"/>
+  <!-- Card number dots -->
+  <text x="140" y="275" font-family="monospace" font-size="20" fill="#d4af7a" opacity="0.6" letter-spacing="8">•••• ••••</text>
+  <!-- Balance amount -->
+  <text x="140" y="320" font-family="-apple-system,sans-serif" font-size="28" font-weight="700" fill="url(#g1gold)">¥12,580</text>
+  <!-- Trend arrow -->
+  <path d="M 330 305 L 370 270 L 355 270 M 370 270 L 370 285" stroke="url(#g1gold)" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Mastercard-style circles -->
+  <circle cx="340" cy="210" r="14" fill="#d4af7a" opacity="0.3"/>
+  <circle cx="360" cy="210" r="14" fill="#d4af7a" opacity="0.2"/>
+</svg>

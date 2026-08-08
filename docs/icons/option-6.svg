@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="g6bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0a0a"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </linearGradient>
+    <linearGradient id="g6gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f5d99b"/>
+      <stop offset="50%" stop-color="#d4af7a"/>
+      <stop offset="100%" stop-color="#b8893e"/>
+    </linearGradient>
+    <linearGradient id="g6gold2" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#e8c886"/>
+      <stop offset="100%" stop-color="#9a7030"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#g6bg)"/>
+
+  <!-- Two arrows forming a C through circular motion -->
+  <!-- Arrow 1: top half going right -->
+  <path d="M 300 110
+           A 150 150 0 0 0 110 280
+           L 110 270
+           A 140 140 0 0 1 295 120
+           Z"
+        fill="url(#g6gold)"/>
+  <!-- Arrow 1 head pointing down-left -->
+  <polygon points="110,280 90,255 135,262" fill="url(#g6gold)"/>
+
+  <!-- Arrow 2: bottom half going left -->
+  <path d="M 212 402
+           A 150 150 0 0 0 402 232
+           L 402 242
+           A 140 140 0 0 1 217 392
+           Z"
+        fill="url(#g6gold2)"/>
+  <!-- Arrow 2 head pointing up-right -->
+  <polygon points="402,232 422,257 377,250" fill="url(#g6gold2)"/>
+
+  <!-- ¥ symbol in center where arrows overlap -->
+  <text x="256" y="280" font-family="-apple-system,sans-serif" font-size="72" font-weight="800" fill="url(#g6gold)" text-anchor="middle" opacity="0.95">¥</text>
+</svg>

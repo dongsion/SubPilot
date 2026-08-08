@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="s17g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f5d99b"/><stop offset="100%" stop-color="#b8893e"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#000"/>
+  <!-- C + ¥ merged: solid C with ¥ as part of the shape -->
+  <!-- Outer C -->
+  <path d="M 365 115 A 145 145 0 1 0 365 397 L 365 355 A 103 103 0 1 1 365 157 Z" fill="url(#s17g)"/>
+  <!-- ¥ as bold solid gold in center, with black gaps -->
+  <rect x="216" y="210" width="80" height="14" rx="7" fill="#000"/>
+  <rect x="216" y="240" width="80" height="14" rx="7" fill="#000"/>
+  <rect x="249" y="195" width="14" height="110" rx="7" fill="#000"/>
+  <rect x="216" y="270" width="80" height="14" rx="7" fill="#000"/>
+  <!-- Diagonal strokes of ¥ -->
+  <rect x="220" y="300" width="70" height="12" rx="6" fill="#000" transform="rotate(25 255 306)"/>
+  <rect x="220" y="300" width="70" height="12" rx="6" fill="#000" transform="rotate(-25 255 306)"/>
+</svg>

@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="g4bg" x1="0%" y1="0%" x2="135%" y2="100%">
+      <stop offset="0%" stop-color="#1c1c1e"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </linearGradient>
+    <linearGradient id="g4gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f5d99b"/>
+      <stop offset="40%" stop-color="#d4af7a"/>
+      <stop offset="100%" stop-color="#b8893e"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="512" height="512" rx="112" fill="url(#g4bg)"/>
+
+  <!-- Abacus frame (minimalist) -->
+  <!-- Top bar -->
+  <rect x="110" y="130" width="292" height="8" rx="4" fill="url(#g4gold)"/>
+  <!-- Middle bar -->
+  <rect x="110" y="250" width="292" height="6" rx="3" fill="url(#g4gold)" opacity="0.5"/>
+  <!-- Bottom bar -->
+  <rect x="110" y="370" width="292" height="8" rx="4" fill="url(#g4gold)"/>
+  <!-- Left frame -->
+  <rect x="110" y="130" width="8" height="248" rx="4" fill="url(#g4gold)"/>
+  <!-- Right frame -->
+  <rect x="394" y="130" width="8" height="248" rx="4" fill="url(#g4gold)"/>
+
+  <!-- Top section beads (2 per rod) -->
+  <!-- Rod 1 -->
+  <line x1="160" y1="138" x2="160" y2="250" stroke="#d4af7a" stroke-width="2" opacity="0.3"/>
+  <circle cx="160" cy="175" r="14" fill="url(#g4gold)"/>
+  <circle cx="160" cy="215" r="14" fill="url(#g4gold)" opacity="0.6"/>
+  <!-- Rod 2 -->
+  <line x1="220" y1="138" x2="220" y2="250" stroke="#d4af7a" stroke-width="2" opacity="0.3"/>
+  <circle cx="220" cy="175" r="14" fill="url(#g4gold)" opacity="0.6"/>
+  <circle cx="220" cy="215" r="14" fill="url(#g4gold)"/>
+  <!-- Rod 3 -->
+  <line x1="280" y1="138" x2="280" y2="250" stroke="#d4af7a" stroke-width="2" opacity="0.3"/>
+  <circle cx="280" cy="175" r="14" fill="url(#g4gold)"/>
+  <circle cx="280" cy="215" r="14" fill="url(#g4gold)" opacity="0.6"/>
+  <!-- Rod 4 -->
+  <line x1="340" y1="138" x2="340" y2="250" stroke="#d4af7a" stroke-width="2" opacity="0.3"/>
+  <circle cx="340" cy="175" r="14" fill="url(#g4gold)" opacity="0.6"/>
+  <circle cx="340" cy="215" r="14" fill="url(#g4gold)"/>
+
+  <!-- Bottom section beads (5 per rod) -->
+  <!-- Rod 1 -->
+  <line x1="160" y1="256" x2="160" y2="370" stroke="#d4af7a" stroke-width="2" opacity="0.3"/>
+  <circle cx="160" cy="285" r="12" fill="url(#g4gold)" opacity="0.7"/>
+  <circle cx="160" cy="315" r="12" fill="url(#g4gold)" opacity="0.7"/>
+  <circle cx="160" cy="345" r="12" fill="url(#g4gold)" opacity="0.7"/>
+  <!-- Rod 2 -->
+  <line x1="220" y1="256" x2="220" y2="370" stroke="#d4af7a" stroke-width="2" opacity="0.3"/>
+  <circle cx="220" cy="285" r="12" fill="url(#g4gold)" opacity="0.7"/>
+  <circle cx="220" cy="315" r="12" fill="url(#g4gold)"/>
+  <circle cx="220" cy="345" r="12" fill="url(#g4gold)" opacity="0.7"/>
+  <!-- Rod 3 -->
+  <line x1="280" y1="256" x2="280" y2="370" stroke="#d4af7a" stroke-width="2" opacity="0.3"/>
+  <circle cx="280" cy="285" r="12" fill="url(#g4gold)"/>
+  <circle cx="280" cy="315" r="12" fill="url(#g4gold)"/>
+  <circle cx="280" cy="345" r="12" fill="url(#g4gold)" opacity="0.7"/>
+  <!-- Rod 4 -->
+  <line x1="340" y1="256" x2="340" y2="370" stroke="#d4af7a" stroke-width="2" opacity="0.3"/>
+  <circle cx="340" cy="285" r="12" fill="url(#g4gold)" opacity="0.7"/>
+  <circle cx="340" cy="315" r="12" fill="url(#g4gold)"/>
+  <circle cx="340" cy="345" r="12" fill="url(#g4gold)"/>
+</svg>

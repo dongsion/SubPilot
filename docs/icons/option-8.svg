@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="g8bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0a0a"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </linearGradient>
+    <linearGradient id="g8gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f5d99b"/>
+      <stop offset="50%" stop-color="#d4af7a"/>
+      <stop offset="100%" stop-color="#b8893e"/>
+    </linearGradient>
+    <linearGradient id="g8goldH" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f5d99b"/>
+      <stop offset="100%" stop-color="#b8893e"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#g8bg)"/>
+
+  <!-- Folded banknote forming a C shape -->
+  <!-- Layer 1 (back, darkest) -->
+  <path d="M 140 180
+           L 372 140
+           L 372 372
+           L 140 332
+           Z"
+        fill="url(#g8gold)" opacity="0.3"/>
+  <!-- Layer 2 (middle) -->
+  <path d="M 140 200
+           L 372 160
+           L 372 352
+           L 140 312
+           Z"
+        fill="url(#g8gold)" opacity="0.6"/>
+  <!-- Layer 3 (front, brightest) -->
+  <path d="M 140 220
+           L 372 180
+           L 372 332
+           L 140 292
+           Z"
+        fill="url(#g8gold)"/>
+
+  <!-- Inner cutout creating C shape -->
+  <path d="M 200 235
+           L 330 210
+           L 330 310
+           L 200 285
+           Z"
+        fill="url(#g8bg)"/>
+
+  <!-- ¥ on the banknote -->
+  <text x="265" y="265" font-family="-apple-system,sans-serif" font-size="48" font-weight="800" fill="url(#g8goldH)" text-anchor="middle">¥</text>
+
+  <!-- Fold lines -->
+  <line x1="140" y1="220" x2="140" y2="292" stroke="#9a7030" stroke-width="2" opacity="0.5"/>
+  <line x1="372" y1="180" x2="372" y2="332" stroke="#9a7030" stroke-width="2" opacity="0.5"/>
+
+  <!-- Corner decoration on banknote -->
+  <circle cx="170" cy="240" r="6" fill="none" stroke="#9a7030" stroke-width="2" opacity="0.4"/>
+  <circle cx="342" cy="225" r="6" fill="none" stroke="#9a7030" stroke-width="2" opacity="0.4"/>
+  <circle cx="170" cy="272" r="6" fill="none" stroke="#9a7030" stroke-width="2" opacity="0.4"/>
+  <circle cx="342" cy="307" r="6" fill="none" stroke="#9a7030" stroke-width="2" opacity="0.4"/>
+
+  <!-- Shadow under note -->
+  <ellipse cx="256" cy="380" rx="120" ry="6" fill="#d4af7a" opacity="0.05"/>
+</svg>

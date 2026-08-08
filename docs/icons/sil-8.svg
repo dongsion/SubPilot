@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="s8g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f5d99b"/><stop offset="100%" stop-color="#b8893e"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#000"/>
+  <!-- Solid C made from bold arc only (minimal, no inner ring) -->
+  <path d="M 350 125 A 145 145 0 1 0 350 387 L 350 358 A 115 115 0 1 1 350 154 Z" fill="url(#s8g)"/>
+  <!-- ¥ -->
+  <text x="248" y="285" font-family="-apple-system,sans-serif" font-size="56" font-weight="800" fill="#000" text-anchor="middle">¥</text>
+</svg>

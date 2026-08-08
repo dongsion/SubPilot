@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="s13g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f5d99b"/><stop offset="100%" stop-color="#b8893e"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#000"/>
+  <!-- Solid vertical oval coin -->
+  <ellipse cx="256" cy="256" rx="130" ry="170" fill="url(#s13g)"/>
+  <!-- C cutout -->
+  <path d="M 325 170 A 95 95 0 1 0 325 342 L 325 305 A 58 58 0 1 1 325 207 Z" fill="#000"/>
+  <!-- ¥ -->
+  <text x="256" y="280" font-family="-apple-system,sans-serif" font-size="50" font-weight="800" fill="url(#s13g)" text-anchor="middle">¥</text>
+</svg>

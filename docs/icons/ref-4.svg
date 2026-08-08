@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="r4bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0a0a14"/><stop offset="100%" stop-color="#000"/>
+    </radialGradient>
+    <radialGradient id="r4coin" cx="38%" cy="32%" r="72%">
+      <stop offset="0%" stop-color="#fce8b8"/>
+      <stop offset="40%" stop-color="#e0c080"/>
+      <stop offset="75%" stop-color="#b08840"/>
+      <stop offset="100%" stop-color="#705018"/>
+    </radialGradient>
+    <radialGradient id="r4face" cx="42%" cy="35%" r="55%">
+      <stop offset="0%" stop-color="#f0d898"/>
+      <stop offset="100%" stop-color="#b8893e"/>
+    </radialGradient>
+    <filter id="r4emboss">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
+      <feOffset dx="0" dy="2" result="offset"/>
+      <feMerge><feMergeNode in="offset"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#r4bg)"/>
+  <!-- Ambient glow -->
+  <circle cx="256" cy="256" r="170" fill="#d4af7a" opacity="0.04"/>
+  <!-- Coin -->
+  <circle cx="256" cy="256" r="150" fill="url(#r4coin)"/>
+  <!-- Rim detail: two thin lines -->
+  <circle cx="256" cy="256" r="150" fill="none" stroke="#705018" stroke-width="1.5" opacity="0.5"/>
+  <circle cx="256" cy="256" r="144" fill="none" stroke="#fce8b8" stroke-width="0.8" opacity="0.2"/>
+  <circle cx="256" cy="256" r="135" fill="none" stroke="#705018" stroke-width="1" opacity="0.3"/>
+  <!-- Inner face -->
+  <circle cx="256" cy="256" r="125" fill="url(#r4face)"/>
+  <!-- Inner ring -->
+  <circle cx="256" cy="256" r="110" fill="none" stroke="#705018" stroke-width="0.8" opacity="0.15"/>
+  <!-- C with emboss filter -->
+  <path d="M 320 170 A 90 90 0 1 0 320 342 L 320 308 A 56 56 0 1 1 320 204 Z" fill="#1a1208" filter="url(#r4emboss)"/>
+  <!-- ¥ -->
+  <text x="256" y="280" font-family="-apple-system,sans-serif" font-size="48" font-weight="800" fill="#fce8b8" text-anchor="middle">¥</text>
+  <!-- Star pattern (4 small stars around C, like mint marks) -->
+  <g fill="#705018" opacity="0.2">
+    <polygon points="256,128 259,136 267,136 261,141 263,149 256,144 249,149 251,141 245,136 253,136"/>
+    <polygon points="256,384 259,376 267,376 261,371 263,363 256,368 249,363 251,371 245,376 253,376"/>
+  </g>
+  <!-- Highlight -->
+  <ellipse cx="200" cy="160" rx="55" ry="18" fill="#fff" opacity="0.1" transform="rotate(-25 200 160)"/>
+  <!-- Shadow -->
+  <ellipse cx="256" cy="415" rx="115" ry="10" fill="#000" opacity="0.4"/>
+</svg>

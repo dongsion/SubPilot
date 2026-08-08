@@ -1,9 +1,61 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#000000"/>
-  <rect x="80" y="128" width="352" height="256" rx="36" fill="none" stroke="#d4af7a" stroke-width="10"/>
-  <rect x="80" y="200" width="352" height="6" fill="#d4af7a" opacity="0.3"/>
-  <circle cx="370" cy="330" r="22" fill="none" stroke="#d4af7a" stroke-width="8"/>
-  <path d="M370 330l14 14" stroke="#d4af7a" stroke-width="8" stroke-linecap="round"/>
-  <text x="120" y="350" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="42" font-weight="700" fill="#d4af7a" letter-spacing="6">•••</text>
-  <text x="120" y="180" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="28" font-weight="600" fill="#ffffff" opacity="0.9">Countra</text>
+  <defs>
+    <!-- Background gradient -->
+    <radialGradient id="bgGrad" cx="50%" cy="35%" r="75%">
+      <stop offset="0%" stop-color="#1a1510"/>
+      <stop offset="60%" stop-color="#0d0a06"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+    <!-- Gold gradient for main element -->
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f5d99b"/>
+      <stop offset="35%" stop-color="#d4af7a"/>
+      <stop offset="70%" stop-color="#b8893e"/>
+      <stop offset="100%" stop-color="#9a7030"/>
+    </linearGradient>
+    <!-- Gold gradient for chart line -->
+    <linearGradient id="goldBright" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#e8c886"/>
+      <stop offset="100%" stop-color="#f5d99b"/>
+    </linearGradient>
+    <!-- Glow filter -->
+    <filter id="goldGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background squircle -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)"/>
+
+  <!-- Outer C ring (coin shape) -->
+  <path d="M 360 140
+           A 130 130 0 1 0 360 372
+           L 340 340
+           A 90 90 0 1 1 340 172
+           Z"
+        fill="url(#goldGrad)"
+        filter="url(#goldGlow)"/>
+
+  <!-- Inner upward chart line inside the C opening -->
+  <polyline points="175,320 215,280 255,295 300,225 335,250"
+            fill="none"
+            stroke="url(#goldBright)"
+            stroke-width="14"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            opacity="0.95"/>
+
+  <!-- Chart arrow head -->
+  <polygon points="335,250 322,235 345,228" fill="url(#goldBright)" opacity="0.95"/>
+
+  <!-- Small coin dot at top of C (decorative sparkle) -->
+  <circle cx="256" cy="100" r="6" fill="#f5d99b" opacity="0.6"/>
+  <circle cx="256" cy="100" r="3" fill="#fff" opacity="0.4"/>
+
+  <!-- Bottom subtle reflection -->
+  <ellipse cx="256" cy="440" rx="100" ry="8" fill="#d4af7a" opacity="0.06"/>
 </svg>

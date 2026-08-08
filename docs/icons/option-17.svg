@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="g17bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0a0a"/><stop offset="100%" stop-color="#000"/>
+    </linearGradient>
+    <linearGradient id="g17g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f5d99b"/><stop offset="100%" stop-color="#b8893e"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#g17bg)"/>
+  <!-- Hand-drawn style C (slightly imperfect) -->
+  <path d="M 340 140
+           C 250 110, 140 160, 140 256
+           C 140 352, 250 400, 340 370"
+        fill="none" stroke="url(#g17g)" stroke-width="22" stroke-linecap="round"/>
+  <!-- Hand-drawn ¥ (sketchy) -->
+  <text x="240" y="280" font-family="cursive,serif" font-size="72" font-weight="700" fill="url(#g17g)" text-anchor="middle" transform="rotate(-8 240 270)">¥</text>
+  <!-- Sketchy arrows around C -->
+  <!-- Arrow 1 -->
+  <path d="M 380 180 Q 400 200 390 230" fill="none" stroke="url(#g17g)" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+  <polygon points="390,230 382,222 398,220" fill="url(#g17g)" opacity="0.5"/>
+  <!-- Arrow 2 -->
+  <path d="M 110 340 Q 95 310 105 285" fill="none" stroke="url(#g17g)" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+  <polygon points="105,285 113,293 97,295" fill="url(#g17g)" opacity="0.5"/>
+  <!-- Sparkle stars (hand-drawn) -->
+  <g opacity="0.6" fill="url(#g17g)">
+    <polygon points="256,90 260,102 272,106 260,110 256,122 252,110 240,106 252,102"/>
+    <polygon points="390,340 393,348 401,351 393,354 390,362 387,354 379,351 387,348" opacity="0.5"/>
+  </g>
+  <!-- Underline scribble -->
+  <path d="M 180 410 Q 256 420 332 408" fill="none" stroke="url(#g17g)" stroke-width="2" stroke-linecap="round" opacity="0.3"/>
+</svg>

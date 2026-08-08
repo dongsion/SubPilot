@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="g16bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0a0a"/><stop offset="100%" stop-color="#000"/>
+    </linearGradient>
+    <linearGradient id="g16g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f5d99b"/><stop offset="50%" stop-color="#d4af7a"/><stop offset="100%" stop-color="#b8893e"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#g16bg)"/>
+  <!-- Hexagon coin with C -->
+  <polygon points="256,100 382,173 382,339 256,412 130,339 130,173"
+           fill="none" stroke="url(#g16g)" stroke-width="3" opacity="0.3"/>
+  <polygon points="256,120 365,183 365,329 256,392 147,329 147,183"
+           fill="url(#g16g)" opacity="0.12"/>
+  <polygon points="256,120 365,183 365,329 256,392 147,329 147,183"
+           fill="none" stroke="url(#g16g)" stroke-width="2.5"/>
+  <!-- Inner hexagon -->
+  <polygon points="256,170 322,208 322,304 256,342 190,304 190,208"
+           fill="none" stroke="url(#g16g)" stroke-width="1.5" opacity="0.4"/>
+  <!-- C shape -->
+  <path d="M 305 200 A 65 65 0 1 0 305 312 L 305 285 A 38 38 0 1 1 305 227 Z"
+        fill="url(#g16g)"/>
+  <!-- ¥ in C -->
+  <text x="256" y="270" font-family="-apple-system,sans-serif" font-size="36" font-weight="800" fill="url(#g16bg)" text-anchor="middle">¥</text>
+  <!-- Corner dots -->
+  <circle cx="256" cy="100" r="4" fill="url(#g16g)"/>
+  <circle cx="382" cy="173" r="4" fill="url(#g16g)" opacity="0.5"/>
+  <circle cx="382" cy="339" r="4" fill="url(#g16g)" opacity="0.5"/>
+  <circle cx="256" cy="412" r="4" fill="url(#g16g)"/>
+  <circle cx="130" cy="339" r="4" fill="url(#g16g)" opacity="0.5"/>
+  <circle cx="130" cy="173" r="4" fill="url(#g16g)" opacity="0.5"/>
+</svg>

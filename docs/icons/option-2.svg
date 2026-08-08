@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="g2bg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0f1923"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </linearGradient>
+    <linearGradient id="g2gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f5d99b"/>
+      <stop offset="40%" stop-color="#d4af7a"/>
+      <stop offset="100%" stop-color="#9a7030"/>
+    </linearGradient>
+    <linearGradient id="g2goldV" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f5d99b"/>
+      <stop offset="100%" stop-color="#b8893e"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="512" height="512" rx="112" fill="url(#g2bg)"/>
+  <!-- Bar chart - 4 ascending bars -->
+  <rect x="130" y="300" width="48" height="100" rx="8" fill="url(#g2goldV)" opacity="0.5"/>
+  <rect x="196" y="260" width="48" height="140" rx="8" fill="url(#g2goldV)" opacity="0.65"/>
+  <rect x="262" y="210" width="48" height="190" rx="8" fill="url(#g2goldV)" opacity="0.8"/>
+  <rect x="328" y="150" width="48" height="250" rx="8" fill="url(#g2goldV)"/>
+  <!-- Trend line connecting bar tops -->
+  <polyline points="154,300 220,260 286,210 352,150" fill="none" stroke="#f5d99b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"/>
+  <!-- Trend dots -->
+  <circle cx="154" cy="300" r="5" fill="#f5d99b" opacity="0.4"/>
+  <circle cx="220" cy="260" r="5" fill="#f5d99b" opacity="0.5"/>
+  <circle cx="286" cy="210" r="5" fill="#f5d99b" opacity="0.6"/>
+  <circle cx="352" cy="150" r="7" fill="#f5d99b"/>
+  <!-- ¥ symbol at top -->
+  <text x="256" y="120" font-family="-apple-system,sans-serif" font-size="56" font-weight="800" fill="url(#g2gold)" text-anchor="middle">¥</text>
+  <!-- Glow under top dot -->
+  <circle cx="352" cy="150" r="14" fill="#f5d99b" opacity="0.15"/>
+</svg>

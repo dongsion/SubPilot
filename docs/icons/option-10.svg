@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="g10bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0a0a"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </linearGradient>
+    <linearGradient id="g10gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f5d99b"/>
+      <stop offset="50%" stop-color="#d4af7a"/>
+      <stop offset="100%" stop-color="#b8893e"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#g10bg)"/>
+
+  <!-- C formed by a checkmark + arc (checkmark = verified/complete, C = Countra) -->
+  <!-- Main checkmark stroke (bold, angular) -->
+  <path d="M 160 270
+           L 230 340
+           L 370 160"
+        fill="none"
+        stroke="url(#g10gold)"
+        stroke-width="48"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+
+  <!-- Arc completing the C shape on the left -->
+  <path d="M 135 240
+           A 140 140 0 0 1 180 150"
+        fill="none"
+        stroke="url(#g10gold)"
+        stroke-width="48"
+        stroke-linecap="round"/>
+
+  <!-- ¥ symbol small, top right -->
+  <text x="370" y="130" font-family="-apple-system,sans-serif" font-size="40" font-weight="800" fill="url(#g10gold)" text-anchor="middle" opacity="0.6">¥</text>
+
+  <!-- Glow under checkmark -->
+  <ellipse cx="265" cy="380" rx="100" ry="5" fill="#d4af7a" opacity="0.06"/>
+</svg>

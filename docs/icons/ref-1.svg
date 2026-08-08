@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="r1bg" cx="50%" cy="45%" r="65%">
+      <stop offset="0%" stop-color="#1a1510"/><stop offset="100%" stop-color="#000"/>
+    </radialGradient>
+    <radialGradient id="r1coin" cx="40%" cy="35%" r="70%">
+      <stop offset="0%" stop-color="#fce8b8"/>
+      <stop offset="30%" stop-color="#f0d090"/>
+      <stop offset="60%" stop-color="#d4af7a"/>
+      <stop offset="90%" stop-color="#a87a30"/>
+      <stop offset="100%" stop-color="#8a6020"/>
+    </radialGradient>
+    <radialGradient id="r1inner" cx="45%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#f5e0a8"/>
+      <stop offset="70%" stop-color="#d4af7a"/>
+      <stop offset="100%" stop-color="#b8893e"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#r1bg)"/>
+  <!-- Coin shadow -->
+  <ellipse cx="256" cy="400" rx="130" ry="14" fill="#000" opacity="0.5"/>
+  <!-- Outer rim -->
+  <circle cx="256" cy="250" r="155" fill="url(#r1coin)"/>
+  <!-- Rim groove -->
+  <circle cx="256" cy="250" r="155" fill="none" stroke="#8a6020" stroke-width="2" opacity="0.5"/>
+  <circle cx="256" cy="250" r="142" fill="none" stroke="#8a6020" stroke-width="1.5" opacity="0.3"/>
+  <!-- Inner face -->
+  <circle cx="256" cy="250" r="130" fill="url(#r1inner)"/>
+  <!-- Inner groove -->
+  <circle cx="256" cy="250" r="115" fill="none" stroke="#a87a30" stroke-width="1.5" opacity="0.25"/>
+  <!-- Top highlight arc -->
+  <path d="M 140 195 Q 256 130 372 195" fill="none" stroke="#fff" stroke-width="4" opacity="0.2" stroke-linecap="round"/>
+  <!-- Bold C (black, embossed) -->
+  <path d="M 330 170 A 88 88 0 1 0 330 330 L 330 300 A 58 58 0 1 1 330 200 Z" fill="#1a1510"/>
+  <!-- C shadow (emboss effect) -->
+  <path d="M 330 170 A 88 88 0 1 0 330 330 L 330 300 A 58 58 0 1 1 330 200 Z" fill="none" stroke="#8a6020" stroke-width="1" opacity="0.3"/>
+  <!-- ¥ inside C -->
+  <text x="256" y="275" font-family="-apple-system,sans-serif" font-size="52" font-weight="800" fill="#f5e0a8" text-anchor="middle">¥</text>
+  <!-- Specular highlight -->
+  <ellipse cx="210" cy="170" rx="50" ry="20" fill="#fff" opacity="0.08" transform="rotate(-20 210 170)"/>
+</svg>

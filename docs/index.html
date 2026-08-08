@@ -9,8 +9,10 @@
 <meta name="theme-color" content="#000000">
 <title>Countra · 转便数快</title>
 <link rel="manifest" href="manifest.json">
-<link rel="icon" href="icons/icon.svg">
-<link rel="apple-touch-icon" href="icons/icon.svg">
+<link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <style>
 :root {
   --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'PingFang SC', system-ui, sans-serif;
@@ -340,6 +342,8 @@ input { font-family:inherit; }
 .tx-item-amt { font-size:15px; font-weight:600; font-family:var(--font-mono); text-align:right; letter-spacing:-0.3px; }
 .tx-item-amt.in { color:var(--green); }
 .tx-item-amt.out { color:var(--t1); }
+.tx-repay-btn { flex-shrink:0; padding:5px 12px; border-radius:8px; background:var(--gold); color:#000; font-size:11px; font-weight:700; border:none; font-family:inherit; cursor:pointer; margin-left:8px; white-space:nowrap; }
+.tx-repay-btn:active { transform:scale(0.92); }
 .tx-badge { font-size:9px; padding:2px 6px; border-radius:5px; background:var(--gold-bg); color:var(--gold); font-weight:600; border:1px solid var(--gold-bd); }
 .tx-acct-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
 .ad { width:6px; height:6px; border-radius:50%; display:inline-block; }
@@ -406,6 +410,12 @@ input { font-family:inherit; }
 .ai-msg.user .ai-action-btn { border-color:rgba(0,0,0,0.15); }
 .ai-input-area { padding:10px 16px calc(12px + env(safe-area-inset-bottom, 8px)); border-top:1px solid var(--border); background:rgba(0,0,0,0.5); flex-shrink:0; }
 .ai-input-row { display:flex; gap:10px; align-items:flex-end; }
+.ai-scan-btn { width:42px; height:42px; border-radius:50%; background:rgba(255,255,255,0.06); border:1px solid var(--border); color:var(--t2); display:flex; align-items:center; justify-content:center; flex-shrink:0; cursor:pointer; transition:all .2s; }
+.ai-scan-btn:active{transform:scale(.9);background:rgba(99,102,241,0.15);}
+.ai-scan-btn.scanning{background:rgba(99,102,241,0.2);border-color:rgba(99,102,241,0.5);color:#8b5cf6;animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.5;}}
+.ai-scan-preview { max-width:200px; border-radius:12px; margin-top:8px; }
+.ai-scan-progress { font-size:12px; color:var(--t3); margin-top:6px; }
 .ai-input { flex:1; background:rgba(255,255,255,0.06); border:1px solid var(--border); border-radius:20px; padding:11px 16px; font-size:16px; color:var(--t1); font-family:inherit; outline:none; max-height:100px; resize:none; line-height:1.4; }
 .ai-input:focus{border-color:rgba(99,102,241,0.5);}
 .ai-send { width:42px; height:42px; border-radius:50%; background:linear-gradient(135deg,#6366f1,#8b5cf6); border:none; color:#fff; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
@@ -447,6 +457,12 @@ input { font-family:inherit; }
 .form-i:focus{border-color:var(--gold-bd);}
 .form-i::placeholder{color:var(--t3);}
 .form-i option{background:var(--card2);color:var(--t1);}
+.form-i[type="date"]{ -webkit-appearance:none; appearance:none; color-scheme:dark; text-align:left; display:flex; align-items:center; min-height:50px; box-sizing:border-box; line-height:1.4; }
+:root[data-theme="light"] .form-i[type="date"]{ color-scheme:light; }
+:root[data-theme="light"] .form-i[type="date"]::-webkit-calendar-picker-indicator{ filter:none; }
+@media (prefers-color-scheme: light) { :root[data-theme="auto"] .form-i[type="date"]{ color-scheme:light; } :root[data-theme="auto"] .form-i[type="date"]::-webkit-calendar-picker-indicator{ filter:none; } }
+.form-i[type="date"]::-webkit-calendar-picker-indicator{ filter:invert(0.6); cursor:pointer; position:relative; }
+.form-i[type="date"]::-webkit-date-and-time-value{ text-align:left; min-height:22px; }
 textarea.form-i{resize:none;min-height:80px;}
 .row-pick { display:flex; gap:8px; flex-wrap:wrap; }
 .pick { padding:9px 16px; border-radius:12px; background:rgba(255,255,255,0.04); border:1px solid var(--border); font-size:13px; color:var(--t2); font-family:inherit; font-weight:500; transition:all .15s; }
@@ -953,14 +969,14 @@ textarea.form-i{resize:none;min-height:80px;}
       <div class="info-r" onclick="if(confirm('确定清除所有数据？此操作不可撤销。')){clearAll();toast('数据已清除');}"><span class="info-l">清除所有数据</span><span class="info-v" style="color:var(--red);">›</span></div>
     </div>
     <div class="info-g">
-      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v2.1.0 ›</span></div>
+      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v2.3.0 ›</span></div>
       <div class="info-r" onclick="showChangelog()"><span class="info-l">更新日志</span><span class="info-v" style="color:var(--gold);">查看 ›</span></div>
       <div class="info-r" onclick="checkUpdate()"><span class="info-l">检查更新</span><span class="info-v" style="color:var(--gold);" id="update-status">›</span></div>
       <div class="info-r"><span class="info-l">数据存储</span><span class="info-v" style="color:var(--t3);">仅本地浏览器</span></div>
     </div>
     <div style="text-align:center;padding:40px 20px;color:var(--t3);font-size:12px;">
       <div style="margin-bottom:8px;font-size:20px;letter-spacing:1px;">Countra</div>
-      <div data-ver-footer style="margin-bottom:4px;">转便数快 · v2.1.0 (Build 2026.08.08)</div>
+      <div data-ver-footer style="margin-bottom:4px;">转便数快 · v2.3.0 (Build 2026.08.08)</div>
       <div>所有数据默认仅保存在本地，开启云同步后加密上传至 Supabase</div>
     </div>
     <input type="file" id="import-file" accept=".json" style="display:none;">
@@ -1111,7 +1127,10 @@ textarea.form-i{resize:none;min-height:80px;}
   <div class="ai-input-area">
     <div class="ai-quick" id="ai-quick"></div>
     <div class="ai-input-row">
-      <textarea class="ai-input" id="ai-input" placeholder="试试说：今天用微信花了20元吃饭" rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAIMessage();}"></textarea>
+      <button class="ai-scan-btn" onclick="scanReceiptImage()" title="扫描支付截图">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      </button>
+      <textarea class="ai-input" id="ai-input" placeholder="试试说：今天用微信花了20元吃饭 或点左侧扫描支付截图" rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAIMessage();}"></textarea>
       <button class="ai-send" onclick="sendAIMessage()">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
       </button>
@@ -1298,6 +1317,13 @@ textarea.form-i{resize:none;min-height:80px;}
       <div class="form-g">
         <label class="form-l">关联账户（可选）</label>
         <div class="row-pick" id="tx-debt-acct-pick"></div>
+      </div>
+      <div class="form-g">
+        <label class="form-l">还款状态</label>
+        <div class="row-pick" id="tx-debt-settled-pick">
+          <button class="pick on" data-settled="false">未还款</button>
+          <button class="pick" data-settled="true">已还款</button>
+        </div>
       </div>
     </div>
     <!-- 金额输入（所有类型共用） -->

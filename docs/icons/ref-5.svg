@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="r5bg" cx="50%" cy="45%" r="65%">
+      <stop offset="0%" stop-color="#14110a"/><stop offset="100%" stop-color="#000"/>
+    </radialGradient>
+    <radialGradient id="r5coin" cx="35%" cy="28%" r="75%">
+      <stop offset="0%" stop-color="#fff5d6"/>
+      <stop offset="20%" stop-color="#f5d99b"/>
+      <stop offset="50%" stop-color="#d4af7a"/>
+      <stop offset="80%" stop-color="#a07830"/>
+      <stop offset="100%" stop-color="#6a4810"/>
+    </radialGradient>
+    <radialGradient id="r5face" cx="40%" cy="32%" r="60%">
+      <stop offset="0%" stop-color="#f5e0a8"/>
+      <stop offset="70%" stop-color="#d4af7a"/>
+      <stop offset="100%" stop-color="#a07830"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#r5bg)"/>
+  <!-- Shadow -->
+  <ellipse cx="256" cy="415" rx="125" ry="12" fill="#000" opacity="0.45"/>
+  <!-- Outer rim -->
+  <circle cx="256" cy="250" r="156" fill="url(#r5coin)"/>
+  <!-- Beveled edge: alternating light/dark notches (milled coin edge) -->
+  <g opacity="0.3">
+    <line x1="256" y1="94" x2="256" y2="108" stroke="#6a4810" stroke-width="3"/>
+    <line x1="328" y1="106" x2="324" y2="120" stroke="#6a4810" stroke-width="3"/>
+    <line x1="394" y1="144" x2="386" y2="156" stroke="#6a4810" stroke-width="3"/>
+    <line x1="442" y1="204" x2="430" y2="212" stroke="#6a4810" stroke-width="3"/>
+    <line x1="462" y1="280" x2="448" y2="280" stroke="#6a4810" stroke-width="3"/>
+    <line x1="442" y1="356" x2="430" y2="348" stroke="#6a4810" stroke-width="3"/>
+    <line x1="394" y1="416" x2="386" y2="404" stroke="#6a4810" stroke-width="3"/>
+    <line x1="328" y1="454" x2="324" y2="440" stroke="#6a4810" stroke-width="3"/>
+    <line x1="256" y1="466" x2="256" y2="452" stroke="#6a4810" stroke-width="3"/>
+    <line x1="184" y1="454" x2="188" y2="440" stroke="#6a4810" stroke-width="3"/>
+    <line x1="118" y1="416" x2="126" y2="404" stroke="#6a4810" stroke-width="3"/>
+    <line x1="70" y1="356" x2="82" y2="348" stroke="#6a4810" stroke-width="3"/>
+    <line x1="50" y1="280" x2="64" y2="280" stroke="#6a4810" stroke-width="3"/>
+    <line x1="70" y1="204" x2="82" y2="212" stroke="#6a4810" stroke-width="3"/>
+    <line x1="118" y1="144" x2="126" y2="156" stroke="#6a4810" stroke-width="3"/>
+    <line x1="184" y1="106" x2="188" y2="120" stroke="#6a4810" stroke-width="3"/>
+  </g>
+  <!-- Groove rings -->
+  <circle cx="256" cy="250" r="143" fill="none" stroke="#6a4810" stroke-width="1.5" opacity="0.3"/>
+  <circle cx="256" cy="250" r="138" fill="none" stroke="#fff5d6" stroke-width="0.5" opacity="0.15"/>
+  <!-- Inner face -->
+  <circle cx="256" cy="250" r="128" fill="url(#r5face)"/>
+  <!-- Concentric decorative rings -->
+  <circle cx="256" cy="250" r="115" fill="none" stroke="#a07830" stroke-width="0.5" opacity="0.15"/>
+  <circle cx="256" cy="250" r="100" fill="none" stroke="#a07830" stroke-width="0.5" opacity="0.1"/>
+  <!-- C (bold, with 3D bevel effect) -->
+  <!-- C shadow layer -->
+  <path d="M 328 163 A 95 95 0 1 0 328 337 L 328 303 A 61 61 0 1 1 328 197 Z" fill="#5a4010" opacity="0.5" transform="translate(2,3)"/>
+  <!-- C main -->
+  <path d="M 328 163 A 95 95 0 1 0 328 337 L 328 303 A 61 61 0 1 1 328 197 Z" fill="#1a1208"/>
+  <!-- C top highlight -->
+  <path d="M 328 163 A 95 95 0 0 0 170 200" fill="none" stroke="#fce8b8" stroke-width="2" opacity="0.3"/>
+  <!-- ¥ (bright, slightly glowing) -->
+  <text x="256" y="276" font-family="-apple-system,sans-serif" font-size="52" font-weight="800" fill="#fff5d6" text-anchor="middle">¥</text>
+  <!-- Large specular -->
+  <ellipse cx="195" cy="150" rx="60" ry="20" fill="#fff" opacity="0.1" transform="rotate(-28 195 150)"/>
+  <!-- Small specular -->
+  <circle cx="175" cy="138" r="10" fill="#fff" opacity="0.06"/>
+</svg>

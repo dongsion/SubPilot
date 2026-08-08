@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="r6bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0a0a0a"/><stop offset="100%" stop-color="#000"/>
+    </radialGradient>
+    <radialGradient id="r6coin" cx="38%" cy="32%" r="70%">
+      <stop offset="0%" stop-color="#fce8b8"/>
+      <stop offset="40%" stop-color="#d4af7a"/>
+      <stop offset="80%" stop-color="#9a7030"/>
+      <stop offset="100%" stop-color="#6a4810"/>
+    </radialGradient>
+    <radialGradient id="r6face" cx="42%" cy="35%" r="55%">
+      <stop offset="0%" stop-color="#f0d898"/>
+      <stop offset="100%" stop-color="#b8893e"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#r6bg)"/>
+  <ellipse cx="256" cy="415" rx="120" ry="11" fill="#000" opacity="0.4"/>
+  <!-- Tilted coin (slight 3D perspective) -->
+  <ellipse cx="256" cy="256" rx="155" ry="148" fill="url(#r6coin)"/>
+  <ellipse cx="256" cy="256" rx="140" ry="133" fill="none" stroke="#6a4810" stroke-width="1.5" opacity="0.3"/>
+  <ellipse cx="256" cy="256" rx="130" ry="124" fill="url(#r6face)"/>
+  <ellipse cx="256" cy="256" rx="115" ry="110" fill="none" stroke="#a07830" stroke-width="0.8" opacity="0.15"/>
+  <!-- C slightly compressed for perspective -->
+  <path d="M 322 172 A 88 88 0 1 0 322 340 L 322 308 A 56 56 0 1 1 322 204 Z" fill="#1a1208"/>
+  <text x="256" y="280" font-family="-apple-system,sans-serif" font-size="50" font-weight="800" fill="#fce8b8" text-anchor="middle">¥</text>
+  <!-- Perspective highlight (wider, flatter) -->
+  <ellipse cx="195" cy="165" rx="70" ry="15" fill="#fff" opacity="0.1" transform="rotate(-15 195 165)"/>
+  <!-- Bottom shadow (stronger for perspective) -->
+  <ellipse cx="256" cy="365" rx="110" ry="10" fill="#6a4810" opacity="0.25"/>
+</svg>

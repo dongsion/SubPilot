@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="r8bg" cx="50%" cy="45%" r="65%">
+      <stop offset="0%" stop-color="#12100a"/><stop offset="100%" stop-color="#000"/>
+    </radialGradient>
+    <radialGradient id="r8coin" cx="36%" cy="30%" r="72%">
+      <stop offset="0%" stop-color="#fce8b8"/>
+      <stop offset="25%" stop-color="#f0d090"/>
+      <stop offset="55%" stop-color="#d4af7a"/>
+      <stop offset="85%" stop-color="#a07830"/>
+      <stop offset="100%" stop-color="#6a4810"/>
+    </radialGradient>
+    <radialGradient id="r8face" cx="40%" cy="33%" r="58%">
+      <stop offset="0%" stop-color="#f5e0a8"/>
+      <stop offset="70%" stop-color="#d4af7a"/>
+      <stop offset="100%" stop-color="#a07830"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#r8bg)"/>
+  <ellipse cx="256" cy="415" rx="122" ry="11" fill="#000" opacity="0.4"/>
+  <!-- Coin -->
+  <circle cx="256" cy="252" r="156" fill="url(#r8coin)"/>
+  <circle cx="256" cy="252" r="156" fill="none" stroke="#6a4810" stroke-width="1.5" opacity="0.5"/>
+  <circle cx="256" cy="252" r="143" fill="none" stroke="#fce8b8" stroke-width="0.5" opacity="0.15"/>
+  <circle cx="256" cy="252" r="138" fill="none" stroke="#6a4810" stroke-width="1" opacity="0.25"/>
+  <!-- Inner face -->
+  <circle cx="256" cy="252" r="128" fill="url(#r8face)"/>
+  <!-- Ring of tiny stars (like coin border decoration) -->
+  <g fill="#6a4810" opacity="0.15">
+    <circle cx="256" cy="135" r="1.5"/><circle cx="288" cy="139" r="1.5"/><circle cx="318" cy="152" r="1.5"/>
+    <circle cx="345" cy="172" r="1.5"/><circle cx="366" cy="198" r="1.5"/><circle cx="378" cy="228" r="1.5"/>
+    <circle cx="380" cy="252" r="1.5"/><circle cx="378" cy="276" r="1.5"/><circle cx="366" cy="306" r="1.5"/>
+    <circle cx="345" cy="332" r="1.5"/><circle cx="318" cy="352" r="1.5"/><circle cx="288" cy="365" r="1.5"/>
+    <circle cx="256" cy="369" r="1.5"/><circle cx="224" cy="365" r="1.5"/><circle cx="194" cy="352" r="1.5"/>
+    <circle cx="167" cy="332" r="1.5"/><circle cx="146" cy="306" r="1.5"/><circle cx="134" cy="276" r="1.5"/>
+    <circle cx="132" cy="252" r="1.5"/><circle cx="134" cy="228" r="1.5"/><circle cx="146" cy="198" r="1.5"/>
+    <circle cx="167" cy="172" r="1.5"/><circle cx="194" cy="152" r="1.5"/><circle cx="224" cy="139" r="1.5"/>
+  </g>
+  <circle cx="256" cy="252" r="113" fill="none" stroke="#a07830" stroke-width="0.5" opacity="0.12"/>
+  <!-- C with double bevel -->
+  <path d="M 328 162 A 95 95 0 1 0 328 342 L 328 308 A 61 61 0 1 1 328 196 Z" fill="#2a1a08" opacity="0.4" transform="translate(1,2)"/>
+  <path d="M 328 162 A 95 95 0 1 0 328 342 L 328 308 A 61 61 0 1 1 328 196 Z" fill="#1a1208"/>
+  <path d="M 328 162 A 95 95 0 0 0 175 195" fill="none" stroke="#fce8b8" stroke-width="1.5" opacity="0.25"/>
+  <!-- ¥ -->
+  <text x="256" y="278" font-family="-apple-system,sans-serif" font-size="52" font-weight="800" fill="#fff5d6" text-anchor="middle">¥</text>
+  <!-- Highlight -->
+  <ellipse cx="195" cy="150" rx="58" ry="18" fill="#fff" opacity="0.09" transform="rotate(-28 195 150)"/>
+</svg>

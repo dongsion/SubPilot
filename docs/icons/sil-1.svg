@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="s1g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f5d99b"/><stop offset="50%" stop-color="#d4af7a"/><stop offset="100%" stop-color="#a07830"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#000"/>
+  <!-- Solid gold disc -->
+  <circle cx="256" cy="256" r="160" fill="url(#s1g)"/>
+  <!-- C cutout (solid black, thick) -->
+  <path d="M 330 160 A 100 100 0 1 0 330 352 L 330 315 A 63 63 0 1 1 330 197 Z" fill="#000"/>
+  <!-- ¥ cutout inside C -->
+  <text x="256" y="282" font-family="-apple-system,sans-serif" font-size="56" font-weight="800" fill="url(#s1g)" text-anchor="middle">¥</text>
+</svg>
