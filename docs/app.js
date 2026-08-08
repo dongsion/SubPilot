@@ -1577,6 +1577,8 @@ function renderTx() {
 
 // ===== 钱包余额显示/隐藏 =====
 let balanceMasked = true;
+const revealedCards = new Set();
+
 function toggleBalanceMask() {
   balanceMasked = !balanceMasked;
   const totalEl = $('#wallet-total');
@@ -1587,12 +1589,44 @@ function toggleBalanceMask() {
     totalEl.classList.add('masked');
     textEl.textContent = '****';
     eyeEl.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+    revealedCards.clear();
   } else {
     totalEl.classList.remove('masked');
     textEl.textContent = '¥' + fmt(Math.round(totalAssets));
     eyeEl.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+    state.accounts.forEach(a => revealedCards.add(a.id));
   }
   haptic('light');
+  renderAccounts();
+}
+
+function toggleCardBalance(cardId, ev) {
+  if (ev) { ev.stopPropagation(); ev.preventDefault(); }
+  if (!balanceMasked) return; // 全局已显示，单卡无需切换
+  if (revealedCards.has(cardId)) {
+    revealedCards.delete(cardId);
+  } else {
+    revealedCards.add(cardId);
+  }
+  haptic('light');
+  // Update this card's display in-place
+  const cardEl = document.querySelector('.wc[data-card-id="' + cardId + '"]');
+  if (cardEl) {
+    const balEl = cardEl.querySelector('.wc-face-bal');
+    const eyeEl2 = cardEl.querySelector('.wc-eye-icon');
+    const account = state.accounts.find(a => a.id === cardId);
+    if (account && balEl) {
+      const cs = { CNY:'¥', USD:'$', EUR:'€', GBP:'£', JPY:'¥', HKD:'HK$', TWD:'NT$' };
+      const sym = cs[account.currency || 'CNY'] || '¥';
+      const revealed = !balanceMasked || revealedCards.has(cardId);
+      balEl.textContent = revealed ? sym + fmt(Math.round(account.balance)) : '****';
+      if (eyeEl2) {
+        eyeEl2.innerHTML = revealed
+          ? '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'
+          : '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+      }
+    }
+  }
 }
 
 // ===== 钱包卡片默认渐变配色（鲜艳风格）=====
@@ -1703,12 +1737,16 @@ function renderWalletCard(a, origIdx) {
 
   const curSyms = { CNY:'¥', USD:'$', EUR:'€', GBP:'£', JPY:'¥', HKD:'HK$', TWD:'NT$' };
   const curSym = curSyms[a.currency || 'CNY'] || '¥';
-  const balText = balanceMasked ? '****' : curSym + fmt(Math.round(a.balance));
+  const cardRevealed = !balanceMasked || revealedCards.has(a.id);
+  const balText = cardRevealed ? curSym + fmt(Math.round(a.balance)) : '****';
+  const eyeSvg = cardRevealed
+    ? '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'
+    : '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
 
   const cardStyle = `${cardBg}`;
 
   const peekName = (a.name || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-  return `<div class="wc" data-idx="${origIdx}" data-peek-name="${peekName}" style="${cardStyle}">
+  return `<div class="wc" data-idx="${origIdx}" data-card-id="${a.id}" data-peek-name="${peekName}" style="${cardStyle}">
     ${excludedBadge}
     <div class="wc-face">
       <div class="wc-face-top">
@@ -1721,9 +1759,12 @@ function renderWalletCard(a, origIdx) {
       <div class="wc-face-num">${numDisplay}</div>
       <div class="wc-face-bottom">
         <div class="wc-face-brand">${brandText}</div>
-        <div style="text-align:right;">
-          <div class="wc-face-bal-label">AVAILABLE</div>
-          <div class="wc-face-bal">${balText}</div>
+        <div class="wc-face-bal-row">
+          <div style="text-align:right;">
+            <div class="wc-face-bal-label">AVAILABLE</div>
+            <div class="wc-face-bal">${balText}</div>
+          </div>
+          <svg class="wc-eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" onclick="toggleCardBalance('${a.id}',event)">${eyeSvg}</svg>
         </div>
       </div>
     </div>
@@ -1779,7 +1820,7 @@ function openCardDetail(idx) {
   const chipHtml = acctType.hasChip ? '<div class="card-detail-chip"></div>' : '';
   const curSyms = { CNY:'¥', USD:'$', EUR:'€', GBP:'£', JPY:'¥', HKD:'HK$', TWD:'NT$' };
   const curSym = curSyms[a.currency || 'CNY'] || '¥';
-  const balText = balanceMasked ? '****' : curSym + fmt(Math.round(a.balance));
+  const balText = (!balanceMasked || revealedCards.has(a.id)) ? curSym + fmt(Math.round(a.balance)) : '****';
   const excludedBadge = a.includeInAssets === false ? '<div class="wc-exclude">不计入</div>' : '';
   const currencyLabel = a.currency && a.currency !== 'CNY' ? ' · ' + a.currency : '';
 
@@ -2028,7 +2069,7 @@ function renderAccounts() {
       <span class="card-group-icon">${groupIcon}</span>
       <span class="card-group-name">${groupName}</span>
       <span class="card-group-count">${groupAccounts.length}张</span>
-      <span class="card-group-total">${curSyms.CNY}${fmt(Math.round(groupTotal))}</span>
+      <span class="card-group-total">${balanceMasked ? '****' : curSyms.CNY + fmt(Math.round(groupTotal))}</span>
     </div>`;
     html += `<div class="card-group-stack" style="min-height:${stackH}px;" data-group="${gk}">`;
 
