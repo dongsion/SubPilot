@@ -3557,6 +3557,8 @@ function openAIChat() {
   overlay.classList.add('on');
   renderAIMessages();
   renderQuickReplies();
+  // 后台预加载OCR引擎，用户扫描时无需等待下载
+  setTimeout(() => preloadOCR(), 1000);
   // Use visualViewport to handle keyboard on mobile - fix both height and top offset
   if (window.visualViewport) {
     const onResize = () => {
@@ -4217,6 +4219,45 @@ function cancelAITx() {
 
 // ===== 扫描支付截图 =====
 let _tesseractLoaded = false;
+let _ocrWorker = null;
+let _ocrWorkerReady = false;
+
+// 预加载OCR引擎（在AI页面打开时后台执行，不阻塞UI）
+async function preloadOCR() {
+  if (_ocrWorkerReady) return;
+  try {
+    if (!_tesseractLoaded) {
+      await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
+      _tesseractLoaded = true;
+    }
+    // 后台创建Worker（只加载中文，减小下载量）
+    _ocrWorker = await Tesseract.createWorker('chi_sim', 1, {
+      logger: () => {}  // 预加载时静默
+    });
+    _ocrWorkerReady = true;
+    console.log('[OCR] 引擎预加载完成');
+  } catch (e) {
+    console.warn('[OCR] 预加载失败，将在扫描时重试', e);
+  }
+}
+
+// 压缩图片：缩小尺寸 + 转低质量JPEG，大幅提升OCR速度
+function compressForOCR(dataUrl, maxW = 800) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      let { width: w, height: h } = img;
+      if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/jpeg', 0.85));
+    };
+    img.onerror = () => resolve(dataUrl); // 压缩失败用原图
+    img.src = dataUrl;
+  });
+}
 
 async function scanReceiptImage() {
   const input = document.createElement('input');
@@ -4229,12 +4270,12 @@ async function scanReceiptImage() {
     // 显示用户上传的图片
     const reader = new FileReader();
     reader.onload = async (ev) => {
-      const imgDataUrl = ev.target.result;
+      const origDataUrl = ev.target.result;
       // 添加用户消息（带图片预览）
       aiState.messages.push({
         role: 'user',
         text: '<div style="font-size:13px;">扫描支付截图</div>',
-        imagePreview: imgDataUrl
+        imagePreview: origDataUrl
       });
       renderAIMessages();
 
@@ -4242,7 +4283,7 @@ async function scanReceiptImage() {
       const scanMsgIdx = aiState.messages.length;
       aiState.messages.push({
         role: 'bot',
-        text: '<div style="font-size:14px;">📷 正在识别图片内容...</div><div class="ai-scan-progress" id="scan-progress">正在加载OCR引擎...</div>',
+        text: '<div style="font-size:14px;">📷 正在识别图片内容...</div><div class="ai-scan-progress" id="scan-progress">正在压缩图片...</div>',
         isScanning: true
       });
       renderAIMessages();
@@ -4251,27 +4292,48 @@ async function scanReceiptImage() {
       if (scanBtn) scanBtn.classList.add('scanning');
 
       try {
-        // 动态加载 Tesseract.js
-        if (!_tesseractLoaded) {
-          await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
-          _tesseractLoaded = true;
+        const progressEl = document.getElementById('scan-progress');
+
+        // 1. 压缩图片（缩小到800px宽，大幅减少OCR处理像素）
+        if (progressEl) progressEl.textContent = '正在压缩图片...';
+        const compressedImg = await compressForOCR(origDataUrl, 800);
+
+        // 2. 确保OCR引擎就绪
+        if (!_ocrWorkerReady) {
+          if (progressEl) progressEl.textContent = '正在加载OCR引擎...';
+          if (!_tesseractLoaded) {
+            await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
+            _tesseractLoaded = true;
+          }
+          _ocrWorker = await Tesseract.createWorker('chi_sim', 1, {
+            logger: m => {
+              if (!progressEl) return;
+              if (m.status === 'recognizing text') {
+                progressEl.textContent = `正在识别文字... ${Math.round(m.progress * 100)}%`;
+              } else if (m.status === 'loading language traineddata') {
+                progressEl.textContent = `下载中文识别包... ${Math.round(m.progress * 100)}%`;
+              } else if (m.status === 'initializing api') {
+                progressEl.textContent = '初始化识别引擎...';
+              }
+            }
+          });
+          _ocrWorkerReady = true;
+        } else {
+          // Worker已就绪，设置进度回调
+          _ocrWorker.setLogger({
+            logger: m => {
+              if (!progressEl) return;
+              if (m.status === 'recognizing text') {
+                progressEl.textContent = `正在识别文字... ${Math.round(m.progress * 100)}%`;
+              }
+            }
+          });
         }
 
-        const progressEl = document.getElementById('scan-progress');
-        
-        // 执行OCR识别
-        const worker = await Tesseract.createWorker('chi_sim+eng', 1, {
-          logger: m => {
-            if (m.status === 'recognizing text' && progressEl) {
-              progressEl.textContent = `正在识别文字... ${Math.round(m.progress * 100)}%`;
-            } else if (progressEl) {
-              progressEl.textContent = `正在识别文字...`;
-            }
-          }
-        });
-
-        const result = await worker.recognize(imgDataUrl);
-        await worker.terminate();
+        // 3. 执行OCR识别（复用Worker）
+        if (progressEl) progressEl.textContent = '正在识别文字...';
+        const result = await _ocrWorker.recognize(compressedImg);
+        // 不terminate，复用Worker
 
         const rawText = result.data.text;
         console.log('OCR Result:', rawText);
