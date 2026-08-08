@@ -1,7 +1,7 @@
 {
-  "name": "SubPilot · 订阅管家",
-  "short_name": "SubPilot",
-  "description": "订阅管理 · 账户记账 · 自动扣款追踪",
+  "name": "Countra · 转便数快",
+  "short_name": "Countra",
+  "description": "账户记账 · 订阅管理 · 自动扣款追踪",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#000000",

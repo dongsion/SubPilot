@@ -1,4 +1,4 @@
-// SubPilot · 订阅管家
+// Countra · 转便数快
 // ===== Storage Keys =====
 const KEYS = {
   accounts: 'subpilot_accounts',
@@ -2179,7 +2179,7 @@ function exportData() {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url; a.download = `subpilot-backup-${today()}.json`; a.click();
+  a.href = url; a.download = `countra-backup-${today()}.json`; a.click();
   URL.revokeObjectURL(url);
   toast('数据已导出');
   haptic('success');
@@ -2205,9 +2205,15 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '1.9.8';
+const APP_VERSION = '1.9.9';
 const APP_BUILD = '2026.08.08';
 const CHANGELOG = [
+  { ver: '1.9.9', date: '2026-08-08', items: [
+    '应用更名：SubPilot → Countra（转便数快）',
+    '更新应用名称、图标、标题等所有品牌标识',
+    '数据备份文件名更新为 countra-backup',
+    'localStorage 键名保持 subpilot_ 前缀确保数据兼容'
+  ]},
   { ver: '1.9.8', date: '2026-08-08', items: [
     '密码锁屏重新设计：左侧密码显示 + 右侧滚轮选择器，参考智能手表旋钮交互',
     '单滚轮逐位输入：滚动选数字，点击滚轮确认，四位密码自动提交',
@@ -2412,7 +2418,7 @@ const CHANGELOG = [
     '新增记账功能（收入/支出流水）'
   ]},
   { ver: '1.0.0', date: '2026-08-05', items: [
-    'SubPilot 订阅管家正式发布',
+    'Countra 转便数快正式发布',
     '订阅管理核心功能（概览、列表、详情）',
     '账户管理（银行卡/钱包）',
     'PWA 离线支持'
@@ -2420,7 +2426,7 @@ const CHANGELOG = [
 ];
 
 function showVersionInfo() {
-  let msg = `SubPilot 订阅管家\n\n版本：v${APP_VERSION}\n构建：${APP_BUILD}\n\n当前为最新版本`;
+  let msg = `Countra 转便数快\n\n版本：v${APP_VERSION}\n构建：${APP_BUILD}\n\n当前为最新版本`;
   alert(msg);
 }
 
@@ -2433,7 +2439,7 @@ function showChangelog() {
     }
     html += '\n';
   }
-  alert('SubPilot 更新日志\n\n' + html.trim());
+  alert('Countra 更新日志\n\n' + html.trim());
 }
 
 async function checkUpdate() {
@@ -2513,7 +2519,7 @@ function init() {
   const verEl = document.getElementById('ver-display');
   if (verEl) verEl.textContent = `v${APP_VERSION} ›`;
   const verFooterEls = document.querySelectorAll('[data-ver-footer]');
-  verFooterEls.forEach(el => { el.textContent = `订阅管家 · v${APP_VERSION} (Build ${APP_BUILD})`; });
+  verFooterEls.forEach(el => { el.textContent = `转便数快 · v${APP_VERSION} (Build ${APP_BUILD})`; });
 
   // Process auto-deductions after data is loaded
   processAutoDeductions();
