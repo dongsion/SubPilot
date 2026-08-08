@@ -1529,7 +1529,20 @@ function getWalletCardGradient(a, idx) {
   return WALLET_CARD_COLORS[idx % 7];
 }
 
-function renderWalletCard(a, origIdx, stackPos, totalCount, isPulled) {
+// 卡片logo加载失败时的全局回退函数
+function cardLogoFallback(img, slug, big) {
+  const sz = big ? '28px' : '24px';
+  const spanSz = big ? '20px' : '18px';
+  const rmbSz = big ? '24px' : '22px';
+  let html = '';
+  if (slug === 'alipay') html = `<span style="font-size:${spanSz};font-weight:800;color:#fff;">支</span>`;
+  else if (slug === 'wechat') html = `<svg viewBox="0 0 24 24" style="width:${sz};height:${sz};fill:#fff;"><path d="M8.7 3C4.5 3 1 5.9 1 9.5c0 2 1.1 3.7 2.9 4.9l-.7 2.2 2.6-1.3c.9.2 1.8.4 2.8.4.5 0 .9 0 1.4-.1-.1-.4-.2-.8-.2-1.2 0-3.2 3.1-5.8 7-5.8h.5C15.9 5.3 12.6 3 8.7 3zM6.3 7.8c.5 0 .9.4.9.9s-.4.9-.9.9-.9-.4-.9-.9.4-.9.9-.9zm4.8 0c.5 0 .9.4.9.9s-.4.9-.9.9-.9-.4-.9-.9.4-.9.9-.9zm5.2 2.2c-3.3 0-6 2.3-6 5.2 0 2.9 2.7 5.2 6 5.2.7 0 1.4-.1 2.1-.3l2 1-.5-1.7c1.5-1 2.4-2.5 2.4-4.2 0-2.9-2.7-5.2-6-5.2zm-2 3.3c.4 0 .7.3.7.7s-.3.7-.7.7-.7-.3-.7-.7.3-.7.7-.7zm3.9 0c.4 0 .7.3.7.7s-.3.7-.7.7-.7-.3-.7-.7.3-.7.7-.7z"/></svg>`;
+  else if (slug === 'licaicai' || slug === 'yuebao' || slug === 'wallet') html = `<span style="font-size:${rmbSz};font-weight:300;color:#fff;">￥</span>`;
+  else html = `<svg viewBox="0 0 24 24" style="width:${sz};height:${sz};fill:#fff;"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>`;
+  img.outerHTML = html;
+}
+
+function renderWalletCard(a, origIdx) {
   let acctTypeKey = a.type;
   if (!ACCOUNT_TYPES[acctTypeKey]) acctTypeKey = 'other';
   const acctType = ACCOUNT_TYPES[acctTypeKey];
@@ -1549,43 +1562,23 @@ function renderWalletCard(a, origIdx, stackPos, totalCount, isPulled) {
     else brandSlug = 'wallet';
   }
 
-  function getLogoContent(slug, isSmall) {
-    const spanSmall = 'style="font-size:11px;font-weight:800;color:#fff;"';
-    const spanBig = 'style="font-size:14px;font-weight:800;color:#fff;"';
-    const svgSmall = 'style="width:18px;height:14px;fill:#fff;"';
-    const svgBig = 'style="width:24px;height:20px;fill:#fff;"';
-    const rmbSmall = 'style="font-size:14px;font-weight:300;color:#fff;"';
-    const rmbBig = 'style="font-size:20px;font-weight:300;color:#fff;"';
-    if (slug === 'alipay') return `<span ${isSmall ? spanSmall : spanBig}>支</span>`;
-    if (slug === 'wechat') return `<svg viewBox="0 0 24 24" ${isSmall ? svgSmall : svgBig}><path d="M8.7 3C4.5 3 1 5.9 1 9.5c0 2 1.1 3.7 2.9 4.9l-.7 2.2 2.6-1.3c.9.2 1.8.4 2.8.4.5 0 .9 0 1.4-.1-.1-.4-.2-.8-.2-1.2 0-3.2 3.1-5.8 7-5.8h.5C15.9 5.3 12.6 3 8.7 3zM6.3 7.8c.5 0 .9.4.9.9s-.4.9-.9.9-.9-.4-.9-.9.4-.9.9-.9zm4.8 0c.5 0 .9.4.9.9s-.4.9-.9.9-.9-.4-.9-.9.4-.9.9-.9zm5.2 2.2c-3.3 0-6 2.3-6 5.2 0 2.9 2.7 5.2 6 5.2.7 0 1.4-.1 2.1-.3l2 1-.5-1.7c1.5-1 2.4-2.5 2.4-4.2 0-2.9-2.7-5.2-6-5.2zm-2 3.3c.4 0 .7.3.7.7s-.3.7-.7.7-.7-.3-.7-.7.3-.7.7-.7zm3.9 0c.4 0 .7.3.7.7s-.3.7-.7.7-.7-.3-.7-.7.3-.7.7-.7z"/></svg>`;
-    if (slug === 'unionpay' || slug === 'cmb' || slug === 'icbc' || slug === 'ccb' || slug === 'abc' || slug === 'boc') return `<svg viewBox="0 0 24 24" ${isSmall ? svgSmall : svgBig}><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>`;
-    if (slug === 'licaicai' || slug === 'yuebao' || slug === 'wallet') return `<span ${isSmall ? rmbSmall : rmbBig}>￥</span>`;
-    return `<svg viewBox="0 0 24 24" ${isSmall ? svgSmall : svgBig}><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>`;
+  function getLogoContent(slug) {
+    const spanStyle = 'style="font-size:18px;font-weight:800;color:#fff;"';
+    const svgStyle = 'style="width:24px;height:24px;fill:#fff;"';
+    const rmbStyle = 'style="font-size:22px;font-weight:300;color:#fff;"';
+    if (slug === 'alipay') return `<span ${spanStyle}>支</span>`;
+    if (slug === 'wechat') return `<svg viewBox="0 0 24 24" ${svgStyle}><path d="M8.7 3C4.5 3 1 5.9 1 9.5c0 2 1.1 3.7 2.9 4.9l-.7 2.2 2.6-1.3c.9.2 1.8.4 2.8.4.5 0 .9 0 1.4-.1-.1-.4-.2-.8-.2-1.2 0-3.2 3.1-5.8 7-5.8h.5C15.9 5.3 12.6 3 8.7 3zM6.3 7.8c.5 0 .9.4.9.9s-.4.9-.9.9-.9-.4-.9-.9.4-.9.9-.9zm4.8 0c.5 0 .9.4.9.9s-.4.9-.9.9-.9-.4-.9-.9.4-.9.9-.9zm5.2 2.2c-3.3 0-6 2.3-6 5.2 0 2.9 2.7 5.2 6 5.2.7 0 1.4-.1 2.1-.3l2 1-.5-1.7c1.5-1 2.4-2.5 2.4-4.2 0-2.9-2.7-5.2-6-5.2zm-2 3.3c.4 0 .7.3.7.7s-.3.7-.7.7-.7-.3-.7-.7.3-.7.7-.7zm3.9 0c.4 0 .7.3.7.7s-.3.7-.7.7-.7-.3-.7-.7.3-.7.7-.7z"/></svg>`;
+    if (slug === 'unionpay' || slug === 'cmb' || slug === 'icbc' || slug === 'ccb' || slug === 'abc' || slug === 'boc') return `<svg viewBox="0 0 24 24" ${svgStyle}><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>`;
+    if (slug === 'licaicai' || slug === 'yuebao' || slug === 'wallet') return `<span ${rmbStyle}>￥</span>`;
+    return `<svg viewBox="0 0 24 24" ${svgStyle}><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>`;
   }
 
-  const tabLogoHtml = a.iconUrl
-    ? `<img src="${a.iconUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:5px;" onerror="this.outerHTML='${getLogoContent(brandSlug, true).replace(/'/g, "\\'")}'"/>`
-    : getLogoContent(brandSlug, true);
-  const fullLogoHtml = a.iconUrl
-    ? `<img src="${a.iconUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;" onerror="this.outerHTML='${getLogoContent(brandSlug, false).replace(/'/g, "\\'")}'"/>`
-    : getLogoContent(brandSlug, false);
+  const logoHtml = a.iconUrl
+    ? `<img src="${a.iconUrl}" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:6px;" onerror="cardLogoFallback(this,'${brandSlug}')"/>`
+    : getLogoContent(brandSlug);
 
-  const last4 = a.cardNumber || '****';
   const numDisplay = a.cardNumber ? '•••• •••• •••• ' + a.cardNumber : '•••• •••• •••• ****';
   const excludedBadge = a.includeInAssets === false ? '<div class="wc-exclude">不计入</div>' : '';
-
-  // 钱包式堆叠：抽出卡片在顶部完整显示，其他卡片紧密堆叠在下方
-  // 每张堆叠卡片高度56px，间距为-16px（即上一张盖住下一张顶部16px），露出40px内容
-  const stackCardH = 56;
-  const overlap = 18;
-  if (isPulled) {
-    var finalStyle = `${cardBg}transform:translateY(0);left:0;right:0;z-index:100;opacity:1;pointer-events:auto;`;
-  } else {
-    const topY = 200 - 4 + (stackPos - 1) * (stackCardH - overlap);
-    const inset = Math.min((stackPos - 1) * 6, 18);
-    const opacity = Math.max(1 - (stackPos - 1) * 0.1, 0.55);
-    var finalStyle = `${cardBg}transform:translateY(${topY}px);left:${inset}px;right:${inset}px;z-index:${50 - stackPos};opacity:${opacity};pointer-events:auto;`;
-  }
 
   let brandText = acctType.brand;
   if (brandText === 'UnionPay') brandText = 'UNIONPAY';
@@ -1595,40 +1588,120 @@ function renderWalletCard(a, origIdx, stackPos, totalCount, isPulled) {
   if (brandText === 'Yuebao') brandText = 'YUEBAO';
   if (brandText === 'Wallet') brandText = 'WALLET';
 
-  const chipHtml = acctType.hasChip ? '<div class="wc-full-chip"></div>' : '';
+  const balText = balanceMasked ? '****' : '¥' + fmt(Math.round(a.balance));
 
-  return `<div class="wc ${isPulled ? 'pulled-out' : ''}" data-idx="${origIdx}" data-stack="${stackPos}" style="${finalStyle}">
+  const animDelay = Math.min(origIdx * 0.06, 0.42);
+  const cardStyle = `${cardBg}animation-delay:${animDelay}s;`;
+
+  return `<div class="wc" data-idx="${origIdx}" style="${cardStyle}">
     ${excludedBadge}
-    <div class="wc-tab">
-      <div class="wc-tab-logo">${tabLogoHtml}</div>
-      <div class="wc-tab-name">${a.name}</div>
-      <div class="wc-tab-last4">${last4}</div>
-    </div>
-    <div class="wc-full">
-      <div class="wc-full-top">
+    <div class="wc-face">
+      <div class="wc-face-top">
         <div>
-          <div class="wc-full-name" style="color:#fff;">${a.name}</div>
-          <div class="wc-full-type" style="color:rgba(255,255,255,0.55);">${acctType.name}${a.cardNumber ? ' · 尾号'+a.cardNumber : ''}</div>
+          <div class="wc-face-name">${a.name}</div>
+          <div class="wc-face-type">${acctType.name}${a.cardNumber ? ' · 尾号'+a.cardNumber : ''}</div>
         </div>
-        <div class="wc-full-logo">${fullLogoHtml}</div>
+        <div class="wc-face-logo">${logoHtml}</div>
       </div>
-      ${chipHtml}
-      <div class="wc-full-num" style="color:rgba(255,255,255,0.55);">${numDisplay}</div>
-      <div style="flex:1;"></div>
-      <div class="wc-full-bottom">
-        <div class="wc-full-brand" style="color:rgba(255,255,255,0.5);">${brandText}</div>
+      <div class="wc-face-num">${numDisplay}</div>
+      <div class="wc-face-bottom">
+        <div class="wc-face-brand">${brandText}</div>
         <div style="text-align:right;">
-          <div class="wc-full-bal-label" style="color:rgba(255,255,255,0.4);">AVAILABLE</div>
-          <div class="wc-full-bal" style="color:#fff;">¥${fmt(Math.round(a.balance))}</div>
+          <div class="wc-face-bal-label">AVAILABLE</div>
+          <div class="wc-face-bal">${balText}</div>
         </div>
-      </div>
-      <div class="wc-full-actions">
-        <div class="wc-full-btn" onclick="event.stopPropagation();closePulledCard();openAddTx()">记一笔</div>
-        <div class="wc-full-btn" onclick="event.stopPropagation();toast('转账功能开发中')">转账</div>
-        <div class="wc-full-btn" onclick="event.stopPropagation();closePulledCard();editAccount(${origIdx})">编辑</div>
       </div>
     </div>
   </div>`;
+}
+
+// 打开卡片详情弹窗
+function openCardDetail(idx) {
+  const a = state.accounts[idx];
+  if (!a) return;
+
+  let acctTypeKey = a.type;
+  if (!ACCOUNT_TYPES[acctTypeKey]) acctTypeKey = 'other';
+  const acctType = ACCOUNT_TYPES[acctTypeKey];
+
+  const gradient = getWalletCardGradient(a, idx);
+
+  let brandSlug = a.brandSlug;
+  if (!brandSlug) {
+    if (a.type === 'alipay') brandSlug = 'alipay';
+    else if (a.type === 'wechat') brandSlug = 'wechat';
+    else if (a.type === 'yunshanfu') brandSlug = 'unionpay';
+    else if (a.type === 'licaicai') brandSlug = 'licaicai';
+    else if (a.type === 'yuebao') brandSlug = 'yuebao';
+    else if (a.type === 'bank') brandSlug = 'unionpay';
+    else brandSlug = 'wallet';
+  }
+
+  function getLogoContentBig(slug) {
+    const spanStyle = 'style="font-size:20px;font-weight:800;color:#fff;"';
+    const svgStyle = 'style="width:28px;height:28px;fill:#fff;"';
+    const rmbStyle = 'style="font-size:24px;font-weight:300;color:#fff;"';
+    if (slug === 'alipay') return `<span ${spanStyle}>支</span>`;
+    if (slug === 'wechat') return `<svg viewBox="0 0 24 24" ${svgStyle}><path d="M8.7 3C4.5 3 1 5.9 1 9.5c0 2 1.1 3.7 2.9 4.9l-.7 2.2 2.6-1.3c.9.2 1.8.4 2.8.4.5 0 .9 0 1.4-.1-.1-.4-.2-.8-.2-1.2 0-3.2 3.1-5.8 7-5.8h.5C15.9 5.3 12.6 3 8.7 3zM6.3 7.8c.5 0 .9.4.9.9s-.4.9-.9.9-.9-.4-.9-.9.4-.9.9-.9zm4.8 0c.5 0 .9.4.9.9s-.4.9-.9.9-.9-.4-.9-.9.4-.9.9-.9zm5.2 2.2c-3.3 0-6 2.3-6 5.2 0 2.9 2.7 5.2 6 5.2.7 0 1.4-.1 2.1-.3l2 1-.5-1.7c1.5-1 2.4-2.5 2.4-4.2 0-2.9-2.7-5.2-6-5.2zm-2 3.3c.4 0 .7.3.7.7s-.3.7-.7.7-.7-.3-.7-.7.3-.7.7-.7zm3.9 0c.4 0 .7.3.7.7s-.3.7-.7.7-.7-.3-.7-.7.3-.7.7-.7z"/></svg>`;
+    if (slug === 'unionpay' || slug === 'cmb' || slug === 'icbc' || slug === 'ccb' || slug === 'abc' || slug === 'boc') return `<svg viewBox="0 0 24 24" ${svgStyle}><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>`;
+    if (slug === 'licaicai' || slug === 'yuebao' || slug === 'wallet') return `<span ${rmbStyle}>￥</span>`;
+    return `<svg viewBox="0 0 24 24" ${svgStyle}><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>`;
+  }
+
+  const logoHtml = a.iconUrl
+    ? `<img src="${a.iconUrl}" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:6px;" onerror="cardLogoFallback(this,'${brandSlug}',true)"/>`
+    : getLogoContentBig(brandSlug);
+
+  let brandText = acctType.brand;
+  if (brandText === 'UnionPay') brandText = 'UNIONPAY';
+  if (brandText === 'Alipay') brandText = 'ALIPAY';
+  if (brandText === 'WeChat Pay') brandText = 'WECHAT';
+  if (brandText === 'Licaitong') brandText = 'LICAITONG';
+  if (brandText === 'Yuebao') brandText = 'YUEBAO';
+  if (brandText === 'Wallet') brandText = 'WALLET';
+
+  const numDisplay = a.cardNumber ? '•••• •••• •••• ' + a.cardNumber : '•••• •••• •••• ****';
+  const chipHtml = acctType.hasChip ? '<div class="card-detail-chip"></div>' : '';
+  const balText = balanceMasked ? '****' : '¥' + fmt(Math.round(a.balance));
+  const excludedBadge = a.includeInAssets === false ? '<div class="wc-exclude">不计入</div>' : '';
+
+  const content = $('#card-detail-content');
+  content.innerHTML = `
+    <div class="card-detail-card" style="background:${gradient};">
+      ${excludedBadge}
+      <div class="card-detail-top">
+        <div>
+          <div class="card-detail-name">${a.name}</div>
+          <div class="card-detail-type">${acctType.name}${a.cardNumber ? ' · 尾号'+a.cardNumber : ''}</div>
+        </div>
+        <div class="card-detail-logo">${logoHtml}</div>
+      </div>
+      ${chipHtml}
+      <div class="card-detail-num">${numDisplay}</div>
+      <div class="card-detail-bottom">
+        <div class="card-detail-brand">${brandText}</div>
+        <div style="text-align:right;">
+          <div class="card-detail-bal-label">AVAILABLE</div>
+          <div class="card-detail-bal">${balText}</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-detail-actions">
+      <div class="card-detail-btn" onclick="event.stopPropagation();closeCardDetail();openAddTx()">记一笔</div>
+      <div class="card-detail-btn" onclick="event.stopPropagation();toast('转账功能开发中')">转账</div>
+      <div class="card-detail-btn" onclick="event.stopPropagation();closeCardDetail();editAccount(${idx})">编辑</div>
+    </div>
+  `;
+
+  const overlay = $('#card-detail-overlay');
+  overlay.classList.add('active');
+  haptic('light');
+}
+
+function closeCardDetail() {
+  const overlay = $('#card-detail-overlay');
+  overlay.classList.remove('active');
+  haptic('light');
 }
 
 function closePulledCard() {
@@ -1731,175 +1804,29 @@ function renderAccounts() {
   }
 
   const cs = $('#cards-stack');
-  const hintEl = $('#swipe-hint');
-
-  if (typeof state.pulledCardIdx === 'undefined') state.pulledCardIdx = -1;
-  if (typeof state.activeWalletCardIdx === 'undefined') state.activeWalletCardIdx = 0;
 
   if (state.accounts.length === 0) {
-    if (hintEl) hintEl.style.display = 'none';
     cs.innerHTML = `<div class="empty-state" style="padding:40px 20px 30px;text-align:center;"><div style="font-size:40px;margin-bottom:12px;">💳</div><div style="font-size:15px;color:rgba(255,255,255,0.5);font-weight:500;">暂无卡片</div><div style="font-size:12px;color:rgba(255,255,255,0.25);margin-top:8px;">点击 + 添加你的第一张卡</div></div>`;
     cs.style.minHeight = '180px';
-    cs.style.height = '180px';
   } else {
-    const n = state.accounts.length;
-    if (state.activeWalletCardIdx >= n) state.activeWalletCardIdx = 0;
-    if (state.activeWalletCardIdx < 0) state.activeWalletCardIdx = n - 1;
-
-    // 默认第一张卡片抽出
-    if (state.pulledCardIdx === -1 || state.pulledCardIdx === undefined) {
-      state.pulledCardIdx = state.activeWalletCardIdx;
-    }
-    if (state.pulledCardIdx >= n) state.pulledCardIdx = 0;
-
-    // 容器高度
-    const stackCardH = 56;
-    const overlap = 18;
-    const visibleTabs = Math.min(n - 1, 3);
-    const totalHeight = 200 + visibleTabs * (stackCardH - overlap) + (stackCardH - overlap) + 20;
-    cs.style.minHeight = totalHeight + 'px';
-    cs.style.height = totalHeight + 'px';
-    cs.style.overflow = 'visible';
-
+    cs.style.minHeight = '';
+    // 所有卡片一列排列
     let html = '';
-    // 抽出的卡片在最前
-    const pulledAcct = state.accounts[state.pulledCardIdx];
-    html += renderWalletCard(pulledAcct, state.pulledCardIdx, 0, n, true);
-
-    // 其他卡片按顺序作为卡舌堆叠在抽出卡片下方
-    let tabStackPos = 1;
-    for (let i = 1; i < n && tabStackPos <= 3; i++) {
-      const idx = (state.pulledCardIdx + i) % n;
-      html += renderWalletCard(state.accounts[idx], idx, tabStackPos, n, false);
-      tabStackPos++;
-    }
-
+    state.accounts.forEach((acct, idx) => {
+      html += renderWalletCard(acct, idx);
+    });
     cs.innerHTML = html;
 
-    if (hintEl) hintEl.textContent = n > 1 ? '点击卡舌切换卡片' : '';
-    if (hintEl) hintEl.style.display = n > 1 ? 'block' : 'none';
-
-    // 绑定交互
+    // 绑定点击事件 - 点击卡片弹出详情
     const allCards = cs.querySelectorAll('.wc');
     allCards.forEach(card => {
       const idx = parseInt(card.dataset.idx);
-      const stackPos = parseInt(card.dataset.stack);
-      const isPulled = card.classList.contains('pulled-out');
-
       card.onclick = (e) => {
-        if (card.dataset.animating === '1') return;
-        if (card.dataset.dragging === '1') return;
         e.stopPropagation();
-
-        if (!isPulled) {
-          // 点击卡舌，抽出这张卡
-          state.pulledCardIdx = idx;
-          state.activeWalletCardIdx = idx;
-          renderAccounts();
-          haptic('light');
-        } else {
-          // 点击已抽出的卡片，可以收起或切换
-          haptic('light');
-        }
+        openCardDetail(idx);
       };
-
-      // 触摸滑动 - 在抽出的卡片上左右滑动切换
-      let startX = 0, startY = 0, currentX = 0, currentY = 0, isDragging = false, isSwipe = false, swipeDir = null;
-      card.addEventListener('touchstart', (e) => {
-        if (card.dataset.animating === '1') return;
-        if (!isPulled) return;
-        startX = e.touches[0].clientX;
-        startY = e.touches[0].clientY;
-        currentX = 0; currentY = 0;
-        isDragging = true; isSwipe = false; swipeDir = null;
-        card.dataset.dragging = '';
-        card.style.transition = 'none';
-      }, { passive: true });
-
-      card.addEventListener('touchmove', (e) => {
-        if (!isDragging) return;
-        if (!isPulled) return;
-        currentX = e.touches[0].clientX - startX;
-        currentY = e.touches[0].clientY - startY;
-
-        if (!swipeDir && (Math.abs(currentX) > 10 || Math.abs(currentY) > 10)) {
-          if (Math.abs(currentX) > Math.abs(currentY)) {
-            swipeDir = currentX > 0 ? 'right' : 'left';
-            isSwipe = true;
-            card.dataset.dragging = '1';
-          }
-        }
-        if (swipeDir === 'left' || swipeDir === 'right') {
-          card.style.transform = `translateX(${currentX}px) rotate(${currentX * 0.02}deg)`;
-          card.style.opacity = String(Math.max(1 - Math.abs(currentX)/400, 0.2));
-        }
-      }, { passive: true });
-
-      card.addEventListener('touchend', () => {
-        if (!isDragging) return;
-        isDragging = false;
-        card.style.transition = '';
-        delete card.dataset.dragging;
-
-        if (isPulled && swipeDir === 'left' && currentX < -80 && n > 1) {
-          haptic('medium');
-          state.pulledCardIdx = (state.pulledCardIdx + 1) % n;
-          state.activeWalletCardIdx = state.pulledCardIdx;
-          save();
-          renderAccounts();
-        } else if (isPulled && swipeDir === 'right' && currentX > 80 && n > 1) {
-          haptic('medium');
-          state.pulledCardIdx = (state.pulledCardIdx - 1 + n) % n;
-          state.activeWalletCardIdx = state.pulledCardIdx;
-          save();
-          renderAccounts();
-        } else {
-          renderAccounts();
-        }
-      });
     });
   }
-
-  // Stats
-  const month = getMonthRange();
-  const monthTx = state.transactions.filter(t => t.date >= month.start && t.date <= month.end);
-  const totalBalance = totalAssets;
-  const totalIncome = monthTx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
-  const totalExpense = monthTx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
-  $('#acct-stats').innerHTML = `
-    <div class="stc"><div class="stl">本月收入</div><div class="stv" style="color:var(--green);">+${fmt(Math.round(totalIncome))}</div></div>
-    <div class="stc"><div class="stl">本月支出</div><div class="stv" style="color:var(--red);">-${fmt(Math.round(totalExpense))}</div></div>
-    <div class="stc"><div class="stl">总资产</div><div class="stv">${fmt(Math.round(totalBalance))}</div></div>
-  `;
-
-  // Donut chart
-  const expenseByCat = {};
-  monthTx.filter(t=>t.type==='expense').forEach(t => {
-    const key = t.isSubscription ? '订阅' : (EXPENSE_CATS.find(c=>c.id===t.category)?.name || '其他');
-    expenseByCat[key] = (expenseByCat[key] || 0) + t.amount;
-  });
-  const total = Object.values(expenseByCat).reduce((s,v)=>s+v,0);
-  const dc = $('#dnt-chart');
-  if (total === 0) {
-    dc.innerHTML = `<div style="text-align:center;padding:20px;color:var(--t3);font-size:13px;">本月暂无支出</div>`;
-    return;
-  }
-  const catColors = { '餐饮':'var(--gold)', '订阅':'rgba(255,255,255,0.12)', '购物':'rgba(255,92,72,0.6)', '交通':'rgba(100,200,255,0.4)', '居家':'rgba(255,159,10,0.5)', '娱乐':'rgba(180,100,255,0.5)', '医疗':'rgba(255,69,58,0.5)', '学习':'rgba(82,204,130,0.5)', '其他':'rgba(255,255,255,0.15)' };
-  let cum = 0;
-  const segments = Object.entries(expenseByCat).sort((a,b) => b[1]-a[1]).map(([name, val]) => {
-    const pct = (val/total)*100;
-    const start = cum; cum += pct;
-    return { name, val, pct, start, color: catColors[name] || 'rgba(255,255,255,0.2)' };
-  });
-  let conic = 'conic-gradient(';
-  conic += segments.map(s => `${s.color} ${s.start}% ${s.start+s.pct}%`).join(',');
-  conic += ')';
-  dc.innerHTML = `
-    <div class="dntc" style="background:${conic};"><span class="dntv">¥${fmt(Math.round(total))}</span></div>
-    <div class="dntl">
-      ${segments.slice(0,4).map(s => `<div class="dli"><span class="dld" style="background:${s.color};${s.name==='订阅'?'border:1px solid var(--border);':''}"></span><span class="dln">${s.name}</span><span class="dlv">¥${fmt(Math.round(s.val))}</span></div>`).join('')}
-    </div>
-  `;
 }
 
 function render() {
@@ -1969,9 +1896,15 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '1.9.2';
+const APP_VERSION = '1.9.3';
 const APP_BUILD = '2026.08.08';
 const CHANGELOG = [
+  { ver: '1.9.3', date: '2026-08-08', items: [
+    '卡片入场动效：错落渐入+上滑动画，切换更流畅自然',
+    '底部详情弹窗优化：卡片弹出+操作按钮分层动画',
+    '修复卡面图标显示不全：SVG等比缩放、图片contain模式不裁切',
+    '修复图标加载失败回退：全局cardLogoFallback函数替代内联onerror'
+  ]},
   { ver: '1.9.2', date: '2026-08-08', items: [
     '修复版本号不更新问题：版本号改为JS动态设置，不受缓存影响',
     '检查更新功能重做：点击后清空全部缓存+注销Service Worker+强制刷新页面',

@@ -101,53 +101,64 @@ input { font-family:inherit; }
 .wallet-container { position:relative; background:transparent; border-radius:0; padding:0; box-shadow:none; border:none; overflow:visible; }
 
 /* 卡片区 - 钱包容器 */
-.wallet-cards { position:relative; min-height:260px; padding:0; overflow:visible; perspective:1000px; }
+.wallet-cards { position:relative; padding:0; overflow:visible; display:flex; flex-direction:column; gap:12px; }
 .wallet-cards:has(.empty-state) { min-height:0; padding-top:0; overflow:hidden; }
 
-/* 单张卡片 - 钱包堆叠模式 */
-.wc { position:absolute; left:0; right:0; border-radius:18px; overflow:hidden; cursor:pointer; display:flex; flex-direction:column; padding:0; transition:transform .45s cubic-bezier(.34,1.3,.64,1), opacity .35s ease, left .45s cubic-bezier(.34,1.3,.64,1), right .45s cubic-bezier(.34,1.3,.64,1), filter .35s ease, box-shadow .4s ease, height .45s cubic-bezier(.34,1.3,.64,1), border-radius .4s ease; will-change:transform; -webkit-tap-highlight-color:transparent; box-shadow:0 4px 20px rgba(0,0,0,0.4); }
-.wc.pulled-out { height:200px; border-radius:20px; box-shadow:0 8px 30px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.08); z-index:50 !important; }
+/* 单张卡片 - 统一展示模式 */
+.wc { position:relative; left:auto; right:auto; border-radius:18px; overflow:hidden; cursor:pointer; display:flex; flex-direction:column; padding:0; transition:transform .25s cubic-bezier(.34,1.3,.64,1), box-shadow .25s ease; will-change:transform; -webkit-tap-highlight-color:transparent; box-shadow:0 6px 24px rgba(0,0,0,0.35); height:130px; opacity:0; transform:translateY(24px) scale(0.96); animation:wcEnter .45s cubic-bezier(.22,1,.36,1) forwards; }
+.wc:active { transform:scale(0.97); box-shadow:0 3px 12px rgba(0,0,0,0.3); }
+
+/* 卡片入场动画 - 错落渐入 */
+@keyframes wcEnter { 0% { opacity:0; transform:translateY(24px) scale(0.96); } 100% { opacity:1; transform:translateY(0) scale(1); } }
 
 /* 卡片顶部高光条 */
 .wc::before { content:''; position:absolute; top:0; left:10px; right:10px; height:1px; background:linear-gradient(90deg,transparent,rgba(255,255,255,0.25),transparent); z-index:10; border-radius:1px; }
 
-/* 堆叠状态：薄卡带 */
-.wc:not(.pulled-out) { height:56px; border-radius:14px; box-shadow:0 2px 12px rgba(0,0,0,0.4); }
-
-/* 卡带内容（堆叠状态可见部分） */
-.wc-tab { display:none; align-items:center; height:56px; padding:0 16px; gap:10px; position:relative; z-index:8; }
-.wc:not(.pulled-out) .wc-tab { display:flex; }
-.wc-tab-logo { width:28px; height:20px; border-radius:4px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.2); flex-shrink:0; overflow:hidden; }
-.wc-tab-logo img { width:100%; height:100%; object-fit:cover; border-radius:4px; }
-.wc-tab-logo svg { width:16px; height:12px; fill:#fff; }
-.wc-tab-name { flex:1; font-size:13px; font-weight:600; color:#fff; letter-spacing:0.2px; }
-.wc-tab-last4 { font-size:12px; color:rgba(255,255,255,0.6); font-family:var(--font-mono); font-weight:500; letter-spacing:1px; }
-
-/* 卡片完整内容 - 抽出时显示 */
-.wc-full { display:none; flex-direction:column; width:100%; height:100%; position:relative; z-index:8; padding:18px; }
-.wc.pulled-out .wc-full { display:flex; }
-.wc-full-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; }
-.wc-full-name { font-size:18px; font-weight:700; letter-spacing:0.3px; }
-.wc-full-type { font-size:11px; font-weight:500; opacity:0.55; margin-top:3px; letter-spacing:0.2px; }
-.wc-full-logo { width:40px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center; overflow:hidden; background:rgba(255,255,255,0.15); }
-.wc-full-logo img { width:100%; height:100%; border-radius:8px; object-fit:cover; }
-.wc-full-logo svg { width:24px; height:20px; fill:#fff; }
-.wc-full-chip { width:38px; height:28px; border-radius:5px; background:linear-gradient(135deg,#d4af37 0%,#f0d060 30%,#c9a227 60%,#e8c547 100%); position:relative; margin-bottom:10px; box-shadow:0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.3); }
-.wc-full-chip::before { content:''; position:absolute; inset:4px; border:1px solid rgba(0,0,0,0.1); border-radius:3px; }
-.wc-full-chip::after { content:''; position:absolute; top:50%; left:0; right:0; height:1px; background:rgba(0,0,0,0.08); box-shadow:0 6px 0 rgba(0,0,0,0.06),0 -6px 0 rgba(0,0,0,0.06); }
-.wc-full-num { font-size:15px; letter-spacing:3px; font-family:var(--font-mono); opacity:0.55; margin-bottom:8px; }
-.wc-full-bottom { display:flex; justify-content:space-between; align-items:flex-end; margin-top:auto; }
-.wc-full-brand { font-size:10px; font-weight:800; letter-spacing:2px; text-transform:uppercase; opacity:0.5; }
-.wc-full-bal-label { font-size:9px; text-transform:uppercase; letter-spacing:1px; font-weight:600; opacity:0.4; text-align:right; }
-.wc-full-bal { font-size:28px; font-weight:300; font-family:var(--font-mono); letter-spacing:0; line-height:1; margin-top:3px; text-align:right; }
-
-/* 抽出时的操作按钮 */
-.wc-full-actions { display:flex; gap:8px; margin-top:14px; }
-.wc-full-btn { flex:1; padding:9px 0; border-radius:10px; background:rgba(255,255,255,0.12); color:#fff; font-size:12px; font-weight:600; text-align:center; transition:all .15s; border:1px solid rgba(255,255,255,0.08); }
-.wc-full-btn:active { transform:scale(0.95); background:rgba(255,255,255,0.2); }
+/* 卡片内容 - 统一展示 */
+.wc-face { display:flex; flex-direction:column; width:100%; height:100%; position:relative; z-index:8; padding:16px 18px; }
+.wc-face-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:auto; }
+.wc-face-name { font-size:17px; font-weight:700; letter-spacing:0.3px; color:#fff; }
+.wc-face-type { font-size:11px; font-weight:500; color:rgba(255,255,255,0.5); margin-top:3px; letter-spacing:0.2px; }
+.wc-face-logo { width:48px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; overflow:hidden; background:rgba(255,255,255,0.15); flex-shrink:0; padding:2px; }
+.wc-face-logo img { max-width:100%; max-height:100%; border-radius:6px; object-fit:contain; }
+.wc-face-logo svg { width:24px; height:24px; fill:#fff; }
+.wc-face-num { font-size:14px; letter-spacing:3px; font-family:var(--font-mono); color:rgba(255,255,255,0.5); margin-bottom:10px; }
+.wc-face-bottom { display:flex; justify-content:space-between; align-items:flex-end; }
+.wc-face-brand { font-size:10px; font-weight:800; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,0.45); }
+.wc-face-bal-label { font-size:9px; text-transform:uppercase; letter-spacing:1px; font-weight:600; color:rgba(255,255,255,0.35); text-align:right; }
+.wc-face-bal { font-size:22px; font-weight:300; font-family:var(--font-mono); color:#fff; line-height:1; margin-top:2px; text-align:right; }
 
 /* 不计入资产标签 */
 .wc-exclude { position:absolute; top:10px; right:12px; font-size:9px; padding:3px 8px; border-radius:6px; background:rgba(0,0,0,0.3); color:rgba(255,255,255,0.6); z-index:15; font-weight:500; }
+
+/* 底部弹出详情面板 */
+.card-detail-overlay { position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0); pointer-events:none; transition:background .35s ease; }
+.card-detail-overlay.active { background:rgba(0,0,0,0.55); pointer-events:auto; }
+.card-detail-sheet { position:fixed; bottom:0; left:0; right:0; z-index:10000; background:#1a1a1a; border-radius:24px 24px 0 0; transform:translateY(100%); transition:transform .42s cubic-bezier(.32,.72,0,1); padding:8px 20px 40px; max-height:85vh; overflow-y:auto; -webkit-overflow-scrolling:touch; box-shadow:0 -10px 40px rgba(0,0,0,0.5); }
+.card-detail-overlay.active .card-detail-sheet { transform:translateY(0); }
+.card-detail-card { transition:transform .3s ease; }
+.card-detail-overlay.active .card-detail-card { animation:cardDetailPop .5s cubic-bezier(.22,1,.36,1); }
+@keyframes cardDetailPop { 0% { opacity:0; transform:scale(0.92) translateY(20px); } 100% { opacity:1; transform:scale(1) translateY(0); } }
+.card-detail-actions { animation:cardDetailActionsEnter .5s .1s cubic-bezier(.22,1,.36,1) both; }
+@keyframes cardDetailActionsEnter { 0% { opacity:0; transform:translateY(16px); } 100% { opacity:1; transform:translateY(0); } }
+.card-detail-handle { width:36px; height:4px; border-radius:2px; background:rgba(255,255,255,0.15); margin:0 auto 20px; }
+.card-detail-card { border-radius:18px; overflow:hidden; padding:18px; margin-bottom:20px; position:relative; min-height:140px; display:flex; flex-direction:column; }
+.card-detail-card::before { content:''; position:absolute; top:0; left:10px; right:10px; height:1px; background:linear-gradient(90deg,transparent,rgba(255,255,255,0.25),transparent); }
+.card-detail-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; }
+.card-detail-name { font-size:19px; font-weight:700; color:#fff; }
+.card-detail-type { font-size:12px; color:rgba(255,255,255,0.5); margin-top:3px; }
+.card-detail-logo { width:52px; height:40px; border-radius:8px; display:flex; align-items:center; justify-content:center; overflow:hidden; background:rgba(255,255,255,0.15); flex-shrink:0; padding:2px; }
+.card-detail-logo img { max-width:100%; max-height:100%; border-radius:6px; object-fit:contain; }
+.card-detail-logo svg { width:28px; height:28px; fill:#fff; }
+.card-detail-chip { width:38px; height:28px; border-radius:5px; background:linear-gradient(135deg,#d4af37 0%,#f0d060 30%,#c9a227 60%,#e8c547 100%); margin-bottom:10px; box-shadow:0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.3); }
+.card-detail-num { font-size:16px; letter-spacing:3px; font-family:var(--font-mono); color:rgba(255,255,255,0.5); margin-bottom:10px; }
+.card-detail-bottom { display:flex; justify-content:space-between; align-items:flex-end; margin-top:auto; }
+.card-detail-brand { font-size:10px; font-weight:800; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,0.45); }
+.card-detail-bal-label { font-size:9px; text-transform:uppercase; letter-spacing:1px; font-weight:600; color:rgba(255,255,255,0.35); text-align:right; }
+.card-detail-bal { font-size:30px; font-weight:300; font-family:var(--font-mono); color:#fff; line-height:1; margin-top:3px; text-align:right; }
+.card-detail-actions { display:flex; gap:10px; }
+.card-detail-btn { flex:1; padding:14px 0; border-radius:12px; background:rgba(255,255,255,0.1); color:#fff; font-size:14px; font-weight:600; text-align:center; transition:all .15s; border:1px solid rgba(255,255,255,0.08); }
+.card-detail-btn:active { transform:scale(0.95); background:rgba(255,255,255,0.18); }
 
 /* TOTAL BALANCE 面板 */
 .wallet-balance { padding:0 0 18px; text-align:center; position:relative; z-index:5; }
@@ -542,20 +553,16 @@ textarea.form-i{resize:none;min-height:80px;}
         </div>
         <div class="wallet-cards" id="cards-stack"></div>
       </div>
-      <div class="wallet-hint" id="swipe-hint" style="display:none;">← 左右滑动切换卡片 · 点击卡片查看详情 →</div>
     </div>
-    <div id="acct-detail-section">
-    <div class="qa">
-      <div class="qai" onclick="openAddTx()"><div class="qai2"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div><span class="qal">记一笔</span></div>
-      <div class="qai" onclick="toast('转账功能开发中')"><div class="qai2"><svg viewBox="0 0 24 24"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></div><span class="qal">转账</span></div>
-      <div class="qai" onclick="toast('提醒设置开发中')"><div class="qai2"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div><span class="qal">提醒</span></div>
-      <div class="qai" onclick="showView('settings')"><div class="qai2"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33"/></svg></div><span class="qal">设置</span></div>
-    </div>
-    <div class="sts" id="acct-stats"></div>
-    <div class="sec"><span class="st">支出分布</span></div>
-    <div class="dnt"><div class="dntw" id="dnt-chart"></div></div>
     <div style="height:20px;"></div>
-    </div>
+  </div>
+</div>
+
+<!-- 卡片详情弹窗 -->
+<div class="card-detail-overlay" id="card-detail-overlay" onclick="closeCardDetail()">
+  <div class="card-detail-sheet" id="card-detail-sheet" onclick="event.stopPropagation()">
+    <div class="card-detail-handle"></div>
+    <div id="card-detail-content"></div>
   </div>
 </div>
 
@@ -608,14 +615,14 @@ textarea.form-i{resize:none;min-height:80px;}
       <div class="info-r" onclick="if(confirm('确定清除所有数据？此操作不可撤销。')){clearAll();toast('数据已清除');}"><span class="info-l">清除所有数据</span><span class="info-v" style="color:var(--red);">›</span></div>
     </div>
     <div class="info-g">
-      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v1.9.2 ›</span></div>
+      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v1.9.3 ›</span></div>
       <div class="info-r" onclick="showChangelog()"><span class="info-l">更新日志</span><span class="info-v" style="color:var(--gold);">查看 ›</span></div>
       <div class="info-r" onclick="checkUpdate()"><span class="info-l">检查更新</span><span class="info-v" style="color:var(--gold);" id="update-status">›</span></div>
       <div class="info-r"><span class="info-l">数据存储</span><span class="info-v" style="color:var(--t3);">仅本地浏览器</span></div>
     </div>
     <div style="text-align:center;padding:40px 20px;color:var(--t3);font-size:12px;">
       <div style="margin-bottom:8px;font-size:20px;letter-spacing:1px;">SubPilot</div>
-      <div data-ver-footer style="margin-bottom:4px;">订阅管家 · v1.9.2 (Build 2026.08.08)</div>
+      <div data-ver-footer style="margin-bottom:4px;">订阅管家 · v1.9.3 (Build 2026.08.08)</div>
       <div>所有数据默认仅保存在本地，开启云同步后加密上传至 Supabase</div>
     </div>
     <input type="file" id="import-file" accept=".json" style="display:none;">
