@@ -147,6 +147,9 @@ input { font-family:inherit; }
 
 /* Bank cards - 钱包卡舌式设计 */
 .wallet-wrap { position:relative; margin-bottom:16px; padding:0; }
+
+/* 账户页固定头部（标题+总资产），下拉时只有卡面滚动 */
+.acct-sticky-header { position:sticky; top:0; z-index:50; background:var(--bg); padding-bottom:4px; }
 .wallet-container { position:relative; background:transparent; border-radius:0; padding:0; box-shadow:none; border:none; overflow:visible; }
 
 /* 卡片区 - 钱包容器 - EchoAI扇形堆叠效果 */
@@ -857,21 +860,23 @@ textarea.form-i{resize:none;min-height:80px;}
 <!-- View: Accounts -->
 <div class="view" id="view-accounts">
   <div class="content">
-    <div class="hd">
-      <div class="ht"><h1>账户</h1><p id="acct-sub">0张卡片</p></div>
-    </div>
-    <div class="wallet-wrap">
-      <div class="wallet-container">
-        <div class="wallet-balance" onclick="toggleBalanceMask()">
-          <div class="wallet-balance-label">TOTAL BALANCE</div>
-          <div class="wallet-balance-value" id="wallet-total">
-            <span id="wallet-total-text">¥0</span>
-            <svg class="wallet-eye" id="wallet-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+    <div class="acct-sticky-header">
+      <div class="hd">
+        <div class="ht"><h1>账户</h1><p id="acct-sub">0张卡片</p></div>
+      </div>
+      <div class="wallet-wrap">
+        <div class="wallet-container">
+          <div class="wallet-balance" onclick="toggleBalanceMask()">
+            <div class="wallet-balance-label">TOTAL BALANCE</div>
+            <div class="wallet-balance-value" id="wallet-total">
+              <span id="wallet-total-text">¥0</span>
+              <svg class="wallet-eye" id="wallet-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </div>
           </div>
         </div>
-        <div class="wallet-cards" id="cards-stack"></div>
       </div>
     </div>
+    <div class="wallet-cards" id="cards-stack"></div>
     <div style="height:20px;"></div>
   </div>
 </div>
