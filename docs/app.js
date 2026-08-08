@@ -3129,7 +3129,7 @@ async function checkUpdate() {
   }
 }
 
-// 强制更新：清除所有缓存 + 注销Service Worker + 重新加载页面
+// 强制更新：清除所有缓存 + 注销Service Worker + 带时间戳重新加载（绕过所有缓存层）
 async function forceUpdate() {
   toast('正在清除缓存...');
   try {
@@ -3139,19 +3139,27 @@ async function forceUpdate() {
       await Promise.all(keys.map(k => caches.delete(k)));
     }
 
-    // 2. 注销所有Service Worker
+    // 2. 注销所有Service Worker并等待完成
     if ('serviceWorker' in navigator) {
       const registrations = await navigator.serviceWorker.getRegistrations();
       await Promise.all(registrations.map(r => r.unregister()));
     }
 
-    // 3. 短暂延迟后强制刷新（绕过缓存）
+    // 3. 清除 sessionStorage（可能存有旧版本缓存标记）
+    sessionStorage.clear();
+
+    // 4. 带时间戳跳转，强制绕过浏览器HTTP缓存+CDN缓存+Service Worker缓存
     setTimeout(() => {
-      window.location.reload(true);
-    }, 500);
+      const url = new URL(window.location.href);
+      url.searchParams.delete('_v');
+      url.searchParams.set('_v', Date.now().toString());
+      window.location.href = url.toString();
+    }, 600);
   } catch(e) {
-    // 降级方案：直接刷新
-    window.location.reload(true);
+    // 降级方案：同样带时间戳跳转
+    const url = new URL(window.location.href);
+    url.searchParams.set('_v', Date.now().toString());
+    window.location.href = url.toString();
   }
 }
 
@@ -3159,6 +3167,13 @@ async function forceUpdate() {
 function init() {
   load();
   applyTheme();
+
+  // 清理强制更新时添加的时间戳参数，保持URL干净
+  const _forceUrl = new URL(window.location.href);
+  if (_forceUrl.searchParams.has('_v')) {
+    _forceUrl.searchParams.delete('_v');
+    window.history.replaceState({}, document.title, _forceUrl.toString());
+  }
 
   // 动态设置版本号显示（避免SW缓存导致版本号不更新）
   const verEl = document.getElementById('ver-display');
