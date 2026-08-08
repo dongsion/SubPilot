@@ -2351,8 +2351,8 @@ function bringCardToFront(stackEl, clickedCard) {
   stackEl.insertBefore(clickedCard, stackEl.firstChild);
 
   // Recalculate positions
-  const peekH = 12;
-  const overlap = 4;
+  const peekH = 28;
+  const overlap = 8;
   const reordered = Array.from(stackEl.querySelectorAll('.wc'));
 
   reordered.forEach((card, pos) => {
@@ -2459,9 +2459,9 @@ function renderAccounts() {
     }
 
     // Calculate stack height: front card 130px + peek strips for remaining cards
-    const peekH = 12; // visible strip per behind card
-    const behindH = 18; // actual behind card element height
-    const overlap = 4; // overlap between cards
+    const peekH = 28; // visible strip per behind card
+    const behindH = 36; // actual behind card element height
+    const overlap = 8; // overlap between cards
     const stackH = 130 + (groupAccounts.length - 1) * peekH + 8;
 
     html += `<div class="card-group" data-group="${gk}">`;
@@ -2492,9 +2492,9 @@ function renderAccounts() {
       const groupEl = cs.querySelector(`.card-group-stack[data-group="${gk}"]`);
       if (!groupEl) return;
       const cards = groupEl.querySelectorAll('.wc');
-      const peekH = 12;
-      const behindH = 18;
-      const overlap = 4;
+      const peekH = 28;
+      const behindH = 36;
+      const overlap = 8;
 
       cards.forEach((card, pos) => {
         // Reset all classes first
@@ -2643,9 +2643,13 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '2.0.1';
+const APP_VERSION = '2.0.2';
 const APP_BUILD = '2026.08.08';
 const CHANGELOG = [
+  { ver: '2.0.2', date: '2026-08-08', items: [
+    '修复卡面堆叠显示问题：增大后面卡片露出高度，堆叠效果更清晰可见',
+    '后面卡片条带显示卡名文字，字体加大更易辨认'
+  ]},
   { ver: '2.0.1', date: '2026-08-08', items: [
     '密码滚轮交互优化：每滚完一个数字点"下一步"确认，滚完四位后按钮自动变为"解锁"',
     '移除滚轮点击确认，改为按钮操作，交互更清晰',

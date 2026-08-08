@@ -173,7 +173,7 @@ input { font-family:inherit; }
 /* 前面的卡片阴影更明显 */
 .wc.wc-front { box-shadow:0 10px 36px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3); z-index:100 !important; height:130px; }
 /* 后面的卡片 - 只露出顶部彩色条带 */
-.wc-behind { height:18px !important; z-index:90; box-shadow:0 2px 8px rgba(0,0,0,0.2); }
+.wc-behind { height:36px !important; z-index:90; box-shadow:0 2px 8px rgba(0,0,0,0.2); }
 .wc-behind.wc-behind-2 { z-index:80; }
 .wc-behind.wc-behind-3 { z-index:70; }
 .wc-behind.wc-behind-4 { z-index:60; opacity:0.85; }
@@ -181,7 +181,7 @@ input { font-family:inherit; }
 /* 后面的卡片hover/点击时稍微上浮 */
 .wc-behind:active { transform:scale(0.98) translateY(-2px) !important; }
 /* 条带上的卡片名称提示 */
-.wc-behind::after { content:attr(data-peek-name); position:absolute; left:14px; top:50%; transform:translateY(-50%); font-size:9px; font-weight:600; color:rgba(255,255,255,0.7); letter-spacing:0.3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:60%; pointer-events:none; }
+.wc-behind::after { content:attr(data-peek-name); position:absolute; left:14px; top:50%; transform:translateY(-50%); font-size:11px; font-weight:600; color:rgba(255,255,255,0.8); letter-spacing:0.3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:60%; pointer-events:none; }
 
 /* 卡片顶部高光条 */
 .wc::before { content:''; position:absolute; top:0; left:10px; right:10px; height:1px; background:linear-gradient(90deg,transparent,rgba(255,255,255,0.25),transparent); z-index:10; border-radius:1px; }
@@ -936,14 +936,14 @@ textarea.form-i{resize:none;min-height:80px;}
       <div class="info-r" onclick="if(confirm('确定清除所有数据？此操作不可撤销。')){clearAll();toast('数据已清除');}"><span class="info-l">清除所有数据</span><span class="info-v" style="color:var(--red);">›</span></div>
     </div>
     <div class="info-g">
-      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v2.0.1 ›</span></div>
+      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v2.0.2 ›</span></div>
       <div class="info-r" onclick="showChangelog()"><span class="info-l">更新日志</span><span class="info-v" style="color:var(--gold);">查看 ›</span></div>
       <div class="info-r" onclick="checkUpdate()"><span class="info-l">检查更新</span><span class="info-v" style="color:var(--gold);" id="update-status">›</span></div>
       <div class="info-r"><span class="info-l">数据存储</span><span class="info-v" style="color:var(--t3);">仅本地浏览器</span></div>
     </div>
     <div style="text-align:center;padding:40px 20px;color:var(--t3);font-size:12px;">
       <div style="margin-bottom:8px;font-size:20px;letter-spacing:1px;">Countra</div>
-      <div data-ver-footer style="margin-bottom:4px;">转便数快 · v2.0.1 (Build 2026.08.08)</div>
+      <div data-ver-footer style="margin-bottom:4px;">转便数快 · v2.0.2 (Build 2026.08.08)</div>
       <div>所有数据默认仅保存在本地，开启云同步后加密上传至 Supabase</div>
     </div>
     <input type="file" id="import-file" accept=".json" style="display:none;">
