@@ -549,6 +549,9 @@ function showView(name) {
   // FAB only shows on accounts (card pack) view
   const fab = $('#fab');
   if (fab) fab.style.display = (name === 'accounts') ? 'flex' : 'none';
+  // 记一笔 FAB only shows on tx view
+  const fabTx = $('#fab-tx');
+  if (fabTx) fabTx.style.display = (name === 'tx') ? 'flex' : 'none';
   render();
   haptic('light');
 }
