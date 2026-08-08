@@ -201,6 +201,7 @@ let state = {
   selectedCardColor: 'gold',
   acctIncludeInAssets: true,
   editingAcctIdx: -1,
+  activeCardByGroup: {}, // 每个分组当前展示的卡片索引: {groupKey: accountId}
   currentSubId: null,
   fetchedAppIcon: null,
   editSubId: null,
@@ -1704,11 +1705,10 @@ function renderWalletCard(a, origIdx) {
   const curSym = curSyms[a.currency || 'CNY'] || '¥';
   const balText = balanceMasked ? '****' : curSym + fmt(Math.round(a.balance));
 
-  const animDelay = Math.min(origIdx * 0.06, 0.42);
-  const zIdx = 100 - origIdx;
-  const cardStyle = `${cardBg}animation-delay:${animDelay}s;z-index:${zIdx};`;
+  const cardStyle = `${cardBg}`;
 
-  return `<div class="wc" data-idx="${origIdx}" style="${cardStyle}">
+  const peekName = (a.name || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  return `<div class="wc" data-idx="${origIdx}" data-peek-name="${peekName}" style="${cardStyle}">
     ${excludedBadge}
     <div class="wc-face">
       <div class="wc-face-top">
@@ -1900,6 +1900,55 @@ function closeCardOverlay(e) {
   haptic('light');
 }
 
+// 将指定卡片切换到前台（弹簧动画）
+function bringCardToFront(stackEl, clickedCard) {
+  const cards = Array.from(stackEl.querySelectorAll('.wc'));
+  const clickedIdx = cards.indexOf(clickedCard);
+  if (clickedIdx <= 0) return;
+
+  // Reorder DOM: move clicked card to first position
+  stackEl.insertBefore(clickedCard, stackEl.firstChild);
+
+  // Recalculate positions
+  const peekH = 12;
+  const overlap = 4;
+  const reordered = Array.from(stackEl.querySelectorAll('.wc'));
+
+  reordered.forEach((card, pos) => {
+    card.classList.remove('wc-front', 'wc-behind', 'wc-behind-2', 'wc-behind-3', 'wc-behind-4', 'wc-behind-far');
+    card.style.animationDelay = '';
+    if (pos === 0) {
+      card.style.top = '0px';
+      card.classList.add('wc-front');
+    } else {
+      const topPos = 130 - overlap + (pos - 1) * peekH;
+      card.style.top = topPos + 'px';
+      card.classList.add('wc-behind');
+      if (pos === 2) card.classList.add('wc-behind-2');
+      else if (pos === 3) card.classList.add('wc-behind-3');
+      else if (pos === 4) card.classList.add('wc-behind-4');
+      else if (pos > 4) card.classList.add('wc-behind-far');
+    }
+    // Rebind click handler with new position
+    card.onclick = (e) => {
+      e.stopPropagation();
+      const idx = parseInt(card.dataset.idx);
+      const newPos = Array.from(stackEl.querySelectorAll('.wc')).indexOf(card);
+      if (newPos === 0) {
+        openCardDetail(idx);
+      } else {
+        // Find which group this stack belongs to
+        const gk = stackEl.dataset.group;
+        state.activeCardByGroup[gk] = state.accounts[idx].id;
+        haptic('light');
+        bringCardToFront(stackEl, card);
+      }
+    };
+  });
+
+  // Update group total display (optional - keep it simple)
+}
+
 function renderAccounts() {
   // Total assets
   const totalAssets = state.accounts.filter(a => a.includeInAssets !== false).reduce((s,a)=>s+a.balance,0);
@@ -1926,62 +1975,126 @@ function renderAccounts() {
   if (state.accounts.length === 0) {
     cs.innerHTML = `<div class="empty-state" style="padding:40px 20px 30px;text-align:center;"><div style="font-size:40px;margin-bottom:12px;">💳</div><div style="font-size:15px;color:rgba(255,255,255,0.5);font-weight:500;">暂无卡片</div><div style="font-size:12px;color:rgba(255,255,255,0.25);margin-top:8px;">点击 + 添加你的第一张卡</div></div>`;
     cs.style.minHeight = '180px';
-  } else {
-    cs.style.minHeight = '';
-    // 按分组分类显示卡片
-    let html = '';
-    const groupOrder = ['funding', 'wealth', 'cash'];
-    // 收集自定义分组
-    const customGroups = [];
-    state.accounts.forEach(a => {
-      if (a.customGroup && !groupOrder.includes(a.customGroup) && !customGroups.includes(a.customGroup)) {
-        customGroups.push(a.customGroup);
-      }
-    });
-    const allGroups = [...groupOrder, ...customGroups];
-
-    allGroups.forEach(gk => {
-      const groupAccounts = state.accounts.map((a, i) => ({a, i})).filter(({a}) => {
-        const at = ACCOUNT_TYPES[a.type];
-        const grp = a.customGroup || (at ? at.group : 'funding');
-        return grp === gk;
-      });
-      if (groupAccounts.length === 0) return;
-
-      let groupName, groupIcon;
-      if (ACCOUNT_GROUPS[gk]) {
-        groupName = ACCOUNT_GROUPS[gk].name;
-        groupIcon = ACCOUNT_GROUPS[gk].icon;
-      } else {
-        groupName = gk;
-        groupIcon = '📂';
-      }
-      const groupTotal = groupAccounts.filter(({a}) => a.includeInAssets !== false).reduce((s,{a}) => s + a.balance, 0);
-      const curSyms = { CNY:'¥', USD:'$', EUR:'€', GBP:'£', JPY:'¥', HKD:'HK$', TWD:'NT$' };
-
-      html += `<div class="card-group-header">
-        <span class="card-group-icon">${groupIcon}</span>
-        <span class="card-group-name">${groupName}</span>
-        <span class="card-group-count">${groupAccounts.length}张</span>
-        <span class="card-group-total">${curSyms.CNY}${fmt(Math.round(groupTotal))}</span>
-      </div>`;
-      groupAccounts.forEach(({a, i}) => {
-        html += renderWalletCard(a, i);
-      });
-    });
-
-    cs.innerHTML = html;
-
-    // 绑定点击事件 - 点击卡片弹出详情
-    const allCards = cs.querySelectorAll('.wc');
-    allCards.forEach(card => {
-      const idx = parseInt(card.dataset.idx);
-      card.onclick = (e) => {
-        e.stopPropagation();
-        openCardDetail(idx);
-      };
-    });
+    return;
   }
+
+  cs.style.minHeight = '';
+
+  const groupOrder = ['funding', 'wealth', 'cash'];
+  const customGroups = [];
+  state.accounts.forEach(a => {
+    if (a.customGroup && !groupOrder.includes(a.customGroup) && !customGroups.includes(a.customGroup)) {
+      customGroups.push(a.customGroup);
+    }
+  });
+  const allGroups = [...groupOrder, ...customGroups];
+
+  let html = '';
+
+  allGroups.forEach(gk => {
+    const groupAccounts = state.accounts.map((a, i) => ({a, i})).filter(({a}) => {
+      const at = ACCOUNT_TYPES[a.type];
+      const grp = a.customGroup || (at ? at.group : 'funding');
+      return grp === gk;
+    });
+    if (groupAccounts.length === 0) return;
+
+    let groupName, groupIcon;
+    if (ACCOUNT_GROUPS[gk]) {
+      groupName = ACCOUNT_GROUPS[gk].name;
+      groupIcon = ACCOUNT_GROUPS[gk].icon;
+    } else {
+      groupName = gk;
+      groupIcon = '📂';
+    }
+    const groupTotal = groupAccounts.filter(({a}) => a.includeInAssets !== false).reduce((s,{a}) => s + a.balance, 0);
+    const curSyms = { CNY:'¥', USD:'$', EUR:'€', GBP:'£', JPY:'¥', HKD:'HK$', TWD:'NT$' };
+
+    // Determine active card for this group
+    let activeId = state.activeCardByGroup[gk];
+    if (!activeId || !groupAccounts.find(({a}) => a.id === activeId)) {
+      activeId = groupAccounts[0].a.id;
+      state.activeCardByGroup[gk] = activeId;
+    }
+
+    // Calculate stack height: front card 130px + peek strips for remaining cards
+    const peekH = 12; // visible strip per behind card
+    const behindH = 18; // actual behind card element height
+    const overlap = 4; // overlap between cards
+    const stackH = 130 + (groupAccounts.length - 1) * peekH + 8;
+
+    html += `<div class="card-group" data-group="${gk}">`;
+    html += `<div class="card-group-header">
+      <span class="card-group-icon">${groupIcon}</span>
+      <span class="card-group-name">${groupName}</span>
+      <span class="card-group-count">${groupAccounts.length}张</span>
+      <span class="card-group-total">${curSyms.CNY}${fmt(Math.round(groupTotal))}</span>
+    </div>`;
+    html += `<div class="card-group-stack" style="min-height:${stackH}px;" data-group="${gk}">`;
+
+    // Order cards: active first, then rest
+    const activeIdx = groupAccounts.findIndex(({a}) => a.id === activeId);
+    const ordered = [groupAccounts[activeIdx], ...groupAccounts.slice(0, activeIdx), ...groupAccounts.slice(activeIdx + 1)];
+
+    ordered.forEach(({a, i}, pos) => {
+      html += renderWalletCard(a, i);
+    });
+
+    html += `</div></div>`;
+  });
+
+  cs.innerHTML = html;
+
+  // After DOM insertion, position each card with correct styles
+  requestAnimationFrame(() => {
+    allGroups.forEach(gk => {
+      const groupEl = cs.querySelector(`.card-group-stack[data-group="${gk}"]`);
+      if (!groupEl) return;
+      const cards = groupEl.querySelectorAll('.wc');
+      const peekH = 12;
+      const behindH = 18;
+      const overlap = 4;
+
+      cards.forEach((card, pos) => {
+        // Reset all classes first
+        card.classList.remove('wc-front', 'wc-visible', 'wc-behind', 'wc-behind-2', 'wc-behind-3', 'wc-behind-4', 'wc-behind-far');
+        card.style.height = '';
+        card.style.transform = '';
+        card.style.animationDelay = (pos * 0.06) + 's';
+
+        if (pos === 0) {
+          // Front card
+          card.style.top = '0px';
+          card.classList.add('wc-front', 'wc-visible');
+        } else {
+          // Behind card - positioned as colored strip below previous card
+          const topPos = 130 - overlap + (pos - 1) * peekH;
+          card.style.top = topPos + 'px';
+          card.classList.add('wc-behind', 'wc-visible');
+          if (pos === 2) card.classList.add('wc-behind-2');
+          else if (pos === 3) card.classList.add('wc-behind-3');
+          else if (pos === 4) card.classList.add('wc-behind-4');
+          else if (pos > 4) card.classList.add('wc-behind-far');
+        }
+
+        // Click handler
+        card.onclick = (e) => {
+          e.stopPropagation();
+          const idx = parseInt(card.dataset.idx);
+          if (pos === 0) {
+            // Front card -> open detail
+            openCardDetail(idx);
+          } else {
+            // Behind card -> bring to front with smooth spring animation
+            state.activeCardByGroup[gk] = state.accounts[idx].id;
+            haptic('light');
+            // Reorder DOM within the stack for smooth CSS transition
+            bringCardToFront(groupEl, card, peekH, overlap);
+          }
+        };
+      });
+    });
+  });
 }
 
 function render() {
@@ -2051,9 +2164,16 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '1.9.5';
+const APP_VERSION = '1.9.6';
 const APP_BUILD = '2026.08.08';
 const CHANGELOG = [
+  { ver: '1.9.6', date: '2026-08-08', items: [
+    'EchoAI扇形卡面动效：前景卡完全展开，后景卡以彩色条带堆叠露出',
+    '弹簧缓动切换：点击后景条带，卡片以cubic-bezier(.34,1.4,.64,1)弹簧动画弹到前台',
+    '条带显示卡片名称，后景卡逐层降低透明度营造深度',
+    'DOM直接重排实现切换动画，无需重建节点保证动效流畅',
+    '错落入场动画：卡片从下方弹入，每张间隔60ms'
+  ]},
   { ver: '1.9.5', date: '2026-08-08', items: [
     '卡面分组分类：资金账户/理财账户/纸币现金三大类，支持自定义分组',
     '概览页移除即将续费区域，改为最近流水预览，概览与流水合并展示',
