@@ -202,6 +202,7 @@ let state = {
   activeCardIdx: 0,
   txType: 'expense',
   selectedCat: 'food',
+  debtDir: 'owed',
   selectedCycle: 'month',
   selectedAcctType: 'bank',
   selectedCardColor: 'gold',
@@ -569,31 +570,62 @@ function fabAction() {
 function openAddTx(prefill) {
   state.txType = 'expense';
   state.selectedCat = 'food';
+  state.debtDir = 'owed';
   $('#tx-amt-input').value = '';
   $('#tx-note').value = '';
   $('#tx-tags').value = '';
   $('#tx-tag-chips').innerHTML = '';
   $('#tx-date').value = today();
   $('#tx-fee-input').value = '';
+  $('#tx-debt-person').value = '';
   // Type toggle
   $$('#tx-type .type-opt').forEach(b => {
-    b.classList.remove('on', 'exp', 'inc', 'transfer');
+    b.classList.remove('on', 'exp', 'inc', 'transfer', 'debt');
     if (b.dataset.t === state.txType) b.classList.add('on', 'exp');
   });
+  // Reset debt direction
+  $$('#tx-debt-dir-pick .pick').forEach(b => b.classList.toggle('on', b.dataset.dir === 'owed'));
   updateTxTypeUI();
   renderCatGrid();
   renderTxAcctPick();
   renderTxTransferPick();
+  renderTxDebtPick();
   openSheet('sheet-tx');
   setTimeout(() => $('#tx-amt-input').focus(), 300);
 }
 
 function updateTxTypeUI() {
   const isTransfer = state.txType === 'transfer';
+  const isDebt = state.txType === 'debt';
+  const showNormal = !isTransfer && !isDebt;
   const normalSection = $('#tx-normal-section');
   const transferSection = $('#tx-transfer-section');
-  if (normalSection) normalSection.style.display = isTransfer ? 'none' : 'block';
+  const debtSection = $('#tx-debt-section');
+  if (normalSection) normalSection.style.display = showNormal ? 'block' : 'none';
   if (transferSection) transferSection.style.display = isTransfer ? 'block' : 'none';
+  if (debtSection) debtSection.style.display = isDebt ? 'block' : 'none';
+}
+
+function renderTxDebtPick() {
+  const html = state.accounts.map(a => {
+    return `<button class="pick" data-id="${a.id}">${a.name}</button>`;
+  }).join('');
+  const debtPick = $('#tx-debt-acct-pick');
+  if (debtPick) {
+    debtPick.innerHTML = html || '<div style="font-size:12px;color:var(--t3);padding:8px 0;">无关联账户</div>';
+    $$('#tx-debt-acct-pick .pick').forEach(b => b.onclick = () => {
+      $$('#tx-debt-acct-pick .pick').forEach(x => x.classList.remove('on'));
+      b.classList.add('on');
+    });
+  }
+  // Debt direction toggle
+  $$('#tx-debt-dir-pick .pick').forEach(b => {
+    b.onclick = () => {
+      $$('#tx-debt-dir-pick .pick').forEach(x => x.classList.remove('on'));
+      b.classList.add('on');
+      state.debtDir = b.dataset.dir;
+    };
+  });
 }
 
 function renderTxTransferPick() {
@@ -671,7 +703,6 @@ function saveTx() {
     const toAcct = state.accounts.find(a => a.id === toId);
     if (fromAcct) fromAcct.balance -= (amt + fee);
     if (toAcct) toAcct.balance += amt;
-    // 如果有手续费，从转出账户额外扣除（已包含在上面），手续费作为一笔支出记录
     const tx = {
       id: genId(), type: 'transfer', amount: amt,
       category: 'transfer', categoryName: '转账', categoryIcon: '💸',
@@ -685,6 +716,39 @@ function saveTx() {
     save();
     closeSheet('sheet-tx');
     toast('转账成功');
+    haptic('success');
+    render();
+    return;
+  }
+
+  // ===== 欠款逻辑 =====
+  if (state.txType === 'debt') {
+    const person = $('#tx-debt-person').value.trim();
+    if (!person) { toast('请输入对方姓名'); return; }
+    const dir = state.debtDir || 'owed';
+    const debtAcctBtn = document.querySelector('#tx-debt-acct-pick .pick.on');
+    const acctId = debtAcctBtn ? debtAcctBtn.dataset.id : null;
+    const isOwed = dir === 'owed'; // true = 我欠别人, false = 别人欠我
+    const tx = {
+      id: genId(), type: 'debt', amount: amt,
+      debtDir: dir, debtPerson: person,
+      category: 'debt', categoryName: isOwed ? `欠 ${person}` : `${person} 欠`, categoryIcon: isOwed ? '📤' : '📥',
+      note, accountId: acctId, date,
+      tags,
+      time: timeStr,
+      timestamp: now.toISOString(),
+      isSubscription: false,
+      settled: false
+    };
+    state.transactions.unshift(tx);
+    // 如果关联了账户：我欠别人则账户余额减少，别人欠我则暂不变化（等还款时再记）
+    if (acctId) {
+      const acct = state.accounts.find(a => a.id === acctId);
+      if (acct && isOwed) acct.balance -= amt;
+    }
+    save();
+    closeSheet('sheet-tx');
+    toast(isOwed ? '已记录欠款' : '已记录应收款');
     haptic('success');
     render();
     return;
@@ -721,12 +785,13 @@ function saveTx() {
 $$('#tx-type .type-opt').forEach(b => {
   b.onclick = () => {
     state.txType = b.dataset.t;
-    $$('#tx-type .type-opt').forEach(x => { x.classList.remove('on','exp','inc','transfer'); });
+    $$('#tx-type .type-opt').forEach(x => { x.classList.remove('on','exp','inc','transfer','debt'); });
     if (state.txType === 'expense') b.classList.add('on', 'exp');
     else if (state.txType === 'income') { b.classList.add('on', 'inc'); state.selectedCat = 'salary'; }
-    else b.classList.add('on', 'transfer');
+    else if (state.txType === 'transfer') b.classList.add('on', 'transfer');
+    else if (state.txType === 'debt') b.classList.add('on', 'debt');
     updateTxTypeUI();
-    if (state.txType !== 'transfer') renderCatGrid();
+    if (state.txType !== 'transfer' && state.txType !== 'debt') renderCatGrid();
   };
 });
 
@@ -1925,14 +1990,15 @@ function renderOverview() {
     const acctColor = theme.accent;
     const isSub = t.isSubscription;
     const isTransfer = t.type === 'transfer';
-    const catKey = isSub ? 'sub' : (isTransfer ? 'transfer' : t.category);
-    const iconColor = isTransfer ? '#64a0ff' : (catColors[catKey] || catColors.other);
-    const iconBg = isTransfer ? 'rgba(100,160,255,0.15)' : (catBgColors[catKey] || catBgColors.other);
-    const iconContent = isSub ? txIconSvg('sub') : (isTransfer ? '<path d="M7 7h10M7 7l3-3M7 7l3 3M17 17H7M17 17l-3 3M17 17l-3-3"/>' : txIconSvg(t.category));
-    const badge = isSub ? '<span class="tx-badge">订阅</span>' : (isTransfer ? '<span class="tx-badge" style="background:rgba(100,160,255,0.2);color:#64a0ff;">转账</span>' : '');
-    const amtClass = isTransfer ? '' : (t.type === 'income' ? 'in' : 'out');
-    const acctLabel = isTransfer ? `${acct?.name || '未知'} → ${toAcct?.name || '未知'}` : `${acct?.name || '未知'}`;
-    const amtLabel = isTransfer ? `¥${fmt(t.amount)}` : `${t.type==='income'?'+':'-'}¥${fmt(t.amount)}`;
+    const isDebt = t.type === 'debt';
+    const catKey = isSub ? 'sub' : (isTransfer ? 'transfer' : (isDebt ? 'debt' : t.category));
+    const iconColor = isTransfer ? '#64a0ff' : (isDebt ? '#ffa500' : (catColors[catKey] || catColors.other));
+    const iconBg = isTransfer ? 'rgba(100,160,255,0.15)' : (isDebt ? 'rgba(255,165,0,0.15)' : (catBgColors[catKey] || catBgColors.other));
+    const iconContent = isSub ? txIconSvg('sub') : (isTransfer ? '<path d="M7 7h10M7 7l3-3M7 7l3 3M17 17H7M17 17l-3 3M17 17l-3-3"/>' : (isDebt ? (t.debtDir === 'owed' ? '<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>' : '<path d="M12 21V9M7 14l5-5 5 5M5 3h14"/>') : txIconSvg(t.category)));
+    const badge = isSub ? '<span class="tx-badge">订阅</span>' : (isTransfer ? '<span class="tx-badge" style="background:rgba(100,160,255,0.2);color:#64a0ff;">转账</span>' : (isDebt ? `<span class="tx-badge" style="background:rgba(255,165,0,0.2);color:#ffa500;">${t.debtDir === 'owed' ? '我欠' : '欠我'}</span>` : ''));
+    const amtClass = (isTransfer || isDebt) ? '' : (t.type === 'income' ? 'in' : 'out');
+    const acctLabel = isTransfer ? `${acct?.name || '未知'} → ${toAcct?.name || '未知'}` : (isDebt ? `${t.debtPerson || '未知'}${acct ? ' · ' + acct.name : ''}` : `${acct?.name || '未知'}`);
+    const amtLabel = isTransfer ? `¥${fmt(t.amount)}` : (isDebt ? `${t.debtDir === 'owed' ? '-' : '+'}¥${fmt(t.amount)}` : `${t.type==='income'?'+':'-'}¥${fmt(t.amount)}`);
     return `<div class="tx-item" onclick="openTxDetail('${t.id}')">
       <div class="tx-item-icon" style="background:${iconBg};">
         <svg viewBox="0 0 24 24" style="stroke:${iconColor};fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;">${iconContent.match(/<svg[^>]*>([\s\S]*)<\/svg>/)?.[1] || iconContent}</svg>
@@ -1941,7 +2007,7 @@ function renderOverview() {
         <div class="tx-item-name">${t.categoryName} ${badge}</div>
         <div class="tx-item-meta"><span class="tx-acct-dot" style="background:${acctColor};"></span>${acctLabel} · ${t.time}</div>
       </div>
-      <div class="tx-item-amt ${amtClass}" style="${isTransfer ? 'color:var(--t2);' : ''}">${amtLabel}</div>
+      <div class="tx-item-amt ${amtClass}" style="${isTransfer ? 'color:var(--t2);' : (isDebt ? (t.debtDir === 'owed' ? '' : 'color:var(--green);') : '')}">${amtLabel}</div>
     </div>`;
   }).join('');
 }
@@ -2115,6 +2181,7 @@ function renderTx() {
   if (filter === 'expense') txs = txs.filter(t => t.type === 'expense');
   if (filter === 'income') txs = txs.filter(t => t.type === 'income');
   if (filter === 'transfer') txs = txs.filter(t => t.type === 'transfer');
+  if (filter === 'debt') txs = txs.filter(t => t.type === 'debt');
   if (filter === 'sub') txs = txs.filter(t => t.isSubscription);
   if (state.tagFilter) txs = txs.filter(t => Array.isArray(t.tags) && t.tags.includes(state.tagFilter));
   txs.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
@@ -2184,34 +2251,35 @@ function renderTx() {
       const acctColor = theme.accent;
       const isSub = t.isSubscription;
       const isTransfer = t.type === 'transfer';
-      const catKey = isSub ? 'sub' : (isTransfer ? 'transfer' : t.category);
-      const iconColor = catColors[catKey] || catColors.other;
-      const iconBg = catBgColors[catKey] || catBgColors.other;
-      const iconContent = isSub ? txIconSvg('sub') : (isTransfer ? '<path d="M7 7h10M7 7l3-3M7 7l3 3M17 17H7M17 17l-3 3M17 17l-3-3"/>' : txIconSvg(t.category));
-      const badge = isSub ? '<span class="tx-badge">订阅</span>' : (isTransfer ? '<span class="tx-badge" style="background:rgba(100,160,255,0.2);color:#64a0ff;">转账</span>' : '');
-      const amtClass = isTransfer ? '' : (t.type === 'income' ? 'in' : 'out');
+      const isDebt = t.type === 'debt';
+      const catKey = isSub ? 'sub' : (isTransfer ? 'transfer' : (isDebt ? 'debt' : t.category));
+      const iconColor = isTransfer ? '#64a0ff' : (isDebt ? '#ffa500' : (catColors[catKey] || catColors.other));
+      const iconBg = isTransfer ? 'rgba(100,160,255,0.15)' : (isDebt ? 'rgba(255,165,0,0.15)' : (catBgColors[catKey] || catBgColors.other));
+      const iconContent = isSub ? txIconSvg('sub') : (isTransfer ? '<path d="M7 7h10M7 7l3-3M7 7l3 3M17 17H7M17 17l-3 3M17 17l-3-3"/>' : (isDebt ? (t.debtDir === 'owed' ? '<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>' : '<path d="M12 21V9M7 14l5-5 5 5M5 3h14"/>') : txIconSvg(t.category)));
+      const badge = isSub ? '<span class="tx-badge">订阅</span>' : (isTransfer ? '<span class="tx-badge" style="background:rgba(100,160,255,0.2);color:#64a0ff;">转账</span>' : (isDebt ? `<span class="tx-badge" style="background:rgba(255,165,0,0.2);color:#ffa500;">${t.debtDir === 'owed' ? '我欠' : '欠我'}</span>` : ''));
+      const amtClass = (isTransfer || isDebt) ? '' : (t.type === 'income' ? 'in' : 'out');
       const tagsHtml = (Array.isArray(t.tags) && t.tags.length > 0)
         ? `<div class="tx-item-tags">${t.tags.map(tg => `<span class="tx-item-tag">#${escapeHtml(tg)}</span>`).join('')}</div>`
         : '';
 
-      // 转账显示：转出账户 → 转入账户
+      // 显示标签
       const acctLabel = isTransfer
         ? `${acct?.name || '未知'} → ${toAcct?.name || '未知'}`
-        : `${acct?.name || '未知'}`;
+        : (isDebt ? `${t.debtPerson || '未知'}${acct ? ' · ' + acct.name : ''}` : `${acct?.name || '未知'}`);
       const amtLabel = isTransfer
         ? `¥${fmt(t.amount)}${t.fee ? ' <span style="font-size:11px;color:var(--t3);">+手续费¥' + fmt(t.fee) + '</span>' : ''}`
-        : `${t.type==='income'?'+':'-'}¥${fmt(t.amount)}`;
+        : (isDebt ? `${t.debtDir === 'owed' ? '-' : '+'}¥${fmt(t.amount)}` : `${t.type==='income'?'+':'-'}¥${fmt(t.amount)}`);
 
       html += `<div class="tx-item" onclick="openTxDetail('${t.id}')">
-        <div class="tx-item-icon" style="background:${isTransfer ? 'rgba(100,160,255,0.15)' : iconBg};">
-          <svg viewBox="0 0 24 24" style="stroke:${isTransfer ? '#64a0ff' : iconColor};fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;">${iconContent.match(/<svg[^>]*>([\s\S]*)<\/svg>/)?.[1] || iconContent}</svg>
+        <div class="tx-item-icon" style="background:${iconBg};">
+          <svg viewBox="0 0 24 24" style="stroke:${iconColor};fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;">${iconContent.match(/<svg[^>]*>([\s\S]*)<\/svg>/)?.[1] || iconContent}</svg>
         </div>
         <div class="tx-item-body">
           <div class="tx-item-name">${t.categoryName} ${badge}</div>
           <div class="tx-item-meta"><span class="tx-acct-dot" style="background:${acctColor};"></span>${acctLabel} · ${t.time}</div>
           ${tagsHtml}
         </div>
-        <div class="tx-item-amt ${amtClass}" style="${isTransfer ? 'color:var(--t2);' : ''}">${amtLabel}</div>
+        <div class="tx-item-amt ${amtClass}" style="${isTransfer ? 'color:var(--t2);' : (isDebt ? (t.debtDir === 'owed' ? '' : 'color:var(--green);') : '')}">${amtLabel}</div>
       </div>`;
     });
 

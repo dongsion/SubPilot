@@ -149,7 +149,7 @@ input { font-family:inherit; }
 .wallet-wrap { position:relative; margin-bottom:16px; padding:0; }
 
 /* 账户页固定头部（标题+总资产），下拉时只有卡面滚动 */
-.acct-sticky-header { position:sticky; top:0; z-index:50; background:var(--bg); padding-bottom:4px; }
+.acct-sticky-header { position:sticky; top:0; z-index:200; background:var(--bg); padding-bottom:4px; }
 .wallet-container { position:relative; background:transparent; border-radius:0; padding:0; box-shadow:none; border:none; overflow:visible; }
 
 /* 卡片区 - 钱包容器 - EchoAI扇形堆叠效果 */
@@ -471,6 +471,7 @@ textarea.form-i{resize:none;min-height:80px;}
 .type-opt.on.exp{background:rgba(255,92,72,0.85);color:#fff;}
 .type-opt.on.inc{background:rgba(82,204,130,0.85);color:#fff;}
 .type-opt.on.transfer{background:rgba(100,160,255,0.85);color:#fff;}
+.type-opt.on.debt{background:rgba(255,165,0,0.85);color:#fff;}
 .cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px 8px;margin-bottom:8px;}
 .cat-i{display:flex;flex-direction:column;align-items:center;gap:6px;}
 .cat-ic{width:48px;height:48px;border-radius:14px;background:rgba(255,255,255,0.04);display:flex;align-items:center;justify-content:center;font-size:22px;border:1px solid var(--border);transition:all .15s;}
@@ -848,6 +849,7 @@ textarea.form-i{resize:none;min-height:80px;}
       <button class="pl off" data-f="expense">支出</button>
       <button class="pl off" data-f="income">收入</button>
       <button class="pl off" data-f="transfer">转账</button>
+      <button class="pl off" data-f="debt">欠款</button>
       <button class="pl off" data-f="sub">订阅</button>
       <button class="pl off" id="tx-tag-pill" onclick="toggleTagFilter(event)">标签</button>
     </div>
@@ -1260,6 +1262,7 @@ textarea.form-i{resize:none;min-height:80px;}
       <button class="type-opt on exp" data-t="expense">支出</button>
       <button class="type-opt" data-t="income">收入</button>
       <button class="type-opt" data-t="transfer">转账</button>
+      <button class="type-opt" data-t="debt">欠款</button>
     </div>
     <!-- 转账专用区域 -->
     <div id="tx-transfer-section" style="display:none;">
@@ -1274,6 +1277,24 @@ textarea.form-i{resize:none;min-height:80px;}
       <div class="form-g">
         <label class="form-l">手续费（可选）</label>
         <input type="text" class="form-i" id="tx-fee-input" placeholder="0.00" inputmode="decimal">
+      </div>
+    </div>
+    <!-- 欠款专用区域 -->
+    <div id="tx-debt-section" style="display:none;">
+      <div class="form-g">
+        <label class="form-l">欠款类型</label>
+        <div class="row-pick" id="tx-debt-dir-pick">
+          <button class="pick on" data-dir="owed">我欠别人</button>
+          <button class="pick" data-dir="owe-me">别人欠我</button>
+        </div>
+      </div>
+      <div class="form-g">
+        <label class="form-l">对方姓名</label>
+        <input type="text" class="form-i" id="tx-debt-person" placeholder="如：张三、小李">
+      </div>
+      <div class="form-g">
+        <label class="form-l">关联账户（可选）</label>
+        <div class="row-pick" id="tx-debt-acct-pick"></div>
       </div>
     </div>
     <!-- 支出/收入专用区域 -->
