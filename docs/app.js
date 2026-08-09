@@ -3225,9 +3225,14 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '2.5.1';
+const APP_VERSION = '2.5.2';
 const APP_BUILD = '2026-08-09';
 const CHANGELOG = [
+  { ver: '2.5.2', date: '2026-08-09', items: [
+    '修复自定义食物按钮点击无反应的问题（浏览器缓存旧版JS）',
+    '新增Service Worker自动刷新机制',
+    '脚本文件添加版本号参数，强制绕过浏览器缓存'
+  ]},
   { ver: '2.5.1', date: '2026-08-09', items: [
     '新增自定义食物输入：可手动输入食物名称和热量',
     '支持自定义蛋白质、碳水、脂肪和份量',
