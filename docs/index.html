@@ -502,6 +502,30 @@ textarea.form-i{resize:none;min-height:80px;}
 .cat-ic{width:48px;height:48px;border-radius:14px;background:rgba(255,255,255,0.04);display:flex;align-items:center;justify-content:center;font-size:22px;border:1px solid var(--border);transition:all .15s;}
 .cat-i.on .cat-ic{background:var(--gold-bg);border-color:var(--gold-bd);transform:scale(1.05);}
 .cat-nm{font-size:10px;color:var(--t2);font-weight:500;}
+/* Food picker */
+.food-picker{margin-bottom:8px;}
+.food-list{max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:12px;background:var(--card2);display:none;}
+.food-list.show{display:block;}
+.food-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;}
+.food-item:last-child{border-bottom:none;}
+.food-item:active{background:rgba(255,255,255,0.04);}
+.food-item.on{background:var(--gold-bg);}
+.food-emoji{font-size:22px;flex-shrink:0;width:32px;text-align:center;}
+.food-info{flex:1;min-width:0;}
+.food-name{font-size:13px;font-weight:600;}
+.food-nutri{font-size:10px;color:var(--t3);margin-top:1px;}
+.food-kcal{font-size:13px;font-weight:700;color:var(--orange);font-family:var(--font-mono);flex-shrink:0;}
+.food-selected-card{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;background:var(--gold-bg);border:1px solid var(--gold-bd);}
+.food-selected-card .fsc-emoji{font-size:28px;}
+.food-selected-card .fsc-info{flex:1;}
+.food-selected-card .fsc-name{font-size:14px;font-weight:700;}
+.food-selected-card .fsc-detail{font-size:11px;color:var(--t3);margin-top:2px;}
+.food-selected-card .fsc-kcal{font-size:18px;font-weight:700;color:var(--orange);font-family:var(--font-mono);}
+.food-selected-card .fsc-clear{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--t3);cursor:pointer;flex-shrink:0;}
+/* Calorie badge in tx list */
+.tx-cal-badge{display:inline-block;font-size:9px;font-weight:700;padding:2px 5px;border-radius:4px;background:rgba(245,158,11,0.15);color:var(--orange);margin-left:4px;vertical-align:middle;}
+.tx-food-badge{display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:6px;background:rgba(245,158,11,0.12);color:var(--orange);border:1px solid rgba(245,158,11,0.2);}
+.cal-day-kcal{font-size:12px;font-weight:700;color:var(--orange);padding:8px 12px;background:rgba(245,158,11,0.08);border-radius:8px;margin-bottom:8px;text-align:center;}
 .sub-detail-hero{border-radius:20px;padding:24px;display:flex;align-items:center;gap:16px;margin-bottom:20px;position:relative;overflow:hidden;border:1px solid var(--border);}
 .sub-detail-hero::after{content:'';position:absolute;bottom:-30px;left:-20px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,0.03),transparent 70%);}
 .sdh-ic{width:60px;height:60px;border-radius:16px;display:flex;align-items:center;justify-content:center;background:var(--card2);border:1px solid var(--border);flex-shrink:0;overflow:hidden;}
@@ -829,6 +853,11 @@ textarea.form-i{resize:none;min-height:80px;}
           <div class="hero-label">收入</div>
           <div class="hero-val" style="color:var(--green);"><span class="hero-cur">¥</span><span id="hero-income">0</span></div>
         </div>
+        <div class="hero-divider"></div>
+        <div class="hero-item" id="hero-cal-item" style="display:none;">
+          <div class="hero-label">今日热量</div>
+          <div class="hero-val" style="color:var(--orange);"><span id="hero-cal-intake">0</span><span class="hero-cur" style="font-size:12px;"> / <span id="hero-cal-goal">1800</span> kcal</span></div>
+        </div>
       </div>
       <div class="hm" id="hero-meta"></div>
     </div>
@@ -952,6 +981,10 @@ textarea.form-i{resize:none;min-height:80px;}
     <div class="info-g">
       <div class="info-r" onclick="toggleTheme()"><span class="info-l">🌙 主题</span><span class="info-v" style="color:var(--gold);" id="theme-status">深色 ›</span></div>
     </div>
+    <div class="sec" style="margin-top:8px;"><span class="st" style="font-size:13px;color:var(--t3);">饮食</span></div>
+    <div class="info-g">
+      <div class="info-r" onclick="openCalorieSettings()"><span class="info-l">🔥 每日热量目标</span><span class="info-v" style="color:var(--gold);" id="calorie-goal-status">1800 kcal ›</span></div>
+    </div>
     <div class="sec" style="margin-top:8px;"><span class="st" style="font-size:13px;color:var(--t3);">通知</span></div>
     <div class="info-g">
       <div class="info-r" onclick="toggleNotifications()"><span class="info-l">🔔 到期提醒</span><span class="info-v" style="color:var(--gold);" id="notif-status">未开启 ›</span></div>
@@ -964,14 +997,14 @@ textarea.form-i{resize:none;min-height:80px;}
       <div class="info-r" onclick="if(confirm('确定清除所有数据？此操作不可撤销。')){clearAll();toast('数据已清除');}"><span class="info-l">清除所有数据</span><span class="info-v" style="color:var(--red);">›</span></div>
     </div>
     <div class="info-g">
-      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v2.4.0 ›</span></div>
+      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v2.5.0 ›</span></div>
       <div class="info-r" onclick="showChangelog()"><span class="info-l">更新日志</span><span class="info-v" style="color:var(--gold);">查看 ›</span></div>
       <div class="info-r" onclick="checkUpdate()"><span class="info-l">检查更新</span><span class="info-v" style="color:var(--gold);" id="update-status">›</span></div>
       <div class="info-r"><span class="info-l">数据存储</span><span class="info-v" style="color:var(--t3);">仅本地浏览器</span></div>
     </div>
     <div style="text-align:center;padding:40px 20px;color:var(--t3);font-size:12px;">
       <div style="margin-bottom:8px;font-size:20px;letter-spacing:1px;">Countra</div>
-      <div data-ver-footer style="margin-bottom:4px;">转便数快 · v2.4.0 (Build 2026.08.09)</div>
+      <div data-ver-footer style="margin-bottom:4px;">转便数快 · v2.5.0 (Build 2026.08.09)</div>
       <div>所有数据默认仅保存在本地，开启云同步后加密上传至 Supabase</div>
     </div>
     <input type="file" id="import-file" accept=".json" style="display:none;">
@@ -1328,6 +1361,17 @@ textarea.form-i{resize:none;min-height:80px;}
     <div class="form-g">
       <label class="form-l">分类</label>
       <div class="cat-grid" id="cat-grid"></div>
+    </div>
+    <!-- 饮食记录区域（仅餐饮分类显示） -->
+    <div id="tx-food-section" style="display:none;">
+      <div class="form-g">
+        <label class="form-l">📸 记录饮食 <span style="font-size:11px;color:var(--t3);font-weight:400;">选食物自动填热量</span></label>
+        <div class="food-picker" id="food-picker">
+          <input type="text" class="form-i" id="food-search" placeholder="搜索食物..." oninput="filterFoodList()">
+        </div>
+        <div class="food-list" id="food-list"></div>
+        <div id="food-selected" style="display:none;"></div>
+      </div>
     </div>
     <div class="form-g">
       <label class="form-l">账户</label>

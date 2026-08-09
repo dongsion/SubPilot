@@ -186,6 +186,70 @@ const INCOME_CATS = [
   { id: 'other_in', icon: '💡', name: '其他' }
 ];
 
+// ===== Food Nutrition Database (per 100g, common Chinese foods) =====
+const FOOD_DB = [
+  { name: '白米饭', emoji: '🍚', kcal: 116, p: 2.6, c: 25.9, f: 0.3, gram: 200 },
+  { name: '炒饭', emoji: '🍳', kcal: 174, p: 5.8, c: 25, f: 5.1, gram: 300 },
+  { name: '面条', emoji: '🍜', kcal: 110, p: 3.5, c: 22, f: 1.2, gram: 300 },
+  { name: '汤面', emoji: '🍜', kcal: 85, p: 4.2, c: 14, f: 1.8, gram: 350 },
+  { name: '炒面', emoji: '🍝', kcal: 163, p: 5.6, c: 24, f: 4.3, gram: 300 },
+  { name: '饺子', emoji: '🥟', kcal: 240, p: 9.5, c: 30, f: 8, gram: 200 },
+  { name: '包子', emoji: '🥟', kcal: 227, p: 8.4, c: 37, f: 4.5, gram: 150 },
+  { name: '馒头', emoji: '🍞', kcal: 223, p: 7, c: 47, f: 1.1, gram: 100 },
+  { name: '粥', emoji: '🍚', kcal: 46, p: 1.1, c: 9.9, f: 0.2, gram: 300 },
+  { name: '咖喱饭', emoji: '🍛', kcal: 140, p: 5.5, c: 20, f: 4, gram: 350 },
+  { name: '炒菜(肉)', emoji: '🥘', kcal: 165, p: 12, c: 8, f: 10, gram: 250 },
+  { name: '炒菜(素)', emoji: '🥬', kcal: 85, p: 3.5, c: 6, f: 5, gram: 250 },
+  { name: '红烧肉', emoji: '🥩', kcal: 257, p: 14, c: 5, f: 22, gram: 200 },
+  { name: '宫保鸡丁', emoji: '🍗', kcal: 197, p: 15, c: 8, f: 12, gram: 250 },
+  { name: '番茄炒蛋', emoji: '🍅', kcal: 107, p: 6.5, c: 5, f: 7, gram: 200 },
+  { name: '麻婆豆腐', emoji: '🌶️', kcal: 128, p: 7, c: 4, f: 9, gram: 250 },
+  { name: '鱼香肉丝', emoji: '🍖', kcal: 175, p: 11, c: 10, f: 10, gram: 250 },
+  { name: '回锅肉', emoji: '🥓', kcal: 215, p: 12, c: 8, f: 16, gram: 200 },
+  { name: '糖醋里脊', emoji: '🍖', kcal: 195, p: 13, c: 18, f: 8, gram: 250 },
+  { name: '清蒸鱼', emoji: '🐟', kcal: 120, p: 18, c: 1, f: 5, gram: 250 },
+  { name: '红烧鱼', emoji: '🐟', kcal: 165, p: 16, c: 5, f: 9, gram: 250 },
+  { name: '水煮鱼', emoji: '🐟', kcal: 178, p: 15, c: 3, f: 12, gram: 300 },
+  { name: '火锅', emoji: '🍲', kcal: 150, p: 8, c: 10, f: 9, gram: 500 },
+  { name: '麻辣烫', emoji: '🍲', kcal: 130, p: 7, c: 12, f: 7, gram: 400 },
+  { name: '烧烤', emoji: '🍢', kcal: 210, p: 14, c: 6, f: 15, gram: 300 },
+  { name: '炸鸡', emoji: '🍗', kcal: 246, p: 16, c: 12, f: 16, gram: 200 },
+  { name: '汉堡', emoji: '🍔', kcal: 256, p: 12, c: 30, f: 10, gram: 200 },
+  { name: '披萨', emoji: '🍕', kcal: 266, p: 11, c: 33, f: 10, gram: 200 },
+  { name: '寿司', emoji: '🍣', kcal: 140, p: 6, c: 28, f: 1.5, gram: 200 },
+  { name: '沙拉', emoji: '🥗', kcal: 85, p: 3, c: 8, f: 4.5, gram: 200 },
+  { name: '三明治', emoji: '🥪', kcal: 210, p: 9, c: 28, f: 7, gram: 150 },
+  { name: '咖啡', emoji: '☕', kcal: 45, p: 0.3, c: 7, f: 1.5, gram: 350 },
+  { name: '拿铁', emoji: '☕', kcal: 65, p: 3.5, c: 6, f: 3, gram: 350 },
+  { name: '奶茶', emoji: '🧋', kcal: 95, p: 1.5, c: 16, f: 3, gram: 500 },
+  { name: '果汁', emoji: '🧃', kcal: 48, p: 0.5, c: 12, f: 0.1, gram: 300 },
+  { name: '可乐', emoji: '🥤', kcal: 43, p: 0, c: 10.6, f: 0, gram: 330 },
+  { name: '蛋糕', emoji: '🍰', kcal: 347, p: 5, c: 52, f: 14, gram: 100 },
+  { name: '面包', emoji: '🍞', kcal: 265, p: 9, c: 49, f: 3.2, gram: 100 },
+  { name: '饼干', emoji: '🍪', kcal: 433, p: 7, c: 67, f: 16, gram: 50 },
+  { name: '冰淇淋', emoji: '🍦', kcal: 167, p: 3.5, c: 24, f: 6, gram: 100 },
+  { name: '水果', emoji: '🍎', kcal: 52, p: 0.3, c: 14, f: 0.2, gram: 200 },
+  { name: '酸奶', emoji: '🥛', kcal: 72, p: 2.5, c: 9.3, f: 2.7, gram: 200 },
+  { name: '牛奶', emoji: '🥛', kcal: 54, p: 3, c: 3.4, f: 3.2, gram: 250 },
+  { name: '豆浆', emoji: '🥛', kcal: 31, p: 1.8, c: 1.1, f: 1.6, gram: 300 },
+  { name: '鸡蛋', emoji: '🥚', kcal: 144, p: 13.3, c: 2.8, f: 8.8, gram: 50 },
+  { name: '煎饼果子', emoji: '🫓', kcal: 188, p: 6, c: 28, f: 6, gram: 200 },
+  { name: '肉夹馍', emoji: '🥙', kcal: 228, p: 10, c: 30, f: 8, gram: 200 },
+  { name: '凉皮', emoji: '🍜', kcal: 137, p: 4, c: 25, f: 2, gram: 300 },
+  { name: '米线', emoji: '🍜', kcal: 95, p: 3.5, c: 16, f: 1.5, gram: 350 },
+  { name: '螺蛳粉', emoji: '🍜', kcal: 128, p: 5, c: 18, f: 4.5, gram: 400 },
+  { name: '兰州拉面', emoji: '🍜', kcal: 98, p: 4.5, c: 16, f: 2, gram: 350 },
+  { name: '黄焖鸡米饭', emoji: '🍗', kcal: 145, p: 8, c: 18, f: 4.5, gram: 400 },
+  { name: '麻辣香锅', emoji: '🍲', kcal: 168, p: 8, c: 10, f: 11, gram: 400 },
+  { name: '酸菜鱼', emoji: '🐟', kcal: 115, p: 14, c: 4, f: 5.5, gram: 350 },
+  { name: '小龙虾', emoji: '🦞', kcal: 92, p: 14, c: 3, f: 3, gram: 300 },
+  { name: '日式拉面', emoji: '🍜', kcal: 105, p: 6, c: 15, f: 2.5, gram: 400 },
+  { name: '韩式拌饭', emoji: '🍚', kcal: 142, p: 6, c: 20, f: 4, gram: 350 },
+  { name: '泰式咖喱', emoji: '🍛', kcal: 135, p: 6, c: 16, f: 5.5, gram: 350 },
+  { name: '牛排', emoji: '🥩', kcal: 250, p: 26, c: 0, f: 17, gram: 200 },
+  { name: '意面', emoji: '🍝', kcal: 158, p: 6, c: 25, f: 4, gram: 250 },
+];
+
 // Account card color classes
 const CARD_COLORS = ['dark1', 'dark2', 'dark3', 'dark4'];
 
@@ -220,7 +284,8 @@ let state = {
     appPassword: null,
     notifications: false,
     exRates: { USD: 7.25, EUR: 7.85, GBP: 9.20, JPY: 0.048, HKD: 0.93, TWD: 0.22 },
-    defaultCurrency: 'CNY'
+    defaultCurrency: 'CNY',
+    dailyCalorieGoal: 1800
   },
   qrcodes: [],
   invoices: [],
@@ -679,6 +744,75 @@ function renderCatGrid() {
     state.selectedCat = el.dataset.c;
     renderCatGrid();
   });
+  // Show food section only for dining category
+  const foodSection = $('#tx-food-section');
+  if (foodSection) {
+    const showFood = state.txType === 'expense' && state.selectedCat === 'food';
+    foodSection.style.display = showFood ? 'block' : 'none';
+    if (showFood && !state.selectedFood) renderFoodList('');
+  }
+}
+
+// ===== Food Picker =====
+function renderFoodList(query) {
+  const list = $('#food-list');
+  if (!list) return;
+  const q = (query || '').toLowerCase().trim();
+  const items = q
+    ? FOOD_DB.filter(f => f.name.toLowerCase().includes(q))
+    : FOOD_DB.slice(0, 20);
+  if (items.length === 0) {
+    list.innerHTML = `<div style="padding:16px;text-align:center;font-size:12px;color:var(--t3);">未找到「${escapeHtml(query)}」</div>`;
+    list.classList.add('show');
+    return;
+  }
+  list.innerHTML = items.map(f => {
+    const totalKcal = Math.round(f.kcal * f.gram / 100);
+    return `<div class="food-item" onclick="selectFood('${f.name.replace(/'/g,"\\'")}')">
+      <div class="food-emoji">${f.emoji}</div>
+      <div class="food-info">
+        <div class="food-name">${f.name}</div>
+        <div class="food-nutri">P${f.p}g · C${f.c}g · F${f.f}g · ${f.gram}g/份</div>
+      </div>
+      <div class="food-kcal">~${totalKcal}</div>
+    </div>`;
+  }).join('');
+  list.classList.add('show');
+}
+
+function filterFoodList() {
+  const q = $('#food-search').value;
+  renderFoodList(q);
+}
+
+function selectFood(name) {
+  const food = FOOD_DB.find(f => f.name === name);
+  if (!food) return;
+  state.selectedFood = food;
+  const totalKcal = Math.round(food.kcal * food.gram / 100);
+  const totalP = (food.p * food.gram / 100).toFixed(1);
+  const totalC = (food.c * food.gram / 100).toFixed(1);
+  const totalF = (food.f * food.gram / 100).toFixed(1);
+  $('#food-list').classList.remove('show');
+  $('#food-search').value = '';
+  const sel = $('#food-selected');
+  sel.style.display = 'block';
+  sel.innerHTML = `<div class="food-selected-card">
+    <div class="fsc-emoji">${food.emoji}</div>
+    <div class="fsc-info">
+      <div class="fsc-name">${food.name}</div>
+      <div class="fsc-detail">P${totalP}g · C${totalC}g · F${totalF}g · ${food.gram}g</div>
+    </div>
+    <div class="fsc-kcal">~${totalKcal}<span style="font-size:10px;color:var(--t3);"> kcal</span></div>
+    <div class="fsc-clear" onclick="clearFoodSelection()">✕</div>
+  </div>`;
+}
+
+function clearFoodSelection() {
+  state.selectedFood = null;
+  $('#food-selected').style.display = 'none';
+  $('#food-selected').innerHTML = '';
+  renderFoodList('');
 }
 
 function renderTxAcctPick() {
@@ -784,11 +918,26 @@ function saveTx() {
     timestamp: now.toISOString(),
     isSubscription: false
   };
+  // 保存食物热量信息（仅餐饮支出且有选中食物时）
+  if (state.txType === 'expense' && state.selectedFood) {
+    const f = state.selectedFood;
+    tx.foodName = f.name;
+    tx.foodEmoji = f.emoji;
+    tx.foodKcal = Math.round(f.kcal * f.gram / 100);
+    tx.foodGram = f.gram;
+    tx.foodP = +(f.p * f.gram / 100).toFixed(1);
+    tx.foodC = +(f.c * f.gram / 100).toFixed(1);
+    tx.foodF = +(f.f * f.gram / 100).toFixed(1);
+  }
   state.transactions.unshift(tx);
   // Update account balance
   const acct = state.accounts.find(a => a.id === acctId);
   if (acct) {
     acct.balance += state.txType === 'expense' ? -amt : amt;
+  }
+  // 清除食物选择
+  if (state.selectedFood) {
+    clearFoodSelection();
   }
   save();
   closeSheet('sheet-tx');
@@ -1988,6 +2137,18 @@ function renderOverview() {
   }
 
   // overview-tx 已合并到 tx-list，不再单独渲染
+
+  // 今日热量环
+  const calItem = $('#hero-cal-item');
+  if (calItem) {
+    const todayStr = today();
+    const todayFoodTx = state.transactions.filter(t => t.date === todayStr && t.type === 'expense' && t.foodKcal);
+    const todayKcal = todayFoodTx.reduce((s, t) => s + (t.foodKcal || 0), 0);
+    const goal = state.settings.dailyCalorieGoal || 1800;
+    $('#hero-cal-intake').textContent = todayKcal;
+    $('#hero-cal-goal').textContent = goal;
+    calItem.style.display = todayKcal > 0 ? 'flex' : 'none';
+  }
 }
 
 function renderSubCard(sub) {
@@ -2236,6 +2397,10 @@ function renderTx() {
       const tagsHtml = (Array.isArray(t.tags) && t.tags.length > 0)
         ? `<div class="tx-item-tags">${t.tags.map(tg => `<span class="tx-item-tag">#${escapeHtml(tg)}</span>`).join('')}</div>`
         : '';
+      // 餐饮食物热量标签
+      const foodBadge = (t.foodKcal && t.foodName)
+        ? `<span class="tx-food-badge">${t.foodEmoji || '🍽️'} ${escapeHtml(t.foodName)} · ${t.foodKcal}kcal</span>`
+        : '';
 
       // 显示标签
       const acctLabel = isTransfer
@@ -2253,6 +2418,7 @@ function renderTx() {
           <div class="tx-item-name">${t.categoryName} ${badge} ${isDebt && t.settled ? '<span class="tx-badge" style="background:rgba(82,204,130,0.12);color:var(--green);">已还</span>' : ''}</div>
           <div class="tx-item-meta"><span class="tx-acct-dot" style="background:${acctColor};"></span>${acctLabel} · ${t.time}</div>
           ${tagsHtml}
+          ${foodBadge ? `<div class="tx-item-tags">${foodBadge}</div>` : ''}
         </div>
         <div class="tx-item-amt ${amtClass}" style="${isTransfer ? 'color:var(--t2);' : (isDebt ? (t.debtDir === 'owed' ? '' : 'color:var(--green);') : '')}">${amtLabel}</div>
         ${isDebt && !t.settled ? `<button class="tx-repay-btn" onclick="event.stopPropagation();settleDebt('${t.id}')">还款</button>` : ''}
@@ -2886,7 +3052,7 @@ function render() {
   const fns = [renderOverview, renderSubs, renderTx, renderAccounts, renderReports,
     renderQRCodes, renderInvoices, renderBudgets, renderSavingsGoals,
     renderCreditCardBills, renderCalendar, renderRecurringTx,
-    updateLockStatus, updateNotifStatus, updateExrateStatus, updateCloudStatus, updateThemeStatus];
+    updateLockStatus, updateNotifStatus, updateExrateStatus, updateCloudStatus, updateThemeStatus, updateCalorieStatus];
   if (state.currentView === 'subdetail') fns.push(renderSubDetail);
   fns.forEach(fn => { try { fn(); } catch(e) { console.error('Render error in', fn.name, e); } });
 }
@@ -2975,9 +3141,18 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '2.4.1';
+const APP_VERSION = '2.5.0';
 const APP_BUILD = '2026-08-09';
 const CHANGELOG = [
+  { ver: '2.5.0', date: '2026-08-09', items: [
+    '新增饮食记录功能：餐饮支出可选择食物，自动计算热量',
+    '内置60+种常见中国食物营养数据库',
+    '概览卡片新增今日热量环，显示摄入/目标',
+    '流水列表餐饮项显示食物热量标签',
+    '财务日历显示食物emoji和每日总热量',
+    '交易详情显示完整营养信息（蛋白质/碳水/脂肪）',
+    '设置新增每日热量目标配置（500-5000kcal）'
+  ]},
   { ver: '2.4.1', date: '2026-08-09', items: [
     '修复云同步后渲染崩溃导致"同步失败"的问题',
     'render函数增加容错，单个渲染失败不影响其他模块'
@@ -3781,6 +3956,17 @@ function openTxDetail(txId) {
         ${t.note ? `<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:var(--t3);">备注</span><span style="font-size:13px;color:var(--t1);">${t.note}</span></div>` : ''}
         ${t.isSubscription ? `<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:var(--t3);">类型</span><span style="font-size:12px;padding:2px 8px;border-radius:6px;background:var(--gold-bg);color:var(--gold);font-weight:600;">订阅自动扣款</span></div>` : ''}
         ${(Array.isArray(t.tags) && t.tags.length > 0) ? `<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;"><span style="font-size:13px;color:var(--t3);flex-shrink:0;">标签</span><span style="font-size:12px;display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;">${t.tags.map(tg => `<span style="padding:3px 9px;border-radius:8px;background:var(--card2);color:var(--gold);border:1px solid var(--gold-bd);font-weight:500;">#${escapeHtml(tg)}</span>`).join('')}</span></div>` : ''}
+        ${t.foodKcal ? `<div style="margin-top:12px;padding:14px;border-radius:12px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+            <span style="font-size:28px;">${t.foodEmoji || '🍽️'}</span>
+            <div><div style="font-size:14px;font-weight:700;color:var(--orange);">${escapeHtml(t.foodName)} · ${t.foodKcal} kcal</div><div style="font-size:11px;color:var(--t3);margin-top:2px;">份量 ${t.foodGram || 0}g</div></div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <div style="flex:1;text-align:center;padding:8px;border-radius:8px;background:var(--card2);"><div style="font-size:11px;color:var(--t3);">蛋白质</div><div style="font-size:14px;font-weight:700;color:var(--blue);">${t.foodP || 0}g</div></div>
+            <div style="flex:1;text-align:center;padding:8px;border-radius:8px;background:var(--card2);"><div style="font-size:11px;color:var(--t3);">碳水</div><div style="font-size:14px;font-weight:700;color:var(--gold);">${t.foodC || 0}g</div></div>
+            <div style="flex:1;text-align:center;padding:8px;border-radius:8px;background:var(--card2);"><div style="font-size:11px;color:var(--t3);">脂肪</div><div style="font-size:14px;font-weight:700;color:var(--red);">${t.foodF || 0}g</div></div>
+          </div>
+        </div>` : ''}
       </div>
     </div>
     <div class="card-detail-actions">
@@ -4522,6 +4708,30 @@ function updateThemeStatus() {
   const el = $('#theme-status');
   if (!el) return;
   el.textContent = (THEME_LABELS[state.settings.theme] || '深色') + ' ›';
+}
+
+function updateCalorieStatus() {
+  const el = $('#calorie-goal-status');
+  if (!el) return;
+  const goal = state.settings.dailyCalorieGoal || 1800;
+  el.textContent = goal + ' kcal ›';
+}
+
+function openCalorieSettings() {
+  const cur = state.settings.dailyCalorieGoal || 1800;
+  const input = prompt('请输入每日热量目标（kcal）：', String(cur));
+  if (input === null) return;
+  const val = parseInt(input, 10);
+  if (isNaN(val) || val < 500 || val > 5000) {
+    toast('请输入 500-5000 之间的数值');
+    return;
+  }
+  state.settings.dailyCalorieGoal = val;
+  save();
+  updateCalorieStatus();
+  render();
+  toast(`每日热量目标已设为 ${val} kcal`);
+  haptic('success');
 }
 
 // Build the rotary wheel with digits 0-9
@@ -6524,7 +6734,10 @@ function getCalendarEvents(year, month) {
         amount: t.amount,
         income: t.type === 'income',
         time: t.time,
-        meta: t.isSubscription ? '订阅扣款' : (t.note || '')
+        meta: t.isSubscription ? '订阅扣款' : (t.note || ''),
+        foodEmoji: t.foodEmoji || '',
+        foodName: t.foodName || '',
+        foodKcal: t.foodKcal || 0
       });
     }
   });
@@ -6617,14 +6830,20 @@ function renderCalendarEvents(dayStr, events) {
   dayEvents.sort((a, b) => (order[a.type] - order[b.type]) || (a.time || '').localeCompare(b.time || ''));
 
   let html = `<div class="cal-events-title">${label} · ${dayEvents.length}项</div>`;
+  // 计算当天总热量
+  const dayKcal = dayEvents.reduce((s, ev) => s + (ev.foodKcal || 0), 0);
+  if (dayKcal > 0) {
+    html += `<div class="cal-day-kcal">🔥 今日摄入 ${dayKcal} kcal</div>`;
+  }
   dayEvents.forEach(ev => {
     const amtText = ev.amount != null ? (ev.income ? '+' : '-') + '¥' + fmt(ev.amount) : '';
     const amtColor = ev.income ? 'var(--green)' : (ev.dotColor === 'gold' ? 'var(--gold)' : (ev.dotColor === 'blue' ? '#3b82f6' : 'var(--red)'));
+    const foodInfo = ev.foodKcal ? ` · ${ev.foodEmoji || '🍽️'} ${ev.foodKcal}kcal` : '';
     html += `<div class="cal-event">
       <span class="cal-event-dot" style="background:${dotColorVar(ev.dotColor)};"></span>
       <div class="cal-event-body">
-        <div class="cal-event-name">${escapeHtml(ev.label)}</div>
-        <div class="cal-event-meta">${escapeHtml(ev.meta || '')}${ev.time ? ' · ' + ev.time : ''}</div>
+        <div class="cal-event-name">${ev.foodEmoji ? ev.foodEmoji + ' ' : ''}${escapeHtml(ev.label)}</div>
+        <div class="cal-event-meta">${escapeHtml(ev.meta || '')}${ev.time ? ' · ' + ev.time : ''}${foodInfo}</div>
       </div>
       ${amtText ? `<div class="cal-event-amt" style="color:${amtColor};">${amtText}</div>` : ''}
     </div>`;
