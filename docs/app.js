@@ -762,7 +762,7 @@ function renderFoodList(query) {
     ? FOOD_DB.filter(f => f.name.toLowerCase().includes(q))
     : FOOD_DB.slice(0, 20);
   if (items.length === 0) {
-    list.innerHTML = `<div style="padding:16px;text-align:center;font-size:12px;color:var(--t3);">未找到「${escapeHtml(query)}」</div>`;
+    list.innerHTML = `<div style="padding:16px;text-align:center;font-size:12px;color:var(--t3);">未找到「${escapeHtml(query)}」<br><span style="color:var(--gold);cursor:pointer;" onclick="toggleCustomFoodForm()">点击自定义输入 ›</span></div>`;
     list.classList.add('show');
     return;
   }
@@ -812,7 +812,91 @@ function clearFoodSelection() {
   state.selectedFood = null;
   $('#food-selected').style.display = 'none';
   $('#food-selected').innerHTML = '';
+  // 重置自定义表单
+  const form = $('#food-custom-form');
+  if (form) {
+    form.style.display = 'none';
+    const btn = document.querySelector('.food-custom-btn span:last-child');
+    if (btn) btn.textContent = '自定义输入食物';
+  }
   renderFoodList('');
+}
+
+// ===== Custom Food Input =====
+function toggleCustomFoodForm() {
+  const form = $('#food-custom-form');
+  const btn = document.querySelector('.food-custom-btn');
+  if (form.style.display === 'none') {
+    form.style.display = 'block';
+    btn.querySelector('span:last-child').textContent = '收起自定义';
+    // 隐藏食物列表
+    $('#food-list').classList.remove('show');
+    $('#food-search').value = '';
+    setTimeout(() => $('#custom-food-name')?.focus(), 100);
+  } else {
+    form.style.display = 'none';
+    btn.querySelector('span:last-child').textContent = '自定义输入食物';
+    renderFoodList('');
+  }
+}
+
+function confirmCustomFood() {
+  const name = $('#custom-food-name').value.trim();
+  const kcal = parseInt($('#custom-food-kcal').value, 10);
+  const p = parseFloat($('#custom-food-p').value) || 0;
+  const c = parseFloat($('#custom-food-c').value) || 0;
+  const f = parseFloat($('#custom-food-f').value) || 0;
+  const gram = parseInt($('#custom-food-gram').value, 10) || 100;
+
+  if (!name) { toast('请输入食物名称'); $('#custom-food-name').focus(); return; }
+  if (!kcal || kcal <= 0) { toast('请输入热量'); $('#custom-food-kcal').focus(); return; }
+
+  // 构造自定义食物对象（与FOOD_DB格式一致）
+  const customFood = {
+    name: name,
+    emoji: '🍽️',
+    kcal: Math.round(kcal * 100 / gram), // 转换为每100g的值
+    p: +(p * 100 / gram).toFixed(1),
+    c: +(c * 100 / gram).toFixed(1),
+    f: +(f * 100 / gram).toFixed(1),
+    gram: gram,
+    custom: true
+  };
+
+  state.selectedFood = customFood;
+  const totalKcal = kcal; // 用户直接输入的总热量
+  const totalP = p.toFixed(1);
+  const totalC = c.toFixed(1);
+  const totalF = f.toFixed(1);
+
+  // 隐藏表单和列表
+  $('#food-custom-form').style.display = 'none';
+  document.querySelector('.food-custom-btn span:last-child').textContent = '自定义输入食物';
+  $('#food-list').classList.remove('show');
+
+  // 显示选中卡片
+  const sel = $('#food-selected');
+  sel.style.display = 'block';
+  sel.innerHTML = `<div class="food-selected-card" style="border-color:var(--orange);">
+    <div class="fsc-emoji">🍽️</div>
+    <div class="fsc-info">
+      <div class="fsc-name">${escapeHtml(name)} <span style="font-size:10px;padding:1px 6px;border-radius:4px;background:rgba(245,158,11,0.15);color:var(--orange);font-weight:500;">自定义</span></div>
+      <div class="fsc-detail">P${totalP}g · C${totalC}g · F${totalF}g · ${gram}g</div>
+    </div>
+    <div class="fsc-kcal">~${totalKcal}<span style="font-size:10px;color:var(--t3);"> kcal</span></div>
+    <div class="fsc-clear" onclick="clearFoodSelection()">✕</div>
+  </div>`;
+
+  // 清空表单
+  $('#custom-food-name').value = '';
+  $('#custom-food-kcal').value = '';
+  $('#custom-food-p').value = '';
+  $('#custom-food-c').value = '';
+  $('#custom-food-f').value = '';
+  $('#custom-food-gram').value = '';
+
+  toast('已添加自定义食物');
+  haptic('success');
 }
 
 function renderTxAcctPick() {
@@ -3141,9 +3225,15 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '2.5.0';
+const APP_VERSION = '2.5.1';
 const APP_BUILD = '2026-08-09';
 const CHANGELOG = [
+  { ver: '2.5.1', date: '2026-08-09', items: [
+    '新增自定义食物输入：可手动输入食物名称和热量',
+    '支持自定义蛋白质、碳水、脂肪和份量',
+    '搜索无结果时一键跳转自定义输入',
+    '自定义食物在交易记录中标记"自定义"标签'
+  ]},
   { ver: '2.5.0', date: '2026-08-09', items: [
     '新增饮食记录功能：餐饮支出可选择食物，自动计算热量',
     '内置60+种常见中国食物营养数据库',

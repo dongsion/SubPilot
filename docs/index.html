@@ -522,6 +522,17 @@ textarea.form-i{resize:none;min-height:80px;}
 .food-selected-card .fsc-detail{font-size:11px;color:var(--t3);margin-top:2px;}
 .food-selected-card .fsc-kcal{font-size:18px;font-weight:700;color:var(--orange);font-family:var(--font-mono);}
 .food-selected-card .fsc-clear{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--t3);cursor:pointer;flex-shrink:0;}
+/* Custom food input */
+.food-custom-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border-radius:10px;border:1px dashed var(--gold-bd);background:var(--gold-bg);color:var(--gold);font-size:13px;font-weight:600;cursor:pointer;margin-top:8px;transition:opacity .12s;}
+.food-custom-btn:active{opacity:0.7;}
+.food-custom-inputs{padding:12px;border-radius:12px;background:var(--card2);border:1px solid var(--border);margin-top:8px;}
+.fci-row{display:flex;gap:8px;margin-bottom:8px;}
+.fci-row:last-child{margin-bottom:0;}
+.fci-item{flex:1;display:flex;flex-direction:column;gap:4px;}
+.fci-label{font-size:10px;color:var(--t3);font-weight:600;padding-left:2px;}
+.fci-item .form-i{font-size:13px;padding:8px 10px;}
+.food-custom-confirm{width:100%;padding:10px;border-radius:10px;background:var(--gold);color:#000;font-size:13px;font-weight:700;text-align:center;cursor:pointer;}
+.food-custom-confirm:active{opacity:0.8;}
 /* Calorie badge in tx list */
 .tx-cal-badge{display:inline-block;font-size:9px;font-weight:700;padding:2px 5px;border-radius:4px;background:rgba(245,158,11,0.15);color:var(--orange);margin-left:4px;vertical-align:middle;}
 .tx-food-badge{display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:6px;background:rgba(245,158,11,0.12);color:var(--orange);border:1px solid rgba(245,158,11,0.2);}
@@ -997,14 +1008,14 @@ textarea.form-i{resize:none;min-height:80px;}
       <div class="info-r" onclick="if(confirm('确定清除所有数据？此操作不可撤销。')){clearAll();toast('数据已清除');}"><span class="info-l">清除所有数据</span><span class="info-v" style="color:var(--red);">›</span></div>
     </div>
     <div class="info-g">
-      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v2.5.0 ›</span></div>
+      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v2.5.1 ›</span></div>
       <div class="info-r" onclick="showChangelog()"><span class="info-l">更新日志</span><span class="info-v" style="color:var(--gold);">查看 ›</span></div>
       <div class="info-r" onclick="checkUpdate()"><span class="info-l">检查更新</span><span class="info-v" style="color:var(--gold);" id="update-status">›</span></div>
       <div class="info-r"><span class="info-l">数据存储</span><span class="info-v" style="color:var(--t3);">仅本地浏览器</span></div>
     </div>
     <div style="text-align:center;padding:40px 20px;color:var(--t3);font-size:12px;">
       <div style="margin-bottom:8px;font-size:20px;letter-spacing:1px;">Countra</div>
-      <div data-ver-footer style="margin-bottom:4px;">转便数快 · v2.5.0 (Build 2026.08.09)</div>
+      <div data-ver-footer style="margin-bottom:4px;">转便数快 · v2.5.1 (Build 2026.08.09)</div>
       <div>所有数据默认仅保存在本地，开启云同步后加密上传至 Supabase</div>
     </div>
     <input type="file" id="import-file" accept=".json" style="display:none;">
@@ -1365,11 +1376,52 @@ textarea.form-i{resize:none;min-height:80px;}
     <!-- 饮食记录区域（仅餐饮分类显示） -->
     <div id="tx-food-section" style="display:none;">
       <div class="form-g">
-        <label class="form-l">📸 记录饮食 <span style="font-size:11px;color:var(--t3);font-weight:400;">选食物自动填热量</span></label>
+        <label class="form-l">📸 记录饮食 <span style="font-size:11px;color:var(--t3);font-weight:400;">选食物或自定义输入热量</span></label>
         <div class="food-picker" id="food-picker">
           <input type="text" class="form-i" id="food-search" placeholder="搜索食物..." oninput="filterFoodList()">
         </div>
         <div class="food-list" id="food-list"></div>
+        <div class="food-custom-btn" onclick="toggleCustomFoodForm()">
+          <span style="font-size:14px;">✏️</span>
+          <span>自定义输入食物</span>
+        </div>
+        <div id="food-custom-form" style="display:none;">
+          <div class="food-custom-inputs">
+            <div class="fci-row">
+              <div class="fci-item" style="flex:2;">
+                <label class="fci-label">食物名称</label>
+                <input type="text" class="form-i" id="custom-food-name" placeholder="如：自选沙拉" maxlength="20">
+              </div>
+              <div class="fci-item" style="flex:1;">
+                <label class="fci-label">热量(kcal)</label>
+                <input type="number" class="form-i" id="custom-food-kcal" placeholder="0" min="0" max="9999">
+              </div>
+            </div>
+            <div class="fci-row">
+              <div class="fci-item">
+                <label class="fci-label">蛋白质(g)</label>
+                <input type="number" class="form-i" id="custom-food-p" placeholder="0" min="0" step="0.1">
+              </div>
+              <div class="fci-item">
+                <label class="fci-label">碳水(g)</label>
+                <input type="number" class="form-i" id="custom-food-c" placeholder="0" min="0" step="0.1">
+              </div>
+              <div class="fci-item">
+                <label class="fci-label">脂肪(g)</label>
+                <input type="number" class="form-i" id="custom-food-f" placeholder="0" min="0" step="0.1">
+              </div>
+            </div>
+            <div class="fci-row">
+              <div class="fci-item" style="flex:1;">
+                <label class="fci-label">份量(g)</label>
+                <input type="number" class="form-i" id="custom-food-gram" placeholder="100" min="0">
+              </div>
+              <div class="fci-item" style="flex:2;display:flex;align-items:flex-end;">
+                <div class="food-custom-confirm" onclick="confirmCustomFood()">确认添加</div>
+              </div>
+            </div>
+          </div>
+        </div>
         <div id="food-selected" style="display:none;"></div>
       </div>
     </div>
