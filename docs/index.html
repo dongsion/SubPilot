@@ -865,7 +865,7 @@ textarea.form-i{resize:none;min-height:80px;}
           <div class="hero-val" style="color:var(--green);"><span class="hero-cur">¥</span><span id="hero-income">0</span></div>
         </div>
         <div class="hero-divider"></div>
-        <div class="hero-item" id="hero-cal-item" style="display:none;">
+        <div class="hero-item" id="hero-cal-item">
           <div class="hero-label">今日热量</div>
           <div class="hero-val" style="color:var(--orange);"><span id="hero-cal-intake">0</span><span class="hero-cur" style="font-size:12px;"> / <span id="hero-cal-goal">1800</span> kcal</span></div>
         </div>
@@ -1008,14 +1008,14 @@ textarea.form-i{resize:none;min-height:80px;}
       <div class="info-r" onclick="if(confirm('确定清除所有数据？此操作不可撤销。')){clearAll();toast('数据已清除');}"><span class="info-l">清除所有数据</span><span class="info-v" style="color:var(--red);">›</span></div>
     </div>
     <div class="info-g">
-      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v2.5.2 ›</span></div>
+      <div class="info-r" onclick="showVersionInfo()"><span class="info-l">当前版本</span><span class="info-v" style="color:var(--gold);font-weight:600;" id="ver-display">v2.5.3 ›</span></div>
       <div class="info-r" onclick="showChangelog()"><span class="info-l">更新日志</span><span class="info-v" style="color:var(--gold);">查看 ›</span></div>
       <div class="info-r" onclick="checkUpdate()"><span class="info-l">检查更新</span><span class="info-v" style="color:var(--gold);" id="update-status">›</span></div>
       <div class="info-r"><span class="info-l">数据存储</span><span class="info-v" style="color:var(--t3);">仅本地浏览器</span></div>
     </div>
     <div style="text-align:center;padding:40px 20px;color:var(--t3);font-size:12px;">
       <div style="margin-bottom:8px;font-size:20px;letter-spacing:1px;">Countra</div>
-      <div data-ver-footer style="margin-bottom:4px;">转便数快 · v2.5.2 (Build 2026.08.09)</div>
+      <div data-ver-footer style="margin-bottom:4px;">转便数快 · v2.5.3 (Build 2026.08.09)</div>
       <div>所有数据默认仅保存在本地，开启云同步后加密上传至 Supabase</div>
     </div>
     <input type="file" id="import-file" accept=".json" style="display:none;">
@@ -1970,6 +1970,6 @@ if ('serviceWorker' in navigator) {
   });
 }
 </script>
-<script src="app.js?v=2.5.2"></script>
+<script src="app.js?v=2.5.3"></script>
 </body>
 </html>

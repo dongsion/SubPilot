@@ -2222,7 +2222,7 @@ function renderOverview() {
 
   // overview-tx 已合并到 tx-list，不再单独渲染
 
-  // 今日热量环
+  // 今日热量环（始终显示）
   const calItem = $('#hero-cal-item');
   if (calItem) {
     const todayStr = today();
@@ -2231,7 +2231,8 @@ function renderOverview() {
     const goal = state.settings.dailyCalorieGoal || 1800;
     $('#hero-cal-intake').textContent = todayKcal;
     $('#hero-cal-goal').textContent = goal;
-    calItem.style.display = todayKcal > 0 ? 'flex' : 'none';
+    // 始终显示热量环，即使为0也显示 "0 / 1800 kcal"
+    calItem.style.display = 'flex';
   }
 }
 
@@ -3225,9 +3226,13 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '2.5.2';
+const APP_VERSION = '2.5.3';
 const APP_BUILD = '2026-08-09';
 const CHANGELOG = [
+  { ver: '2.5.3', date: '2026-08-09', items: [
+    '修复概览页热量数据不显示的问题',
+    '热量环始终显示，即使当天无饮食记录也显示 0/1800 kcal'
+  ]},
   { ver: '2.5.2', date: '2026-08-09', items: [
     '修复自定义食物按钮点击无反应的问题（浏览器缓存旧版JS）',
     '新增Service Worker自动刷新机制',
