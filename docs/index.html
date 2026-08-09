@@ -110,6 +110,12 @@ input { font-family:inherit; }
 .hv { display:flex; align-items:baseline; gap:4px; margin:12px 0 20px; position:relative; z-index:2; }
 .hc { font-size:24px; font-weight:600; color:var(--gold); }
 .hn { font-size:50px; font-weight:700; font-family:var(--font-mono); letter-spacing:-2.5px; line-height:1; }
+.hero-row { display:flex; align-items:stretch; gap:0; margin:14px 0 20px; position:relative; z-index:2; }
+.hero-item { flex:1; display:flex; flex-direction:column; gap:6px; }
+.hero-label { font-size:12px; color:var(--t3); font-weight:500; }
+.hero-val { font-size:34px; font-weight:700; font-family:var(--font-mono); letter-spacing:-1.5px; line-height:1; display:flex; align-items:baseline; gap:2px; }
+.hero-cur { font-size:18px; font-weight:600; opacity:0.8; }
+.hero-divider { width:1px; background:var(--border); margin:4px 16px; }
 .hm { display:flex; gap:18px; position:relative; z-index:2; flex-wrap:wrap; }
 .hmi { display:flex; flex-direction:column; gap:3px; }
 .hmv { font-size:15px; font-weight:600; font-family:var(--font-mono); }
@@ -812,8 +818,18 @@ textarea.form-i{resize:none;min-height:80px;}
       </div>
     </div>
     <div class="hero">
-      <div class="hl">本月总支出</div>
-      <div class="hv"><span class="hc">¥</span><span class="hn" id="hero-total">0</span></div>
+      <div class="hl">本月概览</div>
+      <div class="hero-row">
+        <div class="hero-item">
+          <div class="hero-label">支出</div>
+          <div class="hero-val" style="color:var(--red);"><span class="hero-cur">¥</span><span id="hero-expense">0</span></div>
+        </div>
+        <div class="hero-divider"></div>
+        <div class="hero-item">
+          <div class="hero-label">收入</div>
+          <div class="hero-val" style="color:var(--green);"><span class="hero-cur">¥</span><span id="hero-income">0</span></div>
+        </div>
+      </div>
       <div class="hm" id="hero-meta"></div>
     </div>
     <div class="chart">

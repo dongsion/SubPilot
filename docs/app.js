@@ -1923,13 +1923,12 @@ function renderOverview() {
   const monthIncome = monthTx.filter(t => t.type === 'income').reduce((s,t) => s + t.amount, 0);
   const subExpense = monthTx.filter(t => t.isSubscription).reduce((s,t) => s + t.amount, 0);
 
-  $('#hero-total').textContent = fmt(Math.round(monthExpense));
+  $('#hero-expense').textContent = fmt(Math.round(monthExpense));
+  $('#hero-income').textContent = fmt(Math.round(monthIncome));
   $('#overview-sub').textContent = `${month.label} · ${state.transactions.length}笔流水`;
 
   const delta = Math.round(monthIncome - monthExpense);
   $('#hero-meta').innerHTML = `
-    <div class="hmi"><span class="hmv" style="color:var(--green);">+${fmt(monthIncome)}</span><span class="hml">收入</span></div>
-    <div class="hdot"></div>
     <div class="hmi"><span class="hmv">${fmt(Math.round(subExpense))}</span><span class="hml">订阅</span></div>
     <div class="hdot"></div>
     <div class="hmi"><span class="hmv" style="color:${delta>=0?'var(--green)':'var(--red)'};">${delta>=0?'+':''}${fmt(delta)}</span><span class="hml">结余</span></div>
