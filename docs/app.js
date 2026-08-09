@@ -639,6 +639,7 @@ function openAddTx(prefill) {
   state.selectedCat = 'food';
   state.debtDir = 'owed';
   state.debtSettled = false;
+  state.editingTxId = null; // 清除编辑标记
   $('#tx-amt-input').value = '';
   $('#tx-note').value = '';
   $('#tx-tags').value = '';
@@ -646,6 +647,9 @@ function openAddTx(prefill) {
   $('#tx-date').value = today();
   $('#tx-fee-input').value = '';
   $('#tx-debt-person').value = '';
+  // 恢复标题
+  const titleEl = document.querySelector('#sheet-tx .sheet-title');
+  if (titleEl) titleEl.textContent = '记一笔';
   // Type toggle
   $$('#tx-type .type-opt').forEach(b => {
     b.classList.remove('on', 'exp', 'inc', 'transfer', 'debt');
@@ -930,12 +934,20 @@ function saveTx() {
     const toId = toBtn.dataset.id;
     if (fromId === toId) { toast('转出和转入账户不能相同'); return; }
     const fee = parseFloat($('#tx-fee-input').value) || 0;
+
+    // 编辑模式：先撤销旧交易
+    const wasEditingTransfer = !!state.editingTxId;
+    if (state.editingTxId) {
+      const oldTx = state.transactions.find(x => x.id === state.editingTxId);
+      if (oldTx) revertTxEffect(oldTx);
+    }
+
     const fromAcct = state.accounts.find(a => a.id === fromId);
     const toAcct = state.accounts.find(a => a.id === toId);
     if (fromAcct) fromAcct.balance -= (amt + fee);
     if (toAcct) toAcct.balance += amt;
     const tx = {
-      id: genId(), type: 'transfer', amount: amt,
+      id: state.editingTxId || genId(), type: 'transfer', amount: amt,
       category: 'transfer', categoryName: '转账', categoryIcon: '💸',
       note, accountId: fromId, toAccountId: toId, fee, date,
       tags,
@@ -943,10 +955,16 @@ function saveTx() {
       timestamp: now.toISOString(),
       isSubscription: false
     };
-    state.transactions.unshift(tx);
+    if (state.editingTxId) {
+      const idx = state.transactions.findIndex(x => x.id === state.editingTxId);
+      if (idx >= 0) state.transactions[idx] = tx;
+    } else {
+      state.transactions.unshift(tx);
+    }
+    state.editingTxId = null;
     save();
     closeSheet('sheet-tx');
-    toast('转账成功');
+    toast(wasEditingTransfer ? '已更新' : '转账成功');
     haptic('success');
     render();
     return;
@@ -960,9 +978,17 @@ function saveTx() {
     const alreadySettled = state.debtSettled;
     const debtAcctBtn = document.querySelector('#tx-debt-acct-pick .pick.on');
     const acctId = debtAcctBtn ? debtAcctBtn.dataset.id : null;
-    const isOwed = dir === 'owed'; // true = 我欠别人, false = 别人欠我
+    const isOwed = dir === 'owed';
+
+    // 编辑模式：先撤销旧交易
+    const wasEditingDebt = !!state.editingTxId;
+    if (state.editingTxId) {
+      const oldTx = state.transactions.find(x => x.id === state.editingTxId);
+      if (oldTx) revertTxEffect(oldTx);
+    }
+
     const tx = {
-      id: genId(), type: 'debt', amount: amt,
+      id: state.editingTxId || genId(), type: 'debt', amount: amt,
       debtDir: dir, debtPerson: person,
       category: 'debt', categoryName: isOwed ? `欠 ${person}` : `${person} 欠`, categoryIcon: isOwed ? '📤' : '📥',
       note, accountId: acctId, date,
@@ -973,16 +999,20 @@ function saveTx() {
       settled: alreadySettled,
       settledDate: alreadySettled ? date : null
     };
-    state.transactions.unshift(tx);
-    // 如果关联了账户：我欠别人则账户余额减少，别人欠我则暂不变化（等还款时再记）
-    // 但如果已标记为已还款，则不调整余额（因为已经还了）
+    if (state.editingTxId) {
+      const idx = state.transactions.findIndex(x => x.id === state.editingTxId);
+      if (idx >= 0) state.transactions[idx] = tx;
+    } else {
+      state.transactions.unshift(tx);
+    }
+    state.editingTxId = null;
     if (acctId && !alreadySettled) {
       const acct = state.accounts.find(a => a.id === acctId);
       if (acct && isOwed) acct.balance -= amt;
     }
     save();
     closeSheet('sheet-tx');
-    toast(alreadySettled ? '已记录欠款（已还款）' : (isOwed ? '已记录欠款' : '已记录应收款'));
+    toast(wasEditingDebt ? '已更新' : (alreadySettled ? '已记录欠款（已还款）' : (isOwed ? '已记录欠款' : '已记录应收款')));
     haptic('success');
     render();
     return;
@@ -993,8 +1023,16 @@ function saveTx() {
   const acctId = acctBtn ? acctBtn.dataset.id : state.accounts[0].id;
   const cats = state.txType === 'expense' ? EXPENSE_CATS : INCOME_CATS;
   const cat = cats.find(c => c.id === state.selectedCat) || cats[0];
+
+  // 编辑模式：先撤销旧交易
+  const isEditing = !!state.editingTxId;
+  if (isEditing) {
+    const oldTx = state.transactions.find(x => x.id === state.editingTxId);
+    if (oldTx) revertTxEffect(oldTx);
+  }
+
   const tx = {
-    id: genId(), type: state.txType, amount: amt,
+    id: state.editingTxId || genId(), type: state.txType, amount: amt,
     category: cat.id, categoryName: cat.name, categoryIcon: cat.icon,
     note, accountId: acctId, date,
     tags,
@@ -1013,7 +1051,13 @@ function saveTx() {
     tx.foodC = +(f.c * f.gram / 100).toFixed(1);
     tx.foodF = +(f.f * f.gram / 100).toFixed(1);
   }
-  state.transactions.unshift(tx);
+  if (isEditing) {
+    const idx = state.transactions.findIndex(x => x.id === state.editingTxId);
+    if (idx >= 0) state.transactions[idx] = tx;
+  } else {
+    state.transactions.unshift(tx);
+  }
+  state.editingTxId = null;
   // Update account balance
   const acct = state.accounts.find(a => a.id === acctId);
   if (acct) {
@@ -1025,9 +1069,30 @@ function saveTx() {
   }
   save();
   closeSheet('sheet-tx');
-  toast('记账成功');
+  toast(isEditing ? '已更新' : '记账成功');
   haptic('success');
   render();
+}
+
+// 撤销交易对账户余额的影响
+function revertTxEffect(t) {
+  if (t.type === 'expense') {
+    const acct = state.accounts.find(a => a.id === t.accountId);
+    if (acct) acct.balance += t.amount; // 加回
+  } else if (t.type === 'income') {
+    const acct = state.accounts.find(a => a.id === t.accountId);
+    if (acct) acct.balance -= t.amount; // 减去
+  } else if (t.type === 'transfer') {
+    const fromAcct = state.accounts.find(a => a.id === t.accountId);
+    const toAcct = state.accounts.find(a => a.id === t.toAccountId);
+    if (fromAcct) fromAcct.balance += (t.amount + (t.fee || 0));
+    if (toAcct) toAcct.balance -= t.amount;
+  } else if (t.type === 'debt') {
+    if (t.accountId && !t.settled && t.debtDir === 'owed') {
+      const acct = state.accounts.find(a => a.id === t.accountId);
+      if (acct) acct.balance += t.amount; // 加回
+    }
+  }
 }
 
 // Type toggle for tx
@@ -3226,9 +3291,15 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '2.5.3';
+const APP_VERSION = '2.6.0';
 const APP_BUILD = '2026-08-09';
 const CHANGELOG = [
+  { ver: '2.6.0', date: '2026-08-09', items: [
+    '流水详情编辑功能上线：点击编辑可修改金额、分类、账户、备注等信息',
+    '编辑时自动撤销旧交易对账户余额的影响，保存后重新计算',
+    'AI输入框移除占位文字，界面更简洁',
+    'AI图标替换为星星图标（底部导航栏+对话头部+消息头像）'
+  ]},
   { ver: '2.5.3', date: '2026-08-09', items: [
     '修复概览页热量数据不显示的问题',
     '热量环始终显示，即使当天无饮食记录也显示 0/1800 kcal'
@@ -3999,7 +4070,7 @@ function renderAIMessages() {
     if (msg.role === 'bot') {
       return `<div class="ai-msg bot">
         <div class="ai-msg-ic">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a4 4 0 0 1 4 4v1h.5a2.5 2.5 0 0 1 0 5H16v1a4 4 0 0 1-8 0v-1H7.5a2.5 2.5 0 0 1 0-5H8V6a4 4 0 0 1 4-4z"/></svg>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" stroke="none"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/></svg>
         </div>
         <div class="ai-msg-bubble">${msg.text}</div>
       </div>`;
@@ -4072,7 +4143,7 @@ function openTxDetail(txId) {
     <div class="card-detail-actions">
       ${isDebt && !t.settled ? `<div class="card-detail-btn" style="background:var(--gold);color:#000;font-weight:700;" onclick="event.stopPropagation();settleDebt('${t.id}')">标记已还款</div>` : ''}
       ${isDebt && t.settled ? `<div class="card-detail-btn" style="background:rgba(255,165,0,0.12);color:#ffa500;font-weight:700;" onclick="event.stopPropagation();unsettleDebt('${t.id}')">取消还款标记</div>` : ''}
-      <div class="card-detail-btn" onclick="event.stopPropagation();closeCardDetail();toast('编辑功能开发中')">编辑</div>
+      <div class="card-detail-btn" onclick="event.stopPropagation();editTx('${t.id}')">编辑</div>
       <div class="card-detail-btn" onclick="event.stopPropagation();deleteTx('${t.id}')">删除</div>
     </div>
   `;
@@ -4134,6 +4205,73 @@ function deleteTx(txId) {
   toast('已删除');
   haptic('success');
   render();
+}
+
+// 编辑交易
+function editTx(txId) {
+  const t = state.transactions.find(x => x.id === txId);
+  if (!t) return;
+  closeCardDetail();
+
+  // 回填表单数据
+  state.txType = t.type;
+  state.selectedCat = t.category || 'food';
+  state.debtDir = t.debtDir || 'owed';
+  state.debtSettled = t.settled || false;
+  state.editingTxId = txId; // 标记正在编辑
+
+  $('#tx-amt-input').value = t.amount;
+  $('#tx-note').value = t.note || '';
+  $('#tx-tags').value = (t.tags || []).join(', ');
+  $('#tx-tag-chips').innerHTML = '';
+  $('#tx-date').value = t.date;
+  $('#tx-fee-input').value = t.fee || '';
+  $('#tx-debt-person').value = t.debtPerson || '';
+
+  // 类型按钮高亮
+  $$('#tx-type .type-opt').forEach(b => {
+    b.classList.remove('on', 'exp', 'inc', 'transfer', 'debt');
+    if (b.dataset.t === state.txType) {
+      b.classList.add('on', state.txType === 'expense' ? 'exp' : (state.txType === 'income' ? 'inc' : state.txType));
+    }
+  });
+
+  // 欠款方向
+  $$('#tx-debt-dir-pick .pick').forEach(b => b.classList.toggle('on', b.dataset.dir === state.debtDir));
+  $$('#tx-debt-settled-pick .pick').forEach(b => b.classList.toggle('on', b.dataset.settled === String(state.debtSettled)));
+
+  updateTxTypeUI();
+  renderCatGrid();
+  renderTxAcctPick();
+  renderTxTransferPick();
+  renderTxDebtPick();
+
+  // 选中对应账户
+  if (t.accountId) {
+    $$('#tx-acct-pick .pick').forEach(b => {
+      b.classList.toggle('on', b.dataset.id === t.accountId);
+    });
+  }
+  if (t.toAccountId) {
+    $$('#tx-from-pick .pick').forEach(b => {
+      b.classList.toggle('on', b.dataset.id === t.accountId);
+    });
+    $$('#tx-to-pick .pick').forEach(b => {
+      b.classList.toggle('on', b.dataset.id === t.toAccountId);
+    });
+  }
+  if (t.accountId && t.type === 'debt') {
+    $$('#tx-debt-acct-pick .pick').forEach(b => {
+      b.classList.toggle('on', b.dataset.id === t.accountId);
+    });
+  }
+
+  // 修改标题
+  const titleEl = document.querySelector('#sheet-tx .sheet-title');
+  if (titleEl) titleEl.textContent = '编辑流水';
+
+  openSheet('sheet-tx');
+  haptic('medium');
 }
 
 function renderTxPreview(tx) {
