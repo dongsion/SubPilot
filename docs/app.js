@@ -197,8 +197,8 @@ let state = {
   budgets: {},
   savingsGoals: [],
   recurringTx: [],
-  currentView: 'overview',
-  lastView: 'overview',
+  currentView: 'tx',
+  lastView: 'tx',
   activeCardIdx: 0,
   txType: 'expense',
   selectedCat: 'food',
@@ -1925,7 +1925,6 @@ function renderOverview() {
 
   $('#hero-expense').textContent = fmt(Math.round(monthExpense));
   $('#hero-income').textContent = fmt(Math.round(monthIncome));
-  $('#overview-sub').textContent = `${month.label} · ${state.transactions.length}笔流水`;
 
   const delta = Math.round(monthIncome - monthExpense);
   $('#hero-meta').innerHTML = `
@@ -1988,44 +1987,7 @@ function renderOverview() {
     }
   }
 
-  // 最近流水（最近5条）
-  const container = $('#overview-tx');
-  const recentTx = [...state.transactions].sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 5);
-  if (recentTx.length === 0) {
-    container.innerHTML = `<div class="empty-state"><div class="es-icon">📝</div><div class="es-text">暂无流水记录</div><div class="es-sub">点击 + 记一笔</div></div>`;
-    return;
-  }
-  const catColors = { food:'#f59e0b',shopping:'#ec4899',transport:'#0ea5e9',home:'#10b981',entertainment:'#a855f7',medical:'#ef4444',study:'#3b82f6',other:'#6b7280',salary:'#10b981',bonus:'#f59e0b',invest:'#8b5cf6',other_in:'#6b7280',sub:'#d4af37' };
-  const catBgColors = { food:'rgba(245,158,11,0.12)',shopping:'rgba(236,72,153,0.12)',transport:'rgba(14,165,233,0.12)',home:'rgba(16,185,129,0.12)',entertainment:'rgba(168,85,247,0.12)',medical:'rgba(239,68,68,0.12)',study:'rgba(59,130,246,0.12)',other:'rgba(107,114,128,0.12)',salary:'rgba(16,185,129,0.12)',bonus:'rgba(245,158,11,0.12)',invest:'rgba(139,92,246,0.12)',other_in:'rgba(107,114,128,0.12)',sub:'rgba(212,175,55,0.12)' };
-
-  container.innerHTML = recentTx.map(t => {
-    const acct = state.accounts.find(a => a.id === t.accountId);
-    const toAcct = t.toAccountId ? state.accounts.find(a => a.id === t.toAccountId) : null;
-    const theme = acct ? (CARD_THEMES[acct.color] || CARD_THEMES.gold) : CARD_THEMES.gold;
-    const acctColor = theme.accent;
-    const isSub = t.isSubscription;
-    const isTransfer = t.type === 'transfer';
-    const isDebt = t.type === 'debt';
-    const catKey = isSub ? 'sub' : (isTransfer ? 'transfer' : (isDebt ? 'debt' : t.category));
-    const iconColor = isTransfer ? '#64a0ff' : (isDebt ? '#ffa500' : (catColors[catKey] || catColors.other));
-    const iconBg = isTransfer ? 'rgba(100,160,255,0.15)' : (isDebt ? 'rgba(255,165,0,0.15)' : (catBgColors[catKey] || catBgColors.other));
-    const iconContent = isSub ? txIconSvg('sub') : (isTransfer ? '<path d="M7 7h10M7 7l3-3M7 7l3 3M17 17H7M17 17l-3 3M17 17l-3-3"/>' : (isDebt ? (t.debtDir === 'owed' ? '<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>' : '<path d="M12 21V9M7 14l5-5 5 5M5 3h14"/>') : txIconSvg(t.category)));
-    const badge = isSub ? '<span class="tx-badge">订阅</span>' : (isTransfer ? '<span class="tx-badge" style="background:rgba(100,160,255,0.2);color:#64a0ff;">转账</span>' : (isDebt ? `<span class="tx-badge" style="background:rgba(255,165,0,0.2);color:#ffa500;">${t.debtDir === 'owed' ? '我欠' : '欠我'}</span>` : ''));
-    const amtClass = (isTransfer || isDebt) ? '' : (t.type === 'income' ? 'in' : 'out');
-    const acctLabel = isTransfer ? `${acct?.name || '未知'} → ${toAcct?.name || '未知'}` : (isDebt ? `${t.debtPerson || '未知'}${acct ? ' · ' + acct.name : ''}` : `${acct?.name || '未知'}`);
-    const amtLabel = isTransfer ? `¥${fmt(t.amount)}` : (isDebt ? `${t.debtDir === 'owed' ? '-' : '+'}¥${fmt(t.amount)}` : `${t.type==='income'?'+':'-'}¥${fmt(t.amount)}`);
-    return `<div class="tx-item" onclick="openTxDetail('${t.id}')">
-      <div class="tx-item-icon" style="background:${iconBg};">
-        <svg viewBox="0 0 24 24" style="stroke:${iconColor};fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;">${iconContent.match(/<svg[^>]*>([\s\S]*)<\/svg>/)?.[1] || iconContent}</svg>
-      </div>
-      <div class="tx-item-body">
-        <div class="tx-item-name">${t.categoryName} ${badge} ${isDebt && t.settled ? '<span class="tx-badge" style="background:rgba(82,204,130,0.12);color:var(--green);">已还</span>' : ''}</div>
-        <div class="tx-item-meta"><span class="tx-acct-dot" style="background:${acctColor};"></span>${acctLabel} · ${t.time}</div>
-      </div>
-      <div class="tx-item-amt ${amtClass}" style="${isTransfer ? 'color:var(--t2);' : (isDebt ? (t.debtDir === 'owed' ? '' : 'color:var(--green);') : '')}">${amtLabel}</div>
-      ${isDebt && !t.settled ? `<button class="tx-repay-btn" onclick="event.stopPropagation();settleDebt('${t.id}')">还款</button>` : ''}
-    </div>`;
-  }).join('');
+  // overview-tx 已合并到 tx-list，不再单独渲染
 }
 
 function renderSubCard(sub) {
@@ -3028,8 +2990,8 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '2.3.0';
-const APP_BUILD = '2026-08-08';
+const APP_VERSION = '2.4.0';
+const APP_BUILD = '2026-08-09';
 const CHANGELOG = [
   { ver: '2.3.0', date: '2026-08-08', items: [
     '新增AI图片扫描记账：点击相机图标上传微信/支付宝支付截图，自动识别金额、日期、时间、商户',
