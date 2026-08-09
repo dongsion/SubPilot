@@ -2883,24 +2883,12 @@ function toggleGroupCollapse(gk) {
 }
 
 function render() {
-  renderOverview();
-  renderSubs();
-  renderTx();
-  renderAccounts();
-  renderReports();
-  renderQRCodes();
-  renderInvoices();
-  renderBudgets();
-  renderSavingsGoals();
-  renderCreditCardBills();
-  renderCalendar();
-  renderRecurringTx();
-  updateLockStatus();
-  updateNotifStatus();
-  updateExrateStatus();
-  updateCloudStatus();
-  updateThemeStatus();
-  if (state.currentView === 'subdetail') renderSubDetail();
+  const fns = [renderOverview, renderSubs, renderTx, renderAccounts, renderReports,
+    renderQRCodes, renderInvoices, renderBudgets, renderSavingsGoals,
+    renderCreditCardBills, renderCalendar, renderRecurringTx,
+    updateLockStatus, updateNotifStatus, updateExrateStatus, updateCloudStatus, updateThemeStatus];
+  if (state.currentView === 'subdetail') fns.push(renderSubDetail);
+  fns.forEach(fn => { try { fn(); } catch(e) { console.error('Render error in', fn.name, e); } });
 }
 
 // Filter pills
@@ -2987,9 +2975,13 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '2.4.0';
+const APP_VERSION = '2.4.1';
 const APP_BUILD = '2026-08-09';
 const CHANGELOG = [
+  { ver: '2.4.1', date: '2026-08-09', items: [
+    '修复云同步后渲染崩溃导致"同步失败"的问题',
+    'render函数增加容错，单个渲染失败不影响其他模块'
+  ]},
   { ver: '2.3.0', date: '2026-08-08', items: [
     '新增AI图片扫描记账：点击相机图标上传微信/支付宝支付截图，自动识别金额、日期、时间、商户',
     'OCR引擎使用Tesseract.js，支持中英文混合识别，自动推断消费分类',
@@ -5925,7 +5917,7 @@ async function syncToCloud() {
     localStorage.setItem('subpilot_local_ts', JSON.stringify(localTimestamps));
     state.cloudLastSync = now;
     save();
-    render();
+    try { render(); } catch(re) { console.error('Render after sync failed:', re); }
     updateCloudStatus();
 
     if (pushCount > 0 && pullCount > 0) {
