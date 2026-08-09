@@ -2150,9 +2150,6 @@ function renderTx() {
   const monthTx = state.transactions.filter(t => t.date >= month.start && t.date <= month.end);
   const exp = monthTx.filter(t => t.type === 'expense').reduce((s,t) => s+t.amount, 0);
   const inc = monthTx.filter(t => t.type === 'income').reduce((s,t) => s+t.amount, 0);
-  $('#tx-expense').textContent = `¥${fmt(Math.round(exp))}`;
-  $('#tx-income').textContent = `¥${fmt(Math.round(inc))}`;
-  $('#tx-balance').textContent = `¥${fmt(Math.round(inc - exp))}`;
 
   const filter = document.querySelector('#tx-fp .pl.on:not(#tx-tag-pill)')?.dataset.f || 'all';
   let txs = monthTx;
