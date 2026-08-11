@@ -1,4 +1,4 @@
-const CACHE_NAME = 'countra-v2.6.6';
+const CACHE_NAME = 'countra-v2.7.1';
 const ASSETS = ['./', './index.html', './app.js', './manifest.json', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 
 // 安装：预缓存核心资源 + 立即激活

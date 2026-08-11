@@ -265,7 +265,11 @@ let state = {
   lastView: 'tx',
   activeCardIdx: 0,
   txType: 'expense',
+  txEntryMode: 'normal',
   selectedCat: 'food',
+  salaryCalMonth: null,
+  salaryWorkLog: {},
+  salaryPanelInited: false,
   debtDir: 'owed',
   debtSettled: false,
   selectedCycle: 'month',
@@ -648,7 +652,7 @@ function quickFabAction(action) {
   if (action === 'tx') {
     openAddTx();
   } else if (action === 'salary') {
-    openAddTx({ type: 'income', category: 'salary', title: '工资收入' });
+    openAddTx({ mode: 'salary', type: 'income', category: 'salary', title: '工资收入' });
   } else if (action === 'qrcodes') {
     showView('qrcodes');
   } else if (action === 'savings') {
@@ -663,6 +667,7 @@ document.addEventListener('click', (e) => {
 // ===== Add Transaction =====
 function openAddTx(prefill) {
   const txPrefill = prefill || {};
+  state.txEntryMode = txPrefill.mode || 'normal';
   state.txType = txPrefill.type || 'expense';
   state.selectedCat = txPrefill.category || (state.txType === 'income' ? 'salary' : 'food');
   state.debtDir = 'owed';
@@ -675,9 +680,15 @@ function openAddTx(prefill) {
   $('#tx-date').value = today();
   $('#tx-fee-input').value = '';
   $('#tx-debt-person').value = '';
+  // 清空工资面板输入
+  ['sal-gross-input','sal-ss-input','sal-bonus-input','sal-hf-input','sal-tax-input'].forEach(id => {
+    const el = $('#' + id);
+    if (el) el.value = '';
+  });
   // 恢复标题
   const titleEl = document.querySelector('#sheet-tx .sheet-title');
   if (titleEl) titleEl.textContent = txPrefill.title || '记一笔';
+  applyTxEntryMode();
   // Type toggle
   $$('#tx-type .type-opt').forEach(b => {
     b.classList.remove('on', 'exp', 'inc', 'transfer', 'debt');
@@ -700,6 +711,256 @@ function openAddTx(prefill) {
   renderTxDebtPick();
   openSheet('sheet-tx');
   setTimeout(() => $('#tx-amt-input').focus(), 300);
+}
+
+function applyTxEntryMode() {
+  const sheet = document.querySelector('#sheet-tx .sheet');
+  const amtInput = $('#tx-amt-input');
+  const noteInput = $('#tx-note');
+  const tagsInput = $('#tx-tags');
+  const saveBtn = $('#tx-save-btn');
+  const isSalary = state.txEntryMode === 'salary';
+  if (sheet) sheet.classList.toggle('salary-mode', isSalary);
+  if (amtInput) amtInput.placeholder = isSalary ? '输入到账金额' : '0.00';
+  if (noteInput) noteInput.placeholder = isSalary ? '如：8月工资 / 绩效奖金' : '可选';
+  if (tagsInput) tagsInput.placeholder = isSalary ? '如：工资、奖金、补贴' : '多个标签用逗号分隔';
+  if (saveBtn) saveBtn.textContent = isSalary ? '保存工资收入' : '保存';
+  // 重置到账日下拉
+  const paydaySelect = $('#salary-payday-select');
+  const paydayCustom = $('#salary-payday-custom');
+  const paydayCustomInput = $('#salary-payday-custom-input');
+  const paydayHint = $('#salary-payday-hint');
+  if (paydaySelect) paydaySelect.value = '';
+  if (paydayCustom) paydayCustom.style.display = 'none';
+  if (paydayCustomInput) paydayCustomInput.value = '';
+  if (paydayHint) paydayHint.textContent = '选择你每月实际收到工资的日期';
+  // 初始化工资管理面板
+  if (isSalary) {
+    setTimeout(initSalaryPanel, 50);
+  }
+}
+
+// 到账日下拉：选"自定义"时显示输入框
+document.addEventListener('DOMContentLoaded', function() {
+  const paydaySelect = $('#salary-payday-select');
+  const paydayCustom = $('#salary-payday-custom');
+  const paydayCustomInput = $('#salary-payday-custom-input');
+  const paydayHint = $('#salary-payday-hint');
+  if (paydaySelect) {
+    paydaySelect.addEventListener('change', function() {
+      if (this.value === 'custom') {
+        if (paydayCustom) paydayCustom.style.display = 'block';
+        if (paydayCustomInput) paydayCustomInput.focus();
+        if (paydayHint) paydayHint.textContent = '输入你每月收到工资的日期（1-31）';
+      } else {
+        if (paydayCustom) paydayCustom.style.display = 'none';
+        if (paydayCustomInput) paydayCustomInput.value = '';
+        if (paydayHint) paydayHint.textContent = this.value ? `已选择每月 ${this.value} 号到账` : '选择你每月实际收到工资的日期';
+      }
+      // 更新倒计时
+      updateSalaryCountdown();
+    });
+    // 自定义日期输入也更新倒计时
+    if (paydayCustomInput) {
+      paydayCustomInput.addEventListener('input', updateSalaryCountdown);
+    }
+  }
+});
+
+// 获取当前选择的到账日
+function getSalaryPayday() {
+  const select = $('#salary-payday-select');
+  if (!select || !select.value) return null;
+  if (select.value === 'custom') {
+    const customInput = $('#salary-payday-custom-input');
+    const val = parseInt(customInput && customInput.value);
+    if (val >= 1 && val <= 31) return val;
+    return null;
+  }
+  return parseInt(select.value);
+}
+
+// ===== 工资管理面板 =====
+function initSalaryPanel() {
+  const now = new Date();
+  state.salaryCalMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  renderSalaryCalendar();
+  updateSalaryCountdown();
+  updateSalaryCompare();
+  calculateNetSalary();
+
+  if (!state.salaryPanelInited) {
+    state.salaryPanelInited = true;
+    // 扣款输入实时计算
+    ['sal-gross-input','sal-ss-input','sal-bonus-input','sal-hf-input','sal-tax-input'].forEach(id => {
+      const el = $('#' + id);
+      if (el) el.addEventListener('input', calculateNetSalary);
+    });
+    // 月份导航
+    const prevBtn = $('#sal-cal-prev');
+    const nextBtn = $('#sal-cal-next');
+    if (prevBtn) prevBtn.addEventListener('click', () => {
+      if (!state.salaryCalMonth) return;
+      state.salaryCalMonth.setMonth(state.salaryCalMonth.getMonth() - 1);
+      renderSalaryCalendar();
+    });
+    if (nextBtn) nextBtn.addEventListener('click', () => {
+      if (!state.salaryCalMonth) return;
+      state.salaryCalMonth.setMonth(state.salaryCalMonth.getMonth() + 1);
+      renderSalaryCalendar();
+    });
+  }
+}
+
+function renderSalaryCalendar() {
+  const grid = $('#sal-cal-grid');
+  const monthEl = $('#sal-cal-month');
+  if (!grid || !monthEl || !state.salaryCalMonth) return;
+
+  const year = state.salaryCalMonth.getFullYear();
+  const month = state.salaryCalMonth.getMonth();
+  const monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  monthEl.textContent = year + '年 ' + monthNames[month];
+
+  const now = new Date();
+  const todayDateStr = today();
+
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const startWeekday = firstDay.getDay();
+  const daysInMonth = lastDay.getDate();
+
+  let html = '';
+  for (let i = 0; i < startWeekday; i++) html += '<div></div>';
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = new Date(year, month, d);
+    const dayOfWeek = date.getDay();
+    const dateKey = date.toISOString().slice(0, 10);
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    const isPast = date < new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const isToday = dateKey === todayDateStr;
+
+    let cls = '';
+    let dot = '';
+
+    if (isWeekend) {
+      cls = 'weekend';
+    } else {
+      const log = state.salaryWorkLog[dateKey];
+      if (log === 'leave') {
+        cls = 'leave';
+        dot = '<span class="sal-cal-dot"></span>';
+      } else if (log === 'worked' || (isPast && log !== 'leave')) {
+        cls = 'worked';
+        dot = '<span class="sal-cal-dot"></span>';
+      } else {
+        cls = 'future';
+        dot = '<span class="sal-cal-dot"></span>';
+      }
+    }
+
+    if (isToday) cls += ' today';
+
+    const clickable = !isWeekend ? ' data-clickable="1"' : '';
+    html += '<div class="sal-cal-day ' + cls + '" data-date="' + dateKey + '"' + clickable + '>' + d + dot + '</div>';
+  }
+
+  grid.innerHTML = html;
+
+  // 绑定点击：切换上班/请假状态
+  grid.querySelectorAll('.sal-cal-day[data-clickable]').forEach(el => {
+    el.addEventListener('click', function() {
+      const key = this.dataset.date;
+      const log = state.salaryWorkLog[key];
+      if (log === 'leave') {
+        delete state.salaryWorkLog[key]; // 恢复默认状态
+      } else {
+        state.salaryWorkLog[key] = 'leave'; // 标记为请假
+      }
+      renderSalaryCalendar();
+    });
+  });
+}
+
+function updateSalaryCountdown() {
+  const numEl = $('#sal-cd-num');
+  const dateEl = $('#sal-cd-date');
+  if (!numEl || !dateEl) return;
+
+  const payday = getSalaryPayday() || 15;
+  const now = new Date();
+  let target = new Date(now.getFullYear(), now.getMonth(), payday);
+  // 本月发薪日已过 → 算下月
+  if (target.getDate() !== payday || target < now) {
+    target = new Date(now.getFullYear(), now.getMonth() + 1, payday);
+    // 处理月底天数不足
+    const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+    if (payday > lastDay) target.setDate(lastDay);
+  }
+
+  const diffMs = target - now;
+  const diffDays = Math.max(0, Math.ceil(diffMs / 86400000));
+  const monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+
+  dateEl.textContent = monthNames[target.getMonth()] + target.getDate() + '日';
+  numEl.textContent = diffDays;
+}
+
+function calculateNetSalary() {
+  const gross = parseFloat($('#sal-gross-input')?.value) || 0;
+  const ss = parseFloat($('#sal-ss-input')?.value) || 0;
+  const bonus = parseFloat($('#sal-bonus-input')?.value) || 0;
+  const hf = parseFloat($('#sal-hf-input')?.value) || 0;
+  const tax = parseFloat($('#sal-tax-input')?.value) || 0;
+
+  const totalDeduct = ss + hf + tax;
+  const net = gross + bonus - totalDeduct;
+
+  const totalEl = $('#sal-deduct-total');
+  if (totalEl) totalEl.textContent = '扣款 ¥' + totalDeduct.toFixed(2);
+
+  const netEl = $('#sal-net-val');
+  if (netEl) netEl.textContent = '¥' + net.toFixed(2);
+
+  const detailEl = $('#sal-net-detail');
+  if (detailEl) detailEl.textContent = '¥' + gross.toFixed(2) + ' + ¥' + bonus.toFixed(2) + ' - ¥' + totalDeduct.toFixed(2);
+
+  // 本月对比卡
+  const currValEl = $('#sal-curr-val');
+  if (currValEl) currValEl.textContent = net > 0 ? '¥' + net.toFixed(0) : '—';
+  const currSubEl = $('#sal-curr-sub');
+  if (currSubEl) currSubEl.textContent = gross > 0 ? '税前 ¥' + gross.toFixed(0) + (bonus > 0 ? ' + 全勤 ¥' + bonus.toFixed(0) : '') : '输入税前薪资';
+
+  // 预估下月
+  const nextValEl = $('#sal-next-val');
+  if (nextValEl) nextValEl.textContent = net > 0 ? '¥' + net.toFixed(0) : '—';
+
+  // 同步到隐藏金额输入框
+  const amtInput = $('#tx-amt-input');
+  if (amtInput && net > 0) amtInput.value = net.toFixed(2);
+}
+
+function updateSalaryCompare() {
+  const now = new Date();
+  const prevStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const prevEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+
+  const prevSalary = state.transactions.find(t =>
+    t.type === 'income' && t.category === 'salary' &&
+    new Date(t.date) >= prevStart && new Date(t.date) <= prevEnd
+  );
+
+  const prevValEl = $('#sal-prev-val');
+  const prevSubEl = $('#sal-prev-sub');
+  if (prevSalary) {
+    if (prevValEl) prevValEl.textContent = '¥' + prevSalary.amount.toFixed(0);
+    if (prevSubEl) prevSubEl.textContent = prevSalary.note || '上月到账';
+  } else {
+    if (prevValEl) prevValEl.textContent = '—';
+    if (prevSubEl) prevSubEl.textContent = '暂无记录';
+  }
 }
 
 function updateTxTypeUI() {
@@ -1057,6 +1318,7 @@ function saveTx() {
   const acctId = acctBtn ? acctBtn.dataset.id : state.accounts[0].id;
   const cats = state.txType === 'expense' ? EXPENSE_CATS : INCOME_CATS;
   const cat = cats.find(c => c.id === state.selectedCat) || cats[0];
+  const wasSalaryMode = state.txEntryMode === 'salary';
 
   // 编辑模式：先撤销旧交易
   const isEditing = !!state.editingTxId;
@@ -1074,6 +1336,21 @@ function saveTx() {
     timestamp: now.toISOString(),
     isSubscription: false
   };
+  // 工资模式：保存到账日信息和薪资明细
+  if (wasSalaryMode) {
+    const payday = getSalaryPayday();
+    if (payday) tx.payday = payday;
+    const gross = parseFloat($('#sal-gross-input')?.value) || 0;
+    const ss = parseFloat($('#sal-ss-input')?.value) || 0;
+    const bonus = parseFloat($('#sal-bonus-input')?.value) || 0;
+    const hf = parseFloat($('#sal-hf-input')?.value) || 0;
+    const tax = parseFloat($('#sal-tax-input')?.value) || 0;
+    if (gross > 0) {
+      tx.salaryGross = gross;
+      tx.salaryBonus = bonus;
+      tx.salaryDeductions = { ss, hf, tax };
+    }
+  }
   // 保存食物热量信息（仅餐饮支出且有选中食物时）
   if (state.txType === 'expense' && state.selectedFood) {
     const f = state.selectedFood;
@@ -1103,7 +1380,7 @@ function saveTx() {
   }
   save();
   closeSheet('sheet-tx');
-  toast(isEditing ? '已更新' : '记账成功');
+  toast(isEditing ? '已更新' : (wasSalaryMode ? '工资收入已记录' : '记账成功'));
   haptic('success');
   render();
 }
@@ -4249,6 +4526,7 @@ function editTx(txId) {
   closeCardDetail();
 
   // 回填表单数据
+  state.txEntryMode = 'normal';
   state.txType = t.type;
   state.selectedCat = t.category || 'food';
   state.debtDir = t.debtDir || 'owed';
@@ -4304,6 +4582,7 @@ function editTx(txId) {
   // 修改标题
   const titleEl = document.querySelector('#sheet-tx .sheet-title');
   if (titleEl) titleEl.textContent = '编辑流水';
+  applyTxEntryMode();
 
   openSheet('sheet-tx');
   haptic('medium');

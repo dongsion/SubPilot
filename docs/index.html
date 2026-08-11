@@ -31,6 +31,7 @@
   --gold-glow: rgba(212,175,122,0.25);
   --red: rgba(255,92,72,0.9);
   --green: rgba(82,204,130,0.9);
+  --orange: #f59e0b;
   --hero-bg: linear-gradient(150deg,#16161a 0%,#0c0c0f 100%);
   --tb-bg: rgba(0,0,0,0.92);
   --lock-bg: #000;
@@ -52,6 +53,7 @@
   --gold-glow: rgba(184,134,11,0.2);
   --red: rgba(220,50,40,0.9);
   --green: rgba(40,160,80,0.9);
+  --orange: #d97706;
   --hero-bg: linear-gradient(150deg,#ffffff 0%,#f0f0f2 100%);
   --tb-bg: rgba(255,255,255,0.92);
   --lock-bg: #f5f5f7;
@@ -74,6 +76,7 @@
     --gold-glow: rgba(184,134,11,0.2);
     --red: rgba(220,50,40,0.9);
     --green: rgba(40,160,80,0.9);
+    --orange: #d97706;
     --hero-bg: linear-gradient(150deg,#ffffff 0%,#f0f0f2 100%);
     --tb-bg: rgba(255,255,255,0.92);
     --lock-bg: #f5f5f7;
@@ -380,7 +383,7 @@ input { font-family:inherit; }
 .quick-fab-item span{position:relative;z-index:1;text-shadow:0 1px 8px rgba(0,0,0,0.18);}
 .quick-fab-item span:first-child{font-size:17px;}
 .quick-fab-item:nth-child(1){background:linear-gradient(135deg,#f6c873 0%,#e88b3e 52%,#b85d2f 100%);box-shadow:0 12px 30px rgba(232,139,62,0.28),0 6px 18px rgba(0,0,0,0.28),inset 0 1px 0 rgba(255,255,255,0.22);}
-.quick-fab-item:nth-child(2){background:linear-gradient(135deg,#6ee7b7 0%,#22c55e 52%,#15803d 100%);box-shadow:0 12px 30px rgba(34,197,94,0.3),0 6px 18px rgba(0,0,0,0.28),inset 0 1px 0 rgba(255,255,255,0.22);}
+.quick-fab-item:nth-child(2){background:linear-gradient(135deg,#fde68a 0%,#facc15 52%,#ca8a04 100%);box-shadow:0 12px 30px rgba(202,138,4,0.3),0 6px 18px rgba(0,0,0,0.28),inset 0 1px 0 rgba(255,255,255,0.22);}
 .quick-fab-item:nth-child(3){background:linear-gradient(135deg,#6fd6ff 0%,#5e6bff 52%,#7c3aed 100%);box-shadow:0 12px 30px rgba(94,107,255,0.3),0 6px 18px rgba(0,0,0,0.28),inset 0 1px 0 rgba(255,255,255,0.22);}
 .quick-fab-item:nth-child(4){background:linear-gradient(135deg,#65e4b3 0%,#28b487 50%,#0f766e 100%);box-shadow:0 12px 30px rgba(40,180,135,0.28),0 6px 18px rgba(0,0,0,0.28),inset 0 1px 0 rgba(255,255,255,0.22);}
 .quick-fab-item:active{filter:brightness(.92) saturate(1.08);}
@@ -469,6 +472,113 @@ input { font-family:inherit; }
 @keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
 .sheet-handle { width:36px; height:4px; background:var(--border2); border-radius:999px; margin:0 auto 20px; }
 .sheet-title { font-size:20px; font-weight:700; letter-spacing:-0.5px; margin-bottom:20px; }
+/* 工资管理面板 */
+.salary-panel{display:none;}
+.salary-mode .salary-panel{display:block;}
+.salary-mode #tx-type{display:none;}
+.salary-mode #tx-normal-section .form-g:first-child{display:none;}
+.salary-mode .amt-big{display:none;}
+.salary-mode .btn-gold{background:var(--gold);color:#000;}
+/* salary-card 和 payday 仅在工资模式显示 */
+.salary-card{display:none;}
+.salary-mode .salary-card{display:flex;}
+#salary-payday{display:none;}
+.salary-mode #salary-payday{display:block;}
+/* 薪资卡头部 */
+.salary-card{align-items:center;gap:12px;padding:16px;border-radius:16px;background:linear-gradient(135deg,rgba(212,175,55,0.12),rgba(212,175,55,0.03));border:1px solid var(--gold-bd);margin-bottom:16px;}
+.salary-card-top{display:flex;align-items:center;gap:12px;flex:1;}
+.salary-card-icon{width:44px;height:44px;border-radius:12px;background:var(--gold-bg);border:1px solid var(--gold-bd);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:var(--gold);flex-shrink:0;}
+.salary-card-name{font-size:15px;font-weight:700;color:var(--t1);}
+.salary-card-sub{font-size:11px;color:var(--t3);margin-top:2px;}
+.salary-card-tags{display:flex;gap:6px;flex-wrap:wrap;}
+.salary-tag{font-size:10px;padding:3px 8px;border-radius:6px;background:var(--gold-bg);color:var(--gold);font-weight:600;border:1px solid var(--gold-bd);}
+/* 到账日选择 */
+.salary-payday{margin-bottom:16px;padding:14px 16px;border-radius:16px;background:var(--card2);border:1px solid var(--border);}
+.salary-payday-label{font-size:12px;font-weight:700;color:var(--t2);margin-bottom:10px;}
+.salary-payday-row{display:flex;gap:10px;align-items:center;}
+.salary-payday-select-wrap{flex:1;}
+.salary-payday-select{width:100%;padding:10px 14px;border-radius:12px;background:var(--card);border:1px solid var(--border);color:var(--t1);font-size:14px;font-family:inherit;outline:none;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:36px;}
+.salary-payday-select:focus{border-color:var(--gold-bd);}
+.salary-payday-custom{flex:0 0 100px;}
+.salary-payday-custom input{width:100%;padding:10px 12px;border-radius:12px;background:var(--card);border:1px solid var(--border);color:var(--t1);font-size:14px;font-family:inherit;outline:none;text-align:center;}
+.salary-payday-custom input:focus{border-color:var(--gold-bd);}
+.salary-payday-hint{font-size:11px;color:var(--t3);margin-top:8px;}
+/* 工资对比卡 */
+.sal-compare{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:8px;margin-bottom:16px;}
+.sal-cmp{border-radius:16px;padding:14px 10px;text-align:center;transition:transform .15s;}
+.sal-cmp.prev{background:var(--card2);border:1px solid var(--border);}
+.sal-cmp.curr{background:linear-gradient(135deg,rgba(212,175,55,0.18),rgba(212,175,55,0.04));border:1px solid var(--gold-bd);}
+.sal-cmp.next{background:var(--card2);border:1px solid var(--border);}
+.sal-cmp-lbl{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:0.6px;font-weight:600;margin-bottom:6px;}
+.sal-cmp-val{font-size:16px;font-weight:700;font-family:var(--font-mono);letter-spacing:-0.5px;}
+.sal-cmp.curr .sal-cmp-val{color:var(--gold);}
+.sal-cmp.next .sal-cmp-val{color:var(--t2);}
+.sal-cmp-sub{font-size:10px;color:var(--t3);margin-top:4px;}
+/* 倒计时 */
+.sal-countdown{border-radius:16px;padding:16px;background:var(--card2);border:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;position:relative;overflow:hidden;}
+.sal-countdown::before{content:'';position:absolute;right:-30px;top:-30px;width:100px;height:100px;border-radius:50%;background:radial-gradient(circle,var(--gold-glow),transparent 65%);}
+.sal-cd-left{position:relative;z-index:1;}
+.sal-cd-label{font-size:11px;color:var(--t3);margin-bottom:4px;}
+.sal-cd-date{font-size:15px;font-weight:700;}
+.sal-cd-right{text-align:center;position:relative;z-index:1;}
+.sal-cd-num{font-size:30px;font-weight:800;font-family:var(--font-mono);color:var(--gold);line-height:1;}
+.sal-cd-unit{font-size:11px;color:var(--t3);margin-top:4px;}
+/* 日历 */
+.sal-cal{margin-bottom:16px;}
+.sal-cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.sal-cal-month{font-size:14px;font-weight:700;}
+.sal-cal-nav{display:flex;gap:6px;}
+.sal-cal-nav button{width:30px;height:30px;border-radius:8px;background:var(--card2);border:1px solid var(--border);color:var(--t2);font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.sal-cal-nav button:active{background:var(--card);}
+.sal-cal-wd{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px;}
+.sal-cal-wd div{text-align:center;font-size:10px;color:var(--t3);font-weight:600;padding:4px 0;}
+.sal-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.sal-cal-day{aspect-ratio:1;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;font-weight:600;border:1px solid transparent;cursor:pointer;transition:transform .1s;position:relative;}
+.sal-cal-day:active{transform:scale(0.9);}
+.sal-cal-day.worked{background:rgba(34,197,94,0.12);border-color:rgba(34,197,94,0.2);color:#4ade80;}
+.sal-cal-day.future{background:var(--card2);border-color:var(--border);color:var(--t2);}
+.sal-cal-day.leave{background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.2);color:var(--orange);}
+.sal-cal-day.weekend{background:transparent;border-color:var(--border);color:var(--t3);}
+.sal-cal-day.today{border:2px solid var(--gold);}
+.sal-cal-dot{width:4px;height:4px;border-radius:50%;margin-top:2px;}
+.sal-cal-day.worked .sal-cal-dot{background:#4ade80;}
+.sal-cal-day.leave .sal-cal-dot{background:var(--orange);}
+.sal-cal-day.future .sal-cal-dot{background:var(--t3);opacity:0.4;}
+.sal-cal-legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;}
+.sal-cal-legend div{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--t3);}
+.sal-legend-dot{width:7px;height:7px;border-radius:50%;}
+.sal-legend-dot.w{background:#4ade80;}
+.sal-legend-dot.f{background:var(--t3);opacity:0.4;}
+.sal-legend-dot.l{background:var(--orange);}
+.sal-legend-dot.e{background:transparent;border:1px solid var(--border2);}
+/* 扣款 */
+.sal-deduct{margin-bottom:16px;}
+.sal-deduct-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.sal-deduct-title{font-size:13px;font-weight:700;}
+.sal-deduct-hint{font-size:11px;color:var(--gold);font-weight:600;}
+.sal-deduct-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.sal-deduct-item{background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:12px 14px;transition:border-color .2s;}
+.sal-deduct-item:focus-within{border-color:var(--gold-bd);}
+.sal-deduct-lbl{font-size:11px;color:var(--t3);margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.sal-deduct-ic{width:22px;height:22px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;}
+.sal-deduct-ic.ss{background:rgba(59,130,246,0.15);color:#60a5fa;}
+.sal-deduct-ic.bonus{background:rgba(34,197,94,0.15);color:#4ade80;}
+.sal-deduct-ic.hf{background:rgba(245,158,11,0.15);color:var(--orange);}
+.sal-deduct-ic.tx{background:rgba(239,68,68,0.15);color:#f87171;}
+.sal-deduct-input{width:100%;background:none;border:none;outline:none;font-size:17px;font-weight:700;font-family:var(--font-mono);color:var(--t1);}
+.sal-deduct-input::placeholder{color:var(--t3);font-weight:400;font-family:var(--font-sans);font-size:13px;}
+/* 到手工资 */
+.sal-net{border-radius:16px;padding:16px;background:linear-gradient(135deg,rgba(212,175,55,0.15),rgba(212,175,55,0.03));border:1px solid var(--gold-bd);display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.sal-net-left{}
+.sal-net-lbl{font-size:12px;color:var(--t2);}
+.sal-net-detail{font-size:11px;color:var(--t3);margin-top:3px;}
+.sal-net-val{font-size:28px;font-weight:800;font-family:var(--font-mono);color:var(--gold);letter-spacing:-1px;}
+/* 税前薪资输入 */
+.sal-gross{margin-bottom:16px;}
+.sal-gross-lbl{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:0.8px;font-weight:600;margin-bottom:8px;display:block;}
+.sal-gross-input{width:100%;background:var(--card2);border:2px solid var(--gold);border-radius:16px;padding:18px;text-align:center;font-size:32px;font-weight:800;font-family:var(--font-mono);color:var(--gold);outline:none;box-sizing:border-box;transition:box-shadow .2s;}
+.sal-gross-input:focus{box-shadow:0 0 28px rgba(212,175,55,0.2);}
+.sal-gross-input::placeholder{color:var(--t3);font-size:15px;font-weight:400;font-family:var(--font-sans);}
 .form-g { margin-bottom:18px; }
 .form-l { font-size:11px; color:var(--t3); text-transform:uppercase; letter-spacing:0.8px; font-weight:600; margin-bottom:8px; display:block; }
 .form-i { width:100%; background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:14px; padding:14px 16px; font-size:16px; color:var(--t1); font-family:var(--font-sans); transition:border-color .2s; outline:none; }
@@ -1334,6 +1444,20 @@ textarea.form-i{resize:none;min-height:80px;}
   <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-title">记一笔</div>
+    <div class="salary-card" id="salary-card">
+      <div class="salary-card-top">
+        <div class="salary-card-icon">￥</div>
+        <div>
+          <div class="salary-card-name">薪资到账</div>
+          <div class="salary-card-sub">记录本月工资收入，自动计入统计</div>
+        </div>
+      </div>
+      <div class="salary-card-tags">
+        <span class="salary-tag">工资</span>
+        <span class="salary-tag">本月收入</span>
+        <span class="salary-tag">计入余额</span>
+      </div>
+    </div>
     <div class="type-toggle" id="tx-type">
       <button class="type-opt on exp" data-t="expense">支出</button>
       <button class="type-opt" data-t="income">收入</button>
@@ -1382,6 +1506,120 @@ textarea.form-i{resize:none;min-height:80px;}
     </div>
     <!-- 金额输入（所有类型共用） -->
     <input type="text" class="amt-big" id="tx-amt-input" placeholder="0.00" inputmode="decimal">
+    <!-- 工资专用：到账日选择 -->
+    <div class="salary-payday" id="salary-payday">
+      <div class="salary-payday-label">每月到账日</div>
+      <div class="salary-payday-row">
+        <div class="salary-payday-select-wrap">
+          <select class="salary-payday-select" id="salary-payday-select">
+            <option value="">选择到账日</option>
+            <option value="1">每月 1 号</option>
+            <option value="5">每月 5 号</option>
+            <option value="10">每月 10 号</option>
+            <option value="15">每月 15 号</option>
+            <option value="20">每月 20 号</option>
+            <option value="25">每月 25 号</option>
+            <option value="28">每月 28 号</option>
+            <option value="30">每月 30 号</option>
+            <option value="custom">自定义日期</option>
+          </select>
+        </div>
+        <div class="salary-payday-custom" id="salary-payday-custom">
+          <input type="number" id="salary-payday-custom-input" placeholder="输入几号（1-31）" min="1" max="31" inputmode="numeric">
+        </div>
+      </div>
+      <div class="salary-payday-hint" id="salary-payday-hint">选择你每月实际收到工资的日期</div>
+    </div>
+    <!-- 工资管理面板 -->
+    <div class="salary-panel" id="salary-panel">
+      <!-- 工资对比卡 -->
+      <div class="sal-compare">
+        <div class="sal-cmp prev">
+          <div class="sal-cmp-lbl">上月</div>
+          <div class="sal-cmp-val" id="sal-prev-val">—</div>
+          <div class="sal-cmp-sub" id="sal-prev-sub">暂无记录</div>
+        </div>
+        <div class="sal-cmp curr">
+          <div class="sal-cmp-lbl">本月</div>
+          <div class="sal-cmp-val" id="sal-curr-val">—</div>
+          <div class="sal-cmp-sub" id="sal-curr-sub">输入税前薪资</div>
+        </div>
+        <div class="sal-cmp next">
+          <div class="sal-cmp-lbl">预估下月</div>
+          <div class="sal-cmp-val" id="sal-next-val">—</div>
+          <div class="sal-cmp-sub" id="sal-next-sub">基于本月预估</div>
+        </div>
+      </div>
+      <!-- 发薪日倒计时 -->
+      <div class="sal-countdown">
+        <div class="sal-cd-left">
+          <div class="sal-cd-label">距下次发薪</div>
+          <div class="sal-cd-date" id="sal-cd-date">—</div>
+        </div>
+        <div class="sal-cd-right">
+          <div class="sal-cd-num" id="sal-cd-num">—</div>
+          <div class="sal-cd-unit">天</div>
+        </div>
+      </div>
+      <!-- 工作日历 -->
+      <div class="sal-cal">
+        <div class="sal-cal-head">
+          <div class="sal-cal-month" id="sal-cal-month">—</div>
+          <div class="sal-cal-nav">
+            <button id="sal-cal-prev" type="button">‹</button>
+            <button id="sal-cal-next" type="button">›</button>
+          </div>
+        </div>
+        <div class="sal-cal-wd">
+          <div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div>
+        </div>
+        <div class="sal-cal-grid" id="sal-cal-grid"></div>
+        <div class="sal-cal-legend">
+          <div><span class="sal-legend-dot w"></span>已上班</div>
+          <div><span class="sal-legend-dot f"></span>待上班</div>
+          <div><span class="sal-legend-dot l"></span>请假</div>
+          <div><span class="sal-legend-dot e"></span>周末</div>
+        </div>
+      </div>
+      <!-- 税前薪资输入 -->
+      <div class="sal-gross">
+        <label class="sal-gross-lbl">税前薪资</label>
+        <input type="text" class="sal-gross-input" id="sal-gross-input" placeholder="输入税前金额" inputmode="decimal">
+      </div>
+      <!-- 奖金与扣款 -->
+      <div class="sal-deduct">
+        <div class="sal-deduct-head">
+          <span class="sal-deduct-title">奖金 & 扣款</span>
+          <span class="sal-deduct-hint" id="sal-deduct-total">扣款 ¥0</span>
+        </div>
+        <div class="sal-deduct-grid">
+          <div class="sal-deduct-item">
+            <div class="sal-deduct-lbl"><span class="sal-deduct-ic ss">保</span>社保</div>
+            <input type="text" class="sal-deduct-input" id="sal-ss-input" placeholder="0" inputmode="decimal">
+          </div>
+          <div class="sal-deduct-item">
+            <div class="sal-deduct-lbl"><span class="sal-deduct-ic bonus">奖</span>全勤奖</div>
+            <input type="text" class="sal-deduct-input" id="sal-bonus-input" placeholder="0" inputmode="decimal">
+          </div>
+          <div class="sal-deduct-item">
+            <div class="sal-deduct-lbl"><span class="sal-deduct-ic hf">积</span>公积金</div>
+            <input type="text" class="sal-deduct-input" id="sal-hf-input" placeholder="0" inputmode="decimal">
+          </div>
+          <div class="sal-deduct-item">
+            <div class="sal-deduct-lbl"><span class="sal-deduct-ic tx">税</span>个税</div>
+            <input type="text" class="sal-deduct-input" id="sal-tax-input" placeholder="0" inputmode="decimal">
+          </div>
+        </div>
+      </div>
+      <!-- 到手工资 -->
+      <div class="sal-net">
+        <div class="sal-net-left">
+          <div class="sal-net-lbl">到手薪资</div>
+          <div class="sal-net-detail" id="sal-net-detail">税前 + 全勤奖 - 社保 - 公积金 - 个税</div>
+        </div>
+        <div class="sal-net-val" id="sal-net-val">¥0</div>
+      </div>
+    </div>
     <!-- 支出/收入专用区域 -->
     <div id="tx-normal-section">
     <div class="form-g">
@@ -1460,7 +1698,7 @@ textarea.form-i{resize:none;min-height:80px;}
     </div>
     <div class="btn-row">
       <button class="btn btn-outline" onclick="closeSheet('sheet-tx')">取消</button>
-      <button class="btn btn-gold" onclick="saveTx()">保存</button>
+      <button class="btn btn-gold" id="tx-save-btn" onclick="saveTx()">保存</button>
     </div>
   </div>
 </div>
