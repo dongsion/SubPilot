@@ -384,9 +384,9 @@ input { font-family:inherit; }
 .quick-fab-item:nth-child(3){background:linear-gradient(135deg,#65e4b3 0%,#28b487 50%,#0f766e 100%);box-shadow:0 12px 30px rgba(40,180,135,0.28),0 6px 18px rgba(0,0,0,0.28),inset 0 1px 0 rgba(255,255,255,0.22);}
 .quick-fab-item:active{filter:brightness(.92) saturate(1.08);}
 .quick-fab.open .quick-fab-item{opacity:1; pointer-events:auto;}
-.quick-fab.open .quick-fab-item:nth-child(1){transform:translate(-112px,-18px) rotate(-4deg); transition-delay:.02s;}
-.quick-fab.open .quick-fab-item:nth-child(2){transform:translate(-128px,-80px) rotate(-9deg); transition-delay:.05s;}
-.quick-fab.open .quick-fab-item:nth-child(3){transform:translate(-92px,-142px) rotate(-14deg); transition-delay:.08s;}
+.quick-fab.open .quick-fab-item:nth-child(1){transform:translate(-112px,-20px) rotate(-5deg); transition-delay:.02s; z-index:4;}
+.quick-fab.open .quick-fab-item:nth-child(2){transform:translate(-130px,-63px) rotate(-8deg); transition-delay:.05s; z-index:3;}
+.quick-fab.open .quick-fab-item:nth-child(3){transform:translate(-104px,-106px) rotate(-11deg); transition-delay:.08s; z-index:2;}
 @media (max-width:430px){ .quick-fab{right:20px;} }
 
 /* AI Button - now in tab bar center */
