@@ -552,9 +552,10 @@ input { font-family:inherit; }
 .sal-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
 .sal-cal-day{aspect-ratio:1;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;font-weight:600;border:1px solid transparent;cursor:pointer;transition:transform .1s;position:relative;}
 .sal-cal-day:active{transform:scale(0.9);}
-.sal-cal-day.worked{background:rgba(34,197,94,0.12);border-color:rgba(34,197,94,0.2);color:#4ade80;}
+.sal-cal-day.worked{background:var(--gold-bg);border-color:var(--gold-bd);color:var(--gold);}
+.sal-cal-day.working{background:rgba(34,197,94,0.12);border-color:rgba(34,197,94,0.24);color:#4ade80;}
 .sal-cal-day.future{background:var(--card2);border-color:var(--border);color:var(--t2);}
-.sal-cal-day.leave{background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.2);color:var(--orange);}
+.sal-cal-day.leave{background:rgba(59,130,246,0.12);border-color:rgba(59,130,246,0.24);color:#60a5fa;}
 .sal-cal-day.weekend{background:transparent;border-color:var(--border);color:var(--t3);}
 .sal-cal-day.today{border:2px solid var(--gold);}
 /* 日历日期波浪渐入 */
@@ -563,15 +564,17 @@ input { font-family:inherit; }
 }
 @keyframes salDayIn{from{opacity:0;transform:scale(0.7);}to{opacity:1;transform:scale(1);}}
 .sal-cal-dot{width:4px;height:4px;border-radius:50%;margin-top:2px;}
-.sal-cal-day.worked .sal-cal-dot{background:#4ade80;}
-.sal-cal-day.leave .sal-cal-dot{background:var(--orange);}
+.sal-cal-day.worked .sal-cal-dot{background:var(--gold);}
+.sal-cal-day.working .sal-cal-dot{background:#4ade80;}
+.sal-cal-day.leave .sal-cal-dot{background:#60a5fa;}
 .sal-cal-day.future .sal-cal-dot{background:var(--t3);opacity:0.4;}
 .sal-cal-legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;}
 .sal-cal-legend div{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--t3);}
 .sal-legend-dot{width:7px;height:7px;border-radius:50%;}
-.sal-legend-dot.w{background:#4ade80;}
+.sal-legend-dot.w{background:var(--gold);}
+.sal-legend-dot.ing{background:#4ade80;}
 .sal-legend-dot.f{background:var(--t3);opacity:0.4;}
-.sal-legend-dot.l{background:var(--orange);}
+.sal-legend-dot.l{background:#60a5fa;}
 .sal-legend-dot.e{background:transparent;border:1px solid var(--border2);}
 /* 扣款 */
 .sal-deduct{margin-bottom:16px;}
@@ -1622,6 +1625,7 @@ textarea.form-i{resize:none;min-height:80px;}
         <div class="sal-cal-grid" id="sal-cal-grid"></div>
         <div class="sal-cal-legend">
           <div><span class="sal-legend-dot w"></span>已上班</div>
+          <div><span class="sal-legend-dot ing"></span>正在上班</div>
           <div><span class="sal-legend-dot f"></span>待上班</div>
           <div><span class="sal-legend-dot l"></span>请假</div>
           <div><span class="sal-legend-dot e"></span>周末</div>

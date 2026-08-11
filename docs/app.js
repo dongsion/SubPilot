@@ -852,6 +852,9 @@ function renderSalaryCalendar() {
       if (log === 'leave') {
         cls = 'leave';
         dot = '<span class="sal-cal-dot"></span>';
+      } else if (isToday) {
+        cls = 'working';
+        dot = '<span class="sal-cal-dot"></span>';
       } else if (log === 'worked' || (isPast && log !== 'leave')) {
         cls = 'worked';
         dot = '<span class="sal-cal-dot"></span>';
