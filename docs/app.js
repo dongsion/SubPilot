@@ -453,9 +453,47 @@ const fmt = n => {
 const today = () => new Date().toISOString().slice(0, 10);
 const daysBetween = (d1, d2) => Math.ceil((new Date(d2) - new Date(d1)) / 86400000);
 const addDays = (dateStr, days) => {
-  const d = new Date(dateStr); d.setDate(d.getDate() + days);
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + days);
   return d.toISOString().slice(0, 10);
 };
+
+function isPendingSalaryTx(t) {
+  return !!(t && t.type === 'income' && t.category === 'salary' && t.salaryPending);
+}
+
+function isActiveTx(t) {
+  return !isPendingSalaryTx(t);
+}
+
+function getSalaryPayDate(payday) {
+  const now = new Date();
+  const day = Math.max(1, Math.min(31, parseInt(payday) || 15));
+  let target = new Date(now.getFullYear(), now.getMonth(), day);
+  if (target.getDate() !== day) target = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  if (target.toISOString().slice(0, 10) < today()) {
+    target = new Date(now.getFullYear(), now.getMonth() + 1, day);
+    if (target.getDate() !== day) target = new Date(target.getFullYear(), target.getMonth() + 1, 0);
+  }
+  return target.toISOString().slice(0, 10);
+}
+
+function processPendingSalaryIncome() {
+  let changed = false;
+  state.transactions.forEach(t => {
+    if (!isPendingSalaryTx(t)) return;
+    const payDate = t.salaryPayDate || t.date;
+    if (payDate && payDate <= today()) {
+      t.salaryPending = false;
+      t.salaryCredited = true;
+      t.date = payDate;
+      const acct = state.accounts.find(a => a.id === t.accountId);
+      if (acct) acct.balance += t.amount;
+      changed = true;
+    }
+  });
+  if (changed) save();
+}
 const addMonths = (dateStr, months) => {
   const d = new Date(dateStr); d.setMonth(d.getMonth() + months);
   return d.toISOString().slice(0, 10);
@@ -1057,7 +1095,7 @@ function updateSalaryCompare() {
   const prevEnd = new Date(now.getFullYear(), now.getMonth(), 0);
 
   const prevSalary = state.transactions.find(t =>
-    t.type === 'income' && t.category === 'salary' &&
+    t.type === 'income' && t.category === 'salary' && isActiveTx(t) &&
     new Date(t.date) >= prevStart && new Date(t.date) <= prevEnd
   );
 
@@ -1448,7 +1486,14 @@ function saveTx() {
   // 工资模式：保存到账日信息和薪资明细
   if (wasSalaryMode) {
     const payday = getSalaryPayday();
+    const payDate = getSalaryPayDate(payday);
     if (payday) tx.payday = payday;
+    tx.salaryPayDate = payDate;
+    tx.salaryPending = payDate > today();
+    tx.salaryCredited = !tx.salaryPending;
+    if (tx.salaryPending) {
+      tx.note = note || `预计 ${payDate} 工资到账`;
+    }
     const gross = parseFloat($('#sal-gross-input')?.value) || 0;
     const ss = parseFloat($('#sal-ss-input')?.value) || 0;
     const bonus = parseFloat($('#sal-bonus-input')?.value) || 0;
@@ -1490,7 +1535,7 @@ function saveTx() {
   state.editingTxId = null;
   // Update account balance
   const acct = state.accounts.find(a => a.id === acctId);
-  if (acct) {
+  if (acct && !tx.salaryPending) {
     acct.balance += state.txType === 'expense' ? -amt : amt;
   }
   // 清除食物选择
@@ -1499,7 +1544,7 @@ function saveTx() {
   }
   save();
   closeSheet('sheet-tx');
-  toast(isEditing ? '已更新' : (wasSalaryMode ? '工资收入已记录' : '记账成功'));
+  toast(isEditing ? '已更新' : (wasSalaryMode ? (tx.salaryPending ? '已保存为待到账工资' : '工资收入已记录') : '记账成功'));
   haptic('success');
   render();
 }
@@ -1510,6 +1555,7 @@ function revertTxEffect(t) {
     const acct = state.accounts.find(a => a.id === t.accountId);
     if (acct) acct.balance += t.amount; // 加回
   } else if (t.type === 'income') {
+    if (isPendingSalaryTx(t)) return;
     const acct = state.accounts.find(a => a.id === t.accountId);
     if (acct) acct.balance -= t.amount; // 减去
   } else if (t.type === 'transfer') {
@@ -2647,8 +2693,9 @@ $('#recurring-amt-input')?.addEventListener('input', function(e) {
 function renderOverview() {
   const month = getMonthRange();
   const monthTx = state.transactions.filter(t => t.date >= month.start && t.date <= month.end);
-  const monthExpense = monthTx.filter(t => t.type === 'expense').reduce((s,t) => s + t.amount, 0);
-  const monthIncome = monthTx.filter(t => t.type === 'income').reduce((s,t) => s + t.amount, 0);
+  const activeMonthTx = monthTx.filter(isActiveTx);
+  const monthExpense = activeMonthTx.filter(t => t.type === 'expense').reduce((s,t) => s + t.amount, 0);
+  const monthIncome = activeMonthTx.filter(t => t.type === 'income').reduce((s,t) => s + t.amount, 0);
   const debtBalance = state.transactions
     .filter(t => t.type === 'debt' && !t.settled && t.debtDir === 'owed')
     .reduce((s, t) => s + t.amount, 0);
@@ -2671,10 +2718,10 @@ function renderOverview() {
   let html = '';
   for (let i = 6; i >= 0; i--) {
     const d = addDays(today(), -i);
-    const dayExp = state.transactions.filter(t => t.date === d && t.type === 'expense').reduce((s,t) => s + t.amount, 0);
+    const dayExp = state.transactions.filter(t => t.date === d && t.type === 'expense' && isActiveTx(t)).reduce((s,t) => s + t.amount, 0);
     const maxExp = Math.max(50, ...Array.from({length:7},(_,j) => {
       const dd = addDays(today(), -(6-j));
-      return state.transactions.filter(t => t.date === dd && t.type === 'expense').reduce((s,t) => s + t.amount, 0);
+      return state.transactions.filter(t => t.date === dd && t.type === 'expense' && isActiveTx(t)).reduce((s,t) => s + t.amount, 0);
     }));
     const pct = maxExp > 0 ? Math.max(8, (dayExp / maxExp) * 100) : 10;
     const isToday = i === 0;
@@ -2890,13 +2937,14 @@ function renderTx() {
   const month = getMonthRange();
   $('#tx-month').textContent = month.label;
   const monthTx = state.transactions.filter(t => t.date >= month.start && t.date <= month.end);
-  const exp = monthTx.filter(t => t.type === 'expense').reduce((s,t) => s+t.amount, 0);
-  const inc = monthTx.filter(t => t.type === 'income').reduce((s,t) => s+t.amount, 0);
+  const activeMonthTx = monthTx.filter(isActiveTx);
+  const exp = activeMonthTx.filter(t => t.type === 'expense').reduce((s,t) => s+t.amount, 0);
+  const inc = activeMonthTx.filter(t => t.type === 'income').reduce((s,t) => s+t.amount, 0);
 
   const filter = document.querySelector('#tx-fp .pl.on:not(#tx-tag-pill)')?.dataset.f || 'all';
   let txs = monthTx;
   if (filter === 'expense') txs = txs.filter(t => t.type === 'expense');
-  if (filter === 'income') txs = txs.filter(t => t.type === 'income');
+  if (filter === 'income') txs = txs.filter(t => t.type === 'income' && isActiveTx(t));
   if (filter === 'transfer') txs = txs.filter(t => t.type === 'transfer');
   if (filter === 'debt') txs = txs.filter(t => t.type === 'debt');
   if (filter === 'sub') txs = txs.filter(t => t.isSubscription);
@@ -2940,8 +2988,8 @@ function renderTx() {
     const isYesterday = date === addDays(today(), -1);
     const label = isToday ? '今天' : isYesterday ? '昨天' : `${d.getMonth()+1}月${d.getDate()}日`;
     const weekDay = ['日','一','二','三','四','五','六'][d.getDay()];
-    const dayExp = groups[date].filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
-    const dayInc = groups[date].filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+    const dayExp = groups[date].filter(t=>t.type==='expense' && isActiveTx(t)).reduce((s,t)=>s+t.amount,0);
+    const dayInc = groups[date].filter(t=>t.type==='income' && isActiveTx(t)).reduce((s,t)=>s+t.amount,0);
     // 日卡片颜色点：有支出用红色，纯收入用绿色
     const dotColor = dayExp > 0 ? 'var(--red)' : 'var(--green)';
     let sumText = '';
@@ -2973,8 +3021,9 @@ function renderTx() {
       const iconColor = isTransfer ? '#64a0ff' : (isDebt ? '#ffa500' : (catColors[catKey] || catColors.other));
       const iconBg = isTransfer ? 'rgba(100,160,255,0.15)' : (isDebt ? 'rgba(255,165,0,0.15)' : (catBgColors[catKey] || catBgColors.other));
       const iconContent = isSub ? txIconSvg('sub') : (isTransfer ? '<path d="M7 7h10M7 7l3-3M7 7l3 3M17 17H7M17 17l-3 3M17 17l-3-3"/>' : (isDebt ? (t.debtDir === 'owed' ? '<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>' : '<path d="M12 21V9M7 14l5-5 5 5M5 3h14"/>') : txIconSvg(t.category)));
-      const badge = isSub ? '<span class="tx-badge">订阅</span>' : (isTransfer ? '<span class="tx-badge" style="background:rgba(100,160,255,0.2);color:#64a0ff;">转账</span>' : (isDebt ? `<span class="tx-badge" style="background:rgba(255,165,0,0.2);color:#ffa500;">${t.debtDir === 'owed' ? '我欠' : '欠我'}</span>` : ''));
-      const amtClass = (isTransfer || isDebt) ? '' : (t.type === 'income' ? 'in' : 'out');
+      const isPendingSalary = isPendingSalaryTx(t);
+      const badge = isPendingSalary ? '<span class="tx-badge" style="background:var(--gold-bg);color:var(--gold);">待到账</span>' : (isSub ? '<span class="tx-badge">订阅</span>' : (isTransfer ? '<span class="tx-badge" style="background:rgba(100,160,255,0.2);color:#64a0ff;">转账</span>' : (isDebt ? `<span class="tx-badge" style="background:rgba(255,165,0,0.2);color:#ffa500;">${t.debtDir === 'owed' ? '我欠' : '欠我'}</span>` : '')));
+      const amtClass = (isTransfer || isDebt || isPendingSalary) ? '' : (t.type === 'income' ? 'in' : 'out');
       const tagsHtml = (Array.isArray(t.tags) && t.tags.length > 0)
         ? `<div class="tx-item-tags">${t.tags.map(tg => `<span class="tx-item-tag">#${escapeHtml(tg)}</span>`).join('')}</div>`
         : '';
@@ -2989,7 +3038,7 @@ function renderTx() {
         : (isDebt ? `${t.debtPerson || '未知'}${acct ? ' · ' + acct.name : ''}` : `${acct?.name || '未知'}`);
       const amtLabel = isTransfer
         ? `¥${fmt(t.amount)}${t.fee ? ' <span style="font-size:11px;color:var(--t3);">+手续费¥' + fmt(t.fee) + '</span>' : ''}`
-        : (isDebt ? `${t.debtDir === 'owed' ? '-' : '+'}¥${fmt(t.amount)}` : `${t.type==='income'?'+':'-'}¥${fmt(t.amount)}`);
+        : (isDebt ? `${t.debtDir === 'owed' ? '-' : '+'}¥${fmt(t.amount)}` : (isPendingSalary ? `待到账<br><span style="font-size:10px;color:var(--t3);">${t.salaryPayDate || ''}</span>` : `${t.type==='income'?'+':'-'}¥${fmt(t.amount)}`));
 
       html += `<div class="tx-item" onclick="openTxDetail('${t.id}')">
         <div class="tx-item-icon" style="background:${iconBg};">
@@ -3001,7 +3050,7 @@ function renderTx() {
           ${tagsHtml}
           ${foodBadge ? `<div class="tx-item-tags">${foodBadge}</div>` : ''}
         </div>
-        <div class="tx-item-amt ${amtClass}" style="${isTransfer ? 'color:var(--t2);' : (isDebt ? (t.debtDir === 'owed' ? '' : 'color:var(--green);') : '')}">${amtLabel}</div>
+        <div class="tx-item-amt ${amtClass}" style="${isPendingSalary ? 'color:var(--gold);text-align:right;' : (isTransfer ? 'color:var(--t2);' : (isDebt ? (t.debtDir === 'owed' ? '' : 'color:var(--green);') : ''))}">${amtLabel}</div>
         ${isDebt && !t.settled ? `<button class="tx-repay-btn" onclick="event.stopPropagation();settleDebt('${t.id}')">还款</button>` : ''}
       </div>`;
     });
@@ -4178,6 +4227,8 @@ function init() {
 
   // Process auto-deductions after data is loaded
   processAutoDeductions();
+  // 处理已到发薪日的待到账工资
+  processPendingSalaryIncome();
   // Process recurring transactions
   processRecurringTx();
 
