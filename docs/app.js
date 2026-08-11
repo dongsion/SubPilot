@@ -864,7 +864,9 @@ function renderSalaryCalendar() {
     if (isToday) cls += ' today';
 
     const clickable = !isWeekend ? ' data-clickable="1"' : '';
-    html += '<div class="sal-cal-day ' + cls + '" data-date="' + dateKey + '"' + clickable + '>' + d + dot + '</div>';
+    const delay = ((d - 1) % 7) * 0.025 + Math.floor((d - 1) / 7) * 0.04;
+    const style = ' style="animation-delay:' + delay.toFixed(3) + 's;"';
+    html += '<div class="sal-cal-day ' + cls + '" data-date="' + dateKey + '"' + clickable + style + '>' + d + dot + '</div>';
   }
 
   grid.innerHTML = html;
@@ -922,7 +924,12 @@ function calculateNetSalary() {
   if (totalEl) totalEl.textContent = '扣款 ¥' + totalDeduct.toFixed(2);
 
   const netEl = $('#sal-net-val');
-  if (netEl) netEl.textContent = '¥' + net.toFixed(2);
+  if (netEl) {
+    netEl.textContent = '¥' + net.toFixed(2);
+    netEl.classList.remove('sal-pop');
+    void netEl.offsetWidth;
+    netEl.classList.add('sal-pop');
+  }
 
   const detailEl = $('#sal-net-detail');
   if (detailEl) detailEl.textContent = '¥' + gross.toFixed(2) + ' + ¥' + bonus.toFixed(2) + ' - ¥' + totalDeduct.toFixed(2);
