@@ -617,6 +617,18 @@ input { font-family:inherit; }
 .sal-net-lbl{font-size:12px;color:var(--t2);}
 .sal-net-detail{font-size:11px;color:var(--t3);margin-top:3px;}
 .sal-net-val{font-size:28px;font-weight:800;font-family:var(--font-mono);color:var(--gold);letter-spacing:-1px;}
+/* 薪资换算信息 */
+.sal-insights{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
+.sal-insight{background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:12px 14px;}
+.sal-insight.full{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.sal-insight-lbl{font-size:11px;color:var(--t3);margin-bottom:5px;}
+.sal-insight-val{font-size:18px;font-weight:800;font-family:var(--font-mono);color:var(--t1);letter-spacing:-0.5px;}
+.sal-insight-sub{font-size:10px;color:var(--t3);margin-top:3px;}
+.sal-full-status{font-size:12px;font-weight:700;color:var(--gold);text-align:right;}
+.sal-full-status.ok{color:var(--gold);}
+.sal-full-status.pending{color:var(--t2);}
+.sal-full-status.no{color:#60a5fa;}
+.sal-full-rule{font-size:10px;color:var(--t3);text-align:right;margin-top:3px;}
 /* 税前薪资输入 */
 .sal-gross{margin-bottom:16px;}
 .sal-gross-lbl{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:0.8px;font-weight:600;margin-bottom:8px;display:block;}
@@ -1668,6 +1680,30 @@ textarea.form-i{resize:none;min-height:80px;}
           <div class="sal-net-detail" id="sal-net-detail">税前 + 全勤奖 - 社保 - 公积金 - 个税</div>
         </div>
         <div class="sal-net-val" id="sal-net-val">¥0</div>
+      </div>
+      <!-- 时薪 / 年薪 / 全勤判断 -->
+      <div class="sal-insights">
+        <div class="sal-insight full">
+          <div>
+            <div class="sal-insight-lbl">全勤条件</div>
+            <div class="sal-insight-val" id="sal-full-bonus-val">¥0</div>
+            <div class="sal-insight-sub" id="sal-full-bonus-sub">全勤奖按日历状态判断</div>
+          </div>
+          <div>
+            <div class="sal-full-status pending" id="sal-full-status">待确认</div>
+            <div class="sal-full-rule" id="sal-full-rule">请手动标记本月工作日</div>
+          </div>
+        </div>
+        <div class="sal-insight">
+          <div class="sal-insight-lbl">时薪估算</div>
+          <div class="sal-insight-val" id="sal-hourly-val">—</div>
+          <div class="sal-insight-sub" id="sal-hourly-sub">按已标记工时</div>
+        </div>
+        <div class="sal-insight">
+          <div class="sal-insight-lbl">年薪估算</div>
+          <div class="sal-insight-val" id="sal-annual-val">—</div>
+          <div class="sal-insight-sub" id="sal-annual-sub">按当前月薪 × 12</div>
+        </div>
       </div>
     </div>
     <!-- 支出/收入专用区域 -->

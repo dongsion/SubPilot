@@ -804,11 +804,13 @@ function initSalaryPanel() {
       if (!state.salaryCalMonth) return;
       state.salaryCalMonth.setMonth(state.salaryCalMonth.getMonth() - 1);
       renderSalaryCalendar();
+      calculateNetSalary();
     });
     if (nextBtn) nextBtn.addEventListener('click', () => {
       if (!state.salaryCalMonth) return;
       state.salaryCalMonth.setMonth(state.salaryCalMonth.getMonth() + 1);
       renderSalaryCalendar();
+      calculateNetSalary();
     });
   }
 }
@@ -839,7 +841,6 @@ function renderSalaryCalendar() {
     const dayOfWeek = date.getDay();
     const dateKey = date.toISOString().slice(0, 10);
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-    const isPast = date < new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const isToday = dateKey === todayDateStr;
 
     let cls = '';
@@ -852,10 +853,10 @@ function renderSalaryCalendar() {
       if (log === 'leave') {
         cls = 'leave';
         dot = '<span class="sal-cal-dot"></span>';
-      } else if (isToday) {
+      } else if (log === 'working') {
         cls = 'working';
         dot = '<span class="sal-cal-dot"></span>';
-      } else if (log === 'worked' || (isPast && log !== 'leave')) {
+      } else if (log === 'worked') {
         cls = 'worked';
         dot = '<span class="sal-cal-dot"></span>';
       } else {
@@ -874,17 +875,22 @@ function renderSalaryCalendar() {
 
   grid.innerHTML = html;
 
-  // 绑定点击：切换上班/请假状态
+  // 绑定点击：手动切换待选择/正在上班/已上班/请假
   grid.querySelectorAll('.sal-cal-day[data-clickable]').forEach(el => {
     el.addEventListener('click', function() {
       const key = this.dataset.date;
       const log = state.salaryWorkLog[key];
-      if (log === 'leave') {
-        delete state.salaryWorkLog[key]; // 恢复默认状态
+      if (!log) {
+        state.salaryWorkLog[key] = 'working';
+      } else if (log === 'working') {
+        state.salaryWorkLog[key] = 'worked';
+      } else if (log === 'worked') {
+        state.salaryWorkLog[key] = 'leave';
       } else {
-        state.salaryWorkLog[key] = 'leave'; // 标记为请假
+        delete state.salaryWorkLog[key];
       }
       renderSalaryCalendar();
+      calculateNetSalary();
     });
   });
 }
@@ -913,6 +919,72 @@ function updateSalaryCountdown() {
   numEl.textContent = diffDays;
 }
 
+function getSalaryWorkStats() {
+  const base = state.salaryCalMonth || new Date();
+  const year = base.getFullYear();
+  const month = base.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  let workdays = 0;
+  let worked = 0;
+  let working = 0;
+  let leave = 0;
+  let missing = 0;
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = new Date(year, month, d);
+    const dayOfWeek = date.getDay();
+    if (dayOfWeek === 0 || dayOfWeek === 6) continue;
+
+    workdays++;
+    const key = date.toISOString().slice(0, 10);
+    const log = state.salaryWorkLog[key];
+    if (log === 'worked') worked++;
+    else if (log === 'working') working++;
+    else if (log === 'leave') leave++;
+    else missing++;
+  }
+
+  const attended = worked + working;
+  const fullAttendance = workdays > 0 && leave === 0 && missing === 0;
+  const pending = leave === 0 && missing > 0;
+  return { workdays, worked, working, attended, leave, missing, fullAttendance, pending };
+}
+
+function updateSalaryInsights(stats, bonusInput, bonusApplied, net, annual, hourly) {
+  const bonusValEl = $('#sal-full-bonus-val');
+  const bonusSubEl = $('#sal-full-bonus-sub');
+  const statusEl = $('#sal-full-status');
+  const ruleEl = $('#sal-full-rule');
+  const hourlyEl = $('#sal-hourly-val');
+  const hourlySubEl = $('#sal-hourly-sub');
+  const annualEl = $('#sal-annual-val');
+  const annualSubEl = $('#sal-annual-sub');
+
+  if (bonusValEl) bonusValEl.textContent = '¥' + bonusApplied.toFixed(2);
+  if (bonusSubEl) bonusSubEl.textContent = bonusInput > 0 ? '输入 ¥' + bonusInput.toFixed(2) + '，满足全勤才计入' : '未填写全勤奖';
+
+  if (statusEl) {
+    statusEl.classList.remove('ok', 'pending', 'no');
+    if (stats.fullAttendance) {
+      statusEl.textContent = '已满足';
+      statusEl.classList.add('ok');
+    } else if (stats.leave > 0) {
+      statusEl.textContent = '未满足';
+      statusEl.classList.add('no');
+    } else {
+      statusEl.textContent = '待确认';
+      statusEl.classList.add('pending');
+    }
+  }
+  if (ruleEl) ruleEl.textContent = '上班 ' + stats.attended + '/' + stats.workdays + '，请假 ' + stats.leave + '，未选 ' + stats.missing;
+
+  if (hourlyEl) hourlyEl.textContent = hourly > 0 ? '¥' + hourly.toFixed(2) : '—';
+  if (hourlySubEl) hourlySubEl.textContent = stats.attended > 0 ? '按 ' + stats.attended + ' 天 × 8 小时估算' : '标记上班后计算';
+
+  if (annualEl) annualEl.textContent = annual > 0 ? '¥' + annual.toFixed(0) : '—';
+  if (annualSubEl) annualSubEl.textContent = stats.fullAttendance ? '已计入全勤奖 × 12' : '未计入全勤奖 × 12';
+}
+
 function calculateNetSalary() {
   const gross = parseFloat($('#sal-gross-input')?.value) || 0;
   const ss = parseFloat($('#sal-ss-input')?.value) || 0;
@@ -920,8 +992,13 @@ function calculateNetSalary() {
   const hf = parseFloat($('#sal-hf-input')?.value) || 0;
   const tax = parseFloat($('#sal-tax-input')?.value) || 0;
 
+  const stats = getSalaryWorkStats();
+  const bonusApplied = stats.fullAttendance ? bonus : 0;
   const totalDeduct = ss + hf + tax;
-  const net = gross + bonus - totalDeduct;
+  const net = gross + bonusApplied - totalDeduct;
+  const hours = stats.attended * 8;
+  const hourly = hours > 0 && net > 0 ? net / hours : 0;
+  const annual = net > 0 ? net * 12 : 0;
 
   const totalEl = $('#sal-deduct-total');
   if (totalEl) totalEl.textContent = '扣款 ¥' + totalDeduct.toFixed(2);
@@ -935,13 +1012,14 @@ function calculateNetSalary() {
   }
 
   const detailEl = $('#sal-net-detail');
-  if (detailEl) detailEl.textContent = '¥' + gross.toFixed(2) + ' + ¥' + bonus.toFixed(2) + ' - ¥' + totalDeduct.toFixed(2);
+  if (detailEl) detailEl.textContent = '¥' + gross.toFixed(2) + ' + 全勤 ¥' + bonusApplied.toFixed(2) + ' - ¥' + totalDeduct.toFixed(2);
+  updateSalaryInsights(stats, bonus, bonusApplied, net, annual, hourly);
 
   // 本月对比卡
   const currValEl = $('#sal-curr-val');
   if (currValEl) currValEl.textContent = net > 0 ? '¥' + net.toFixed(0) : '—';
   const currSubEl = $('#sal-curr-sub');
-  if (currSubEl) currSubEl.textContent = gross > 0 ? '税前 ¥' + gross.toFixed(0) + (bonus > 0 ? ' + 全勤 ¥' + bonus.toFixed(0) : '') : '输入税前薪资';
+  if (currSubEl) currSubEl.textContent = gross > 0 ? '税前 ¥' + gross.toFixed(0) + (bonusApplied > 0 ? ' + 全勤 ¥' + bonusApplied.toFixed(0) : '') : '输入税前薪资';
 
   // 预估下月
   const nextValEl = $('#sal-next-val');
@@ -1356,9 +1434,19 @@ function saveTx() {
     const hf = parseFloat($('#sal-hf-input')?.value) || 0;
     const tax = parseFloat($('#sal-tax-input')?.value) || 0;
     if (gross > 0) {
+      const stats = getSalaryWorkStats();
+      const bonusApplied = stats.fullAttendance ? bonus : 0;
+      const totalDeduct = ss + hf + tax;
+      const net = gross + bonusApplied - totalDeduct;
+      const hours = stats.attended * 8;
       tx.salaryGross = gross;
       tx.salaryBonus = bonus;
+      tx.salaryBonusApplied = bonusApplied;
       tx.salaryDeductions = { ss, hf, tax };
+      tx.salaryFullAttendance = stats.fullAttendance;
+      tx.salaryWorkStats = stats;
+      tx.salaryHourly = hours > 0 && net > 0 ? +(net / hours).toFixed(2) : 0;
+      tx.salaryAnnual = net > 0 ? +(net * 12).toFixed(2) : 0;
     }
   }
   // 保存食物热量信息（仅餐饮支出且有选中食物时）
