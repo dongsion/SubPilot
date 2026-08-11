@@ -370,12 +370,12 @@ input { font-family:inherit; }
 .tbi.on svg{stroke:var(--gold);}
 
 /* Quick FAB */
-.quick-fab { position:fixed; bottom:calc(64px + env(safe-area-inset-bottom, 0px)); right:calc(50% - 215px + 20px); width:248px; height:198px; z-index:90; pointer-events:none; display:flex; justify-content:flex-end; align-items:flex-end; }
+.quick-fab { position:fixed; bottom:calc(64px + env(safe-area-inset-bottom, 0px)); right:calc(50% - 215px + 20px); width:260px; height:220px; z-index:90; pointer-events:none; display:flex; justify-content:flex-end; align-items:flex-end; }
 .quick-fab-main { position:absolute; right:0; bottom:0; width:56px; height:56px; border-radius:50%; background:var(--gold); color:#000; border:none; font-size:32px; line-height:1; box-shadow:0 8px 28px var(--gold-glow),0 0 0 5px rgba(212,175,122,0.06); display:flex; align-items:center; justify-content:center; font-weight:300; transition:transform .28s cubic-bezier(.34,1.4,.64,1), box-shadow .2s; pointer-events:auto; z-index:5; }
 .quick-fab-main:active{transform:scale(.9);}
 .quick-fab.open .quick-fab-main{transform:rotate(45deg); box-shadow:0 12px 34px var(--gold-glow),0 0 0 6px rgba(212,175,122,0.08);}
 .quick-fab.open .quick-fab-main:active{transform:rotate(45deg) scale(.92);}
-.quick-fab-item { position:absolute; right:72px; bottom:6px; height:50px; min-width:132px; padding:0 20px; border-radius:18px; border:1px solid rgba(255,255,255,0.18); background:rgba(20,20,22,0.94); color:#fff; backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px); box-shadow:0 12px 30px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.18); display:flex; align-items:center; justify-content:center; gap:8px; font-size:15px; font-weight:700; opacity:0; transform:translate(54px,10px) scale(.45) rotate(0deg); transform-origin:calc(100% + 44px) calc(100% + 2px); transition:transform .4s cubic-bezier(.34,1.45,.64,1), opacity .22s ease, filter .2s, box-shadow .2s; pointer-events:none; overflow:hidden; }
+.quick-fab-item { position:absolute; right:66px; bottom:4px; height:50px; min-width:132px; padding:0 20px; border-radius:18px; border:1px solid rgba(255,255,255,0.18); background:rgba(20,20,22,0.94); color:#fff; backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px); box-shadow:0 12px 30px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.18); display:flex; align-items:center; justify-content:center; gap:8px; font-size:15px; font-weight:700; opacity:0; transform:translate(62px,0) scale(.35) rotate(0deg); transform-origin:calc(100% + 38px) 50%; transition:transform .42s cubic-bezier(.2,1.35,.35,1), opacity .22s ease, filter .2s, box-shadow .2s; pointer-events:none; overflow:hidden; }
 .quick-fab-item::before{content:'';position:absolute;inset:0;background:linear-gradient(120deg,rgba(255,255,255,0.24),transparent 42%,rgba(255,255,255,0.08));pointer-events:none;}
 .quick-fab-item span{position:relative;z-index:1;text-shadow:0 1px 8px rgba(0,0,0,0.18);}
 .quick-fab-item span:first-child{font-size:17px;}
@@ -384,9 +384,9 @@ input { font-family:inherit; }
 .quick-fab-item:nth-child(3){background:linear-gradient(135deg,#65e4b3 0%,#28b487 50%,#0f766e 100%);box-shadow:0 12px 30px rgba(40,180,135,0.28),0 6px 18px rgba(0,0,0,0.28),inset 0 1px 0 rgba(255,255,255,0.22);}
 .quick-fab-item:active{filter:brightness(.92) saturate(1.08);}
 .quick-fab.open .quick-fab-item{opacity:1; pointer-events:auto;}
-.quick-fab.open .quick-fab-item:nth-child(1){transform:translate(0,-2px) rotate(-4deg); transition-delay:.02s; z-index:4;}
-.quick-fab.open .quick-fab-item:nth-child(2){transform:translate(-16px,-43px) rotate(-8deg); transition-delay:.05s; z-index:3;}
-.quick-fab.open .quick-fab-item:nth-child(3){transform:translate(-4px,-84px) rotate(-12deg); transition-delay:.08s; z-index:2;}
+.quick-fab.open .quick-fab-item:nth-child(1){transform:translate(0,0) rotate(8deg); transition-delay:.02s; z-index:4;}
+.quick-fab.open .quick-fab-item:nth-child(2){transform:translate(-2px,-4px) rotate(20deg); transition-delay:.05s; z-index:3;}
+.quick-fab.open .quick-fab-item:nth-child(3){transform:translate(-4px,-8px) rotate(32deg); transition-delay:.08s; z-index:2;}
 @media (max-width:430px){ .quick-fab{right:20px;} }
 
 /* AI Button - now in tab bar center */
