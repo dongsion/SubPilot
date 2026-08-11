@@ -2317,17 +2317,16 @@ function renderOverview() {
 
   // overview-tx 已合并到 tx-list，不再单独渲染
 
-  // 今日热量环（始终显示）
-  const calItem = $('#hero-cal-item');
-  if (calItem) {
-    const todayStr = today();
-    const todayFoodTx = state.transactions.filter(t => t.date === todayStr && t.type === 'expense' && t.foodKcal);
-    const todayKcal = todayFoodTx.reduce((s, t) => s + (t.foodKcal || 0), 0);
-    const goal = state.settings.dailyCalorieGoal || 1800;
-    $('#hero-cal-intake').textContent = todayKcal;
-    $('#hero-cal-goal').textContent = goal;
-    // 始终显示热量环，即使为0也显示 "0 / 1800 kcal"
-    calItem.style.display = 'flex';
+  // 储蓄总进度（始终显示）
+  const savingsItem = $('#hero-savings-item');
+  if (savingsItem) {
+    const totalSaved = state.savingsGoals.reduce((s, g) => s + (g.currentAmount || 0), 0);
+    const totalTarget = state.savingsGoals.reduce((s, g) => s + (g.targetAmount || 0), 0);
+    const pct = totalTarget > 0 ? Math.min(100, Math.round((totalSaved / totalTarget) * 100)) : 0;
+    $('#hero-savings-pct').textContent = pct;
+    $('#hero-savings-saved').textContent = `¥${fmt(Math.round(totalSaved))}`;
+    $('#hero-savings-target').textContent = `¥${fmt(Math.round(totalTarget))}`;
+    savingsItem.style.display = 'flex';
   }
 }
 
