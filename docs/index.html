@@ -370,8 +370,8 @@ input { font-family:inherit; }
 .tbi.on svg{stroke:var(--gold);}
 
 /* Quick FAB */
-.quick-fab { position:fixed; bottom:calc(64px + env(safe-area-inset-bottom, 0px)); right:calc(50% - 215px + 20px); width:260px; height:220px; z-index:90; pointer-events:none; display:flex; justify-content:flex-end; align-items:flex-end; }
-.quick-fab-main { position:absolute; right:0; bottom:0; width:56px; height:56px; border-radius:50%; background:var(--gold); color:#000; border:none; font-size:32px; line-height:1; box-shadow:0 8px 28px var(--gold-glow),0 0 0 5px rgba(212,175,122,0.06); display:flex; align-items:center; justify-content:center; font-weight:300; transition:transform .28s cubic-bezier(.34,1.4,.64,1), box-shadow .2s; pointer-events:auto; z-index:5; }
+.quick-fab { position:fixed; bottom:calc(64px + env(safe-area-inset-bottom, 0px)); right:calc(50% - 215px + 20px); width:280px; height:250px; z-index:90; pointer-events:none; display:flex; justify-content:flex-end; align-items:flex-end; }
+.quick-fab-main { position:absolute; right:0; bottom:0; width:56px; height:56px; border-radius:50%; background:var(--gold); color:#000; border:none; font-size:32px; line-height:1; box-shadow:0 8px 28px var(--gold-glow),0 0 0 5px rgba(212,175,122,0.06); display:flex; align-items:center; justify-content:center; font-weight:300; transition:transform .28s cubic-bezier(.34,1.4,.64,1), box-shadow .2s; pointer-events:auto; z-index:6; }
 .quick-fab-main:active{transform:scale(.9);}
 .quick-fab.open .quick-fab-main{transform:rotate(45deg); box-shadow:0 12px 34px var(--gold-glow),0 0 0 6px rgba(212,175,122,0.08);}
 .quick-fab.open .quick-fab-main:active{transform:rotate(45deg) scale(.92);}
@@ -380,13 +380,15 @@ input { font-family:inherit; }
 .quick-fab-item span{position:relative;z-index:1;text-shadow:0 1px 8px rgba(0,0,0,0.18);}
 .quick-fab-item span:first-child{font-size:17px;}
 .quick-fab-item:nth-child(1){background:linear-gradient(135deg,#f6c873 0%,#e88b3e 52%,#b85d2f 100%);box-shadow:0 12px 30px rgba(232,139,62,0.28),0 6px 18px rgba(0,0,0,0.28),inset 0 1px 0 rgba(255,255,255,0.22);}
-.quick-fab-item:nth-child(2){background:linear-gradient(135deg,#6fd6ff 0%,#5e6bff 52%,#7c3aed 100%);box-shadow:0 12px 30px rgba(94,107,255,0.3),0 6px 18px rgba(0,0,0,0.28),inset 0 1px 0 rgba(255,255,255,0.22);}
-.quick-fab-item:nth-child(3){background:linear-gradient(135deg,#65e4b3 0%,#28b487 50%,#0f766e 100%);box-shadow:0 12px 30px rgba(40,180,135,0.28),0 6px 18px rgba(0,0,0,0.28),inset 0 1px 0 rgba(255,255,255,0.22);}
+.quick-fab-item:nth-child(2){background:linear-gradient(135deg,#6ee7b7 0%,#22c55e 52%,#15803d 100%);box-shadow:0 12px 30px rgba(34,197,94,0.3),0 6px 18px rgba(0,0,0,0.28),inset 0 1px 0 rgba(255,255,255,0.22);}
+.quick-fab-item:nth-child(3){background:linear-gradient(135deg,#6fd6ff 0%,#5e6bff 52%,#7c3aed 100%);box-shadow:0 12px 30px rgba(94,107,255,0.3),0 6px 18px rgba(0,0,0,0.28),inset 0 1px 0 rgba(255,255,255,0.22);}
+.quick-fab-item:nth-child(4){background:linear-gradient(135deg,#65e4b3 0%,#28b487 50%,#0f766e 100%);box-shadow:0 12px 30px rgba(40,180,135,0.28),0 6px 18px rgba(0,0,0,0.28),inset 0 1px 0 rgba(255,255,255,0.22);}
 .quick-fab-item:active{filter:brightness(.92) saturate(1.08);}
 .quick-fab.open .quick-fab-item{opacity:1; pointer-events:auto;}
-.quick-fab.open .quick-fab-item:nth-child(1){transform:translate(0,4px) rotate(4deg); transition-delay:.02s; z-index:4;}
-.quick-fab.open .quick-fab-item:nth-child(2){transform:translate(-8px,-14px) rotate(28deg); transition-delay:.05s; z-index:3;}
-.quick-fab.open .quick-fab-item:nth-child(3){transform:translate(-16px,-28px) rotate(52deg); transition-delay:.08s; z-index:2;}
+.quick-fab.open .quick-fab-item:nth-child(1){transform:translate(0,6px) rotate(2deg); transition-delay:.02s; z-index:5;}
+.quick-fab.open .quick-fab-item:nth-child(2){transform:translate(-6px,-10px) rotate(24deg); transition-delay:.05s; z-index:4;}
+.quick-fab.open .quick-fab-item:nth-child(3){transform:translate(-14px,-28px) rotate(46deg); transition-delay:.08s; z-index:3;}
+.quick-fab.open .quick-fab-item:nth-child(4){transform:translate(-24px,-46px) rotate(68deg); transition-delay:.11s; z-index:2;}
 @media (max-width:430px){ .quick-fab{right:20px;} }
 
 /* AI Button - now in tab bar center */
@@ -1157,6 +1159,7 @@ textarea.form-i{resize:none;min-height:80px;}
 <!-- Quick FAB -->
 <div class="quick-fab" id="quick-fab">
   <button class="quick-fab-item" onclick="quickFabAction('tx')"><span>✎</span><span>记一笔</span></button>
+  <button class="quick-fab-item" onclick="quickFabAction('salary')"><span>￥</span><span>工资收入</span></button>
   <button class="quick-fab-item" onclick="quickFabAction('qrcodes')"><span>▦</span><span>二维码夹</span></button>
   <button class="quick-fab-item" onclick="quickFabAction('savings')"><span>◎</span><span>储蓄目标</span></button>
   <button class="quick-fab-main" onclick="toggleQuickFab()" aria-label="快捷操作">+</button>

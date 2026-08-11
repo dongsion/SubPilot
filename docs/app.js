@@ -647,6 +647,8 @@ function quickFabAction(action) {
   closeQuickFab();
   if (action === 'tx') {
     openAddTx();
+  } else if (action === 'salary') {
+    openAddTx({ type: 'income', category: 'salary', title: '工资收入' });
   } else if (action === 'qrcodes') {
     showView('qrcodes');
   } else if (action === 'savings') {
@@ -660,8 +662,9 @@ document.addEventListener('click', (e) => {
 
 // ===== Add Transaction =====
 function openAddTx(prefill) {
-  state.txType = 'expense';
-  state.selectedCat = 'food';
+  const txPrefill = prefill || {};
+  state.txType = txPrefill.type || 'expense';
+  state.selectedCat = txPrefill.category || (state.txType === 'income' ? 'salary' : 'food');
   state.debtDir = 'owed';
   state.debtSettled = false;
   state.editingTxId = null; // 清除编辑标记
@@ -674,11 +677,17 @@ function openAddTx(prefill) {
   $('#tx-debt-person').value = '';
   // 恢复标题
   const titleEl = document.querySelector('#sheet-tx .sheet-title');
-  if (titleEl) titleEl.textContent = '记一笔';
+  if (titleEl) titleEl.textContent = txPrefill.title || '记一笔';
   // Type toggle
   $$('#tx-type .type-opt').forEach(b => {
     b.classList.remove('on', 'exp', 'inc', 'transfer', 'debt');
-    if (b.dataset.t === state.txType) b.classList.add('on', 'exp');
+    if (b.dataset.t === state.txType) {
+      b.classList.add('on');
+      if (state.txType === 'expense') b.classList.add('exp');
+      else if (state.txType === 'income') b.classList.add('inc');
+      else if (state.txType === 'transfer') b.classList.add('transfer');
+      else if (state.txType === 'debt') b.classList.add('debt');
+    }
   });
   // Reset debt direction
   $$('#tx-debt-dir-pick .pick').forEach(b => b.classList.toggle('on', b.dataset.dir === 'owed'));
@@ -2244,7 +2253,6 @@ function renderOverview() {
   const monthTx = state.transactions.filter(t => t.date >= month.start && t.date <= month.end);
   const monthExpense = monthTx.filter(t => t.type === 'expense').reduce((s,t) => s + t.amount, 0);
   const monthIncome = monthTx.filter(t => t.type === 'income').reduce((s,t) => s + t.amount, 0);
-  const subExpense = monthTx.filter(t => t.isSubscription).reduce((s,t) => s + t.amount, 0);
   const debtBalance = state.transactions
     .filter(t => t.type === 'debt' && !t.settled && t.debtDir === 'owed')
     .reduce((s, t) => s + t.amount, 0);
@@ -2254,8 +2262,6 @@ function renderOverview() {
 
   const delta = Math.round(monthIncome - monthExpense);
   $('#hero-meta').innerHTML = `
-    <div class="hmi"><span class="hmv">${fmt(Math.round(subExpense))}</span><span class="hml">订阅</span></div>
-    <div class="hdot"></div>
     <div class="hmi"><span class="hmv" style="color:${delta>=0?'var(--green)':'var(--red)'};">${delta>=0?'+':''}${fmt(delta)}</span><span class="hml">结余</span></div>
     <div class="hdot"></div>
     <div class="hmi"><span class="hmv" style="color:var(--gold);">${fmt(Math.round(debtBalance))}</span><span class="hml">欠款</span></div>
