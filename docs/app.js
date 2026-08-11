@@ -608,30 +608,55 @@ function txIconSvg(type) {
 function showView(name) {
   state.lastView = state.currentView;
   state.currentView = name;
+  closeQuickFab();
   $$('.view').forEach(v => v.classList.remove('active'));
   const target = $(`#view-${name}`);
   if (target) target.classList.add('active');
   $$('.tbi').forEach(t => t.classList.remove('on'));
   const tab = document.querySelector(`.tbi[data-v="${name}"]`);
   if (tab) tab.classList.add('on');
-  // FAB only shows on accounts (card pack) view
-  const fab = $('#fab');
-  if (fab) fab.style.display = (name === 'accounts') ? 'flex' : 'none';
-  // 记一笔 FAB only shows on tx view
-  const fabTx = $('#fab-tx');
-  if (fabTx) fabTx.style.display = (name === 'tx') ? 'flex' : 'none';
+  updateQuickFabVisibility(name);
   render();
   haptic('light');
 }
 
 // ===== Sheets =====
-function openSheet(id) { $(`#${id}`).classList.add('on'); }
+function openSheet(id) { closeQuickFab(); $(`#${id}`).classList.add('on'); }
 function closeSheet(id) { $(`#${id}`).classList.remove('on'); }
 $$('.sheet-overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) o.classList.remove('on'); }));
 
-function fabAction() {
-  openAddAccount();
+function updateQuickFabVisibility(viewName = state.currentView) {
+  const quickFab = $('#quick-fab');
+  if (!quickFab) return;
+  const visibleViews = ['tx', 'subs', 'accounts', 'settings'];
+  quickFab.style.display = visibleViews.includes(viewName) ? 'flex' : 'none';
 }
+
+function toggleQuickFab() {
+  const quickFab = $('#quick-fab');
+  if (!quickFab || quickFab.style.display === 'none') return;
+  quickFab.classList.toggle('open');
+}
+
+function closeQuickFab() {
+  const quickFab = $('#quick-fab');
+  if (quickFab) quickFab.classList.remove('open');
+}
+
+function quickFabAction(action) {
+  closeQuickFab();
+  if (action === 'tx') {
+    openAddTx();
+  } else if (action === 'qrcodes') {
+    showView('qrcodes');
+  } else if (action === 'savings') {
+    showView('savings');
+  }
+}
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#quick-fab')) closeQuickFab();
+});
 
 // ===== Add Transaction =====
 function openAddTx(prefill) {
@@ -6652,7 +6677,7 @@ function renderSavingsGoals() {
 
   // Render list
   if (state.savingsGoals.length === 0) {
-    listEl.innerHTML = `<div class="empty-state"><div class="es-icon">🎯</div><div class="es-text">暂无储蓄目标</div><div class="es-sub">点击 + 创建第一个目标</div></div>`;
+    listEl.innerHTML = `<div class="empty-state"><div class="es-icon">🎯</div><div class="es-text">暂无储蓄目标</div><div class="es-sub">点击右上角 + 创建第一个目标</div></div>`;
     return;
   }
 
