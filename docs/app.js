@@ -2245,6 +2245,9 @@ function renderOverview() {
   const monthExpense = monthTx.filter(t => t.type === 'expense').reduce((s,t) => s + t.amount, 0);
   const monthIncome = monthTx.filter(t => t.type === 'income').reduce((s,t) => s + t.amount, 0);
   const subExpense = monthTx.filter(t => t.isSubscription).reduce((s,t) => s + t.amount, 0);
+  const debtBalance = state.transactions
+    .filter(t => t.type === 'debt' && !t.settled && t.debtDir === 'owed')
+    .reduce((s, t) => s + t.amount, 0);
 
   $('#hero-expense').textContent = fmt(Math.round(monthExpense));
   $('#hero-income').textContent = fmt(Math.round(monthIncome));
@@ -2254,6 +2257,8 @@ function renderOverview() {
     <div class="hmi"><span class="hmv">${fmt(Math.round(subExpense))}</span><span class="hml">订阅</span></div>
     <div class="hdot"></div>
     <div class="hmi"><span class="hmv" style="color:${delta>=0?'var(--green)':'var(--red)'};">${delta>=0?'+':''}${fmt(delta)}</span><span class="hml">结余</span></div>
+    <div class="hdot"></div>
+    <div class="hmi"><span class="hmv" style="color:var(--gold);">${fmt(Math.round(debtBalance))}</span><span class="hml">欠款</span></div>
   `;
 
   // 7-day chart
