@@ -780,10 +780,31 @@ function getSalaryPayday() {
   return parseInt(select.value);
 }
 
+// 自动填充：今天之前的工作日标为「已上班」（仅填充未手动设置的日期）
+function autoFillPastWorkdays() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const today = now.getDate();
+  const firstDay = new Date(year, month, 1);
+  const daysSoFar = today - 1; // 今天之前的天数
+  for (let d = 1; d <= daysSoFar; d++) {
+    const date = new Date(year, month, d);
+    const dow = date.getDay();
+    if (dow === 0 || dow === 6) continue; // 跳过周末
+    const dateKey = date.toISOString().slice(0, 10);
+    if (!state.salaryWorkLog[dateKey]) {
+      state.salaryWorkLog[dateKey] = 'worked';
+    }
+  }
+}
+
 // ===== 工资管理面板 =====
 function initSalaryPanel() {
   const now = new Date();
   state.salaryCalMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  // 首次打开：自动把今天之前的工作日标为「已上班」
+  autoFillPastWorkdays();
 
   renderSalaryCalendar();
   updateSalaryCountdown();
