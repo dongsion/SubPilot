@@ -805,8 +805,52 @@ function openAddTx(prefill) {
   renderTxAcctPick();
   renderTxTransferPick();
   renderTxDebtPick();
+  if (state.txEntryMode === 'salary') {
+    prefillSalaryFormFromPending();
+  }
   openSheet('sheet-tx');
   setTimeout(() => $('#tx-amt-input').focus(), 300);
+}
+
+// 打开工资收入时，自动回填本月已保存的待到账工资
+function prefillSalaryFormFromPending() {
+  const pending = (state.salaryPendingIncome || [])
+    .filter(p => p.salaryPayDate && p.salaryPayDate > today())
+    .sort((a, b) => (a.salaryPayDate || '').localeCompare(b.salaryPayDate || ''))[0];
+  if (!pending) return;
+
+  const setVal = (id, value) => {
+    const el = $('#' + id);
+    if (el && value !== undefined && value !== null) el.value = String(value);
+  };
+
+  setVal('tx-amt-input', pending.amount || '');
+  setVal('tx-note', pending.note || '');
+  setVal('tx-tags', Array.isArray(pending.tags) ? pending.tags.join(', ') : '');
+  setVal('sal-gross-input', pending.salaryGross || '');
+  setVal('sal-bonus-input', pending.salaryBonus || '');
+  setVal('sal-ss-input', pending.salaryDeductions?.ss || '');
+  setVal('sal-hf-input', pending.salaryDeductions?.hf || '');
+  setVal('sal-tax-input', pending.salaryDeductions?.tax || '');
+
+  const payday = pending.payday || parseInt((pending.salaryPayDate || '').slice(-2));
+  const paydaySelect = $('#salary-payday-select');
+  const paydayCustom = $('#salary-payday-custom');
+  const paydayCustomInput = $('#salary-payday-custom-input');
+  const paydayHint = $('#salary-payday-hint');
+  if (paydaySelect && payday) {
+    const hasOption = Array.from(paydaySelect.options).some(o => o.value === String(payday));
+    paydaySelect.value = hasOption ? String(payday) : 'custom';
+    if (paydayCustom) paydayCustom.style.display = hasOption ? 'none' : 'block';
+    if (paydayCustomInput) paydayCustomInput.value = hasOption ? '' : String(payday);
+    if (paydayHint) paydayHint.textContent = `已读取待到账工资：预计 ${pending.salaryPayDate} 到账`;
+  }
+
+  if (pending.accountId) {
+    $$('#tx-acct-pick .pick').forEach(b => b.classList.toggle('on', b.dataset.id === pending.accountId));
+  }
+
+  calculateNetSalary();
 }
 
 function applyTxEntryMode() {
