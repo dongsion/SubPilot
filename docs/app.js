@@ -934,6 +934,15 @@ function renderSalaryCalendar() {
 
   grid.innerHTML = html;
 
+  // 更新上班天数计数
+  const stats = getSalaryWorkStats();
+  const countEl = $('#sal-cal-count');
+  if (countEl) {
+    const count = stats.worked;
+    countEl.textContent = '已上班 ' + count + ' 天';
+    countEl.classList.toggle('zero', count === 0);
+  }
+
   // 绑定点击：手动切换待选择/正在上班/已上班/请假
   grid.querySelectorAll('.sal-cal-day[data-clickable]').forEach(el => {
     el.addEventListener('click', function() {

@@ -547,6 +547,9 @@ input { font-family:inherit; }
 .sal-cal-nav{display:flex;gap:6px;}
 .sal-cal-nav button{width:30px;height:30px;border-radius:8px;background:var(--card2);border:1px solid var(--border);color:var(--t2);font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
 .sal-cal-nav button:active{background:var(--card);}
+.sal-cal-head-right{display:flex;align-items:center;gap:10px;}
+.sal-cal-count{font-size:11px;font-weight:700;color:var(--gold);background:var(--gold-bg);border:1px solid var(--gold-bd);padding:4px 10px;border-radius:999px;white-space:nowrap;transition:all .2s;}
+.sal-cal-count.zero{color:var(--t3);background:var(--card2);border-color:var(--border);}
 .sal-cal-wd{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px;}
 .sal-cal-wd div{text-align:center;font-size:10px;color:var(--t3);font-weight:600;padding:4px 0;}
 .sal-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
@@ -1626,9 +1629,12 @@ textarea.form-i{resize:none;min-height:80px;}
       <div class="sal-cal">
         <div class="sal-cal-head">
           <div class="sal-cal-month" id="sal-cal-month">—</div>
-          <div class="sal-cal-nav">
-            <button id="sal-cal-prev" type="button">‹</button>
-            <button id="sal-cal-next" type="button">›</button>
+          <div class="sal-cal-head-right">
+            <span class="sal-cal-count" id="sal-cal-count">已上班 0 天</span>
+            <div class="sal-cal-nav">
+              <button id="sal-cal-prev" type="button">‹</button>
+              <button id="sal-cal-next" type="button">›</button>
+            </div>
           </div>
         </div>
         <div class="sal-cal-wd">
