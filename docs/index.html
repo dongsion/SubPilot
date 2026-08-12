@@ -1537,20 +1537,6 @@ textarea.form-i{resize:none;min-height:80px;}
   <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-title">记一笔</div>
-    <div class="salary-card" id="salary-card">
-      <div class="salary-card-top">
-        <div class="salary-card-icon">￥</div>
-        <div>
-          <div class="salary-card-name">薪资到账</div>
-          <div class="salary-card-sub">记录本月工资收入，自动计入统计</div>
-        </div>
-      </div>
-      <div class="salary-card-tags">
-        <span class="salary-tag">工资</span>
-        <span class="salary-tag">本月收入</span>
-        <span class="salary-tag">计入余额</span>
-      </div>
-    </div>
     <div class="type-toggle" id="tx-type">
       <button class="type-opt on exp" data-t="expense">支出</button>
       <button class="type-opt" data-t="income">收入</button>
@@ -1599,32 +1585,19 @@ textarea.form-i{resize:none;min-height:80px;}
     </div>
     <!-- 金额输入（所有类型共用） -->
     <input type="text" class="amt-big" id="tx-amt-input" placeholder="0.00" inputmode="decimal">
-    <!-- 工资专用：到账日选择 -->
-    <div class="salary-payday" id="salary-payday">
-      <div class="salary-payday-label">每月到账日</div>
-      <div class="salary-payday-row">
-        <div class="salary-payday-select-wrap">
-          <select class="salary-payday-select" id="salary-payday-select">
-            <option value="">选择到账日</option>
-            <option value="1">每月 1 号</option>
-            <option value="5">每月 5 号</option>
-            <option value="10">每月 10 号</option>
-            <option value="15">每月 15 号</option>
-            <option value="20">每月 20 号</option>
-            <option value="25">每月 25 号</option>
-            <option value="28">每月 28 号</option>
-            <option value="30">每月 30 号</option>
-            <option value="custom">自定义日期</option>
-          </select>
-        </div>
-        <div class="salary-payday-custom" id="salary-payday-custom">
-          <input type="number" id="salary-payday-custom-input" placeholder="输入几号（1-31）" min="1" max="31" inputmode="numeric">
-        </div>
-      </div>
-      <div class="salary-payday-hint" id="salary-payday-hint">选择你每月实际收到工资的日期</div>
-    </div>
     <!-- 工资管理面板 -->
     <div class="salary-panel" id="salary-panel">
+      <!-- 发薪日倒计时 -->
+      <div class="sal-countdown">
+        <div class="sal-cd-left">
+          <div class="sal-cd-label">距下次发薪</div>
+          <div class="sal-cd-date" id="sal-cd-date">—</div>
+        </div>
+        <div class="sal-cd-right">
+          <div class="sal-cd-num" id="sal-cd-num">—</div>
+          <div class="sal-cd-unit">天</div>
+        </div>
+      </div>
       <!-- 待到账工资提示 -->
       <div class="sal-pending" id="sal-pending-card" style="display:none;">
         <div class="sal-pending-icon">⏳</div>
@@ -1650,17 +1623,6 @@ textarea.form-i{resize:none;min-height:80px;}
           <div class="sal-cmp-lbl">预估下月</div>
           <div class="sal-cmp-val" id="sal-next-val">—</div>
           <div class="sal-cmp-sub" id="sal-next-sub">基于本月预估</div>
-        </div>
-      </div>
-      <!-- 发薪日倒计时 -->
-      <div class="sal-countdown">
-        <div class="sal-cd-left">
-          <div class="sal-cd-label">距下次发薪</div>
-          <div class="sal-cd-date" id="sal-cd-date">—</div>
-        </div>
-        <div class="sal-cd-right">
-          <div class="sal-cd-num" id="sal-cd-num">—</div>
-          <div class="sal-cd-unit">天</div>
         </div>
       </div>
       <!-- 工作日历 -->
@@ -1700,6 +1662,30 @@ textarea.form-i{resize:none;min-height:80px;}
       <div class="sal-gross">
         <label class="sal-gross-lbl">税前薪资</label>
         <input type="text" class="sal-gross-input" id="sal-gross-input" placeholder="输入税前金额" inputmode="decimal">
+      </div>
+      <!-- 工资专用：到账日选择 -->
+      <div class="salary-payday" id="salary-payday">
+        <div class="salary-payday-label">每月到账日</div>
+        <div class="salary-payday-row">
+          <div class="salary-payday-select-wrap">
+            <select class="salary-payday-select" id="salary-payday-select">
+              <option value="">选择到账日</option>
+              <option value="1">每月 1 号</option>
+              <option value="5">每月 5 号</option>
+              <option value="10">每月 10 号</option>
+              <option value="15">每月 15 号</option>
+              <option value="20">每月 20 号</option>
+              <option value="25">每月 25 号</option>
+              <option value="28">每月 28 号</option>
+              <option value="30">每月 30 号</option>
+              <option value="custom">自定义日期</option>
+            </select>
+          </div>
+          <div class="salary-payday-custom" id="salary-payday-custom">
+            <input type="number" id="salary-payday-custom-input" placeholder="输入几号（1-31）" min="1" max="31" inputmode="numeric">
+          </div>
+        </div>
+        <div class="salary-payday-hint" id="salary-payday-hint">选择你每月实际收到工资的日期</div>
       </div>
       <!-- 奖金与扣款 -->
       <div class="sal-deduct">
@@ -2375,6 +2361,6 @@ if ('caches' in window) {
     .catch(()=>{});
 }
 </script>
-<script src="app.js?v=2.7.8"></script>
+<script src="app.js?v=2.7.9"></script>
 </body>
 </html>

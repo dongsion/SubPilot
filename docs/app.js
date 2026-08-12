@@ -4093,9 +4093,13 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '2.7.8';
+const APP_VERSION = '2.7.9';
 const APP_BUILD = '2026-08-12';
 const CHANGELOG = [
+  { ver: '2.7.9', date: '2026-08-12', items: [
+    '调整工资收入界面排序',
+    '移除工资收入顶部「薪资到账」说明卡片'
+  ]},
   { ver: '2.7.8', date: '2026-08-12', items: [
     '临时关闭 PWA 离线缓存，修复 iPhone Safari 提示网络连接丢失的问题',
     '启动时主动注销旧 Service Worker 并清理旧缓存'
