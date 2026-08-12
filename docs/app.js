@@ -5734,11 +5734,14 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
-// ===== App Lock (Rotary Wheel Password) =====
-const WHEEL_ITEM_H = 44;
+// ===== App Lock (Timer Dial Password) =====
 let lockEnteredDigits = [0, 0, 0, 0];
 let lockActiveSlot = 0;
-let lockWheelReady = false;
+let lockCurrentDigit = 0;
+let lockDialBuilt = false;
+let lockAudioCtx = null;
+let lockSlideStartX = 0;
+let lockSlideDragging = false;
 
 function hashPassword(pwd) {
   let h = 5381;
@@ -5749,7 +5752,362 @@ function hashPassword(pwd) {
 function updateLockStatus() {
   const el = $('#lock-status');
   if (!el) return;
-  el.textContent = state.settings.appPassword ? '已开启 ›' : '未开启 ›';
+  el.textContent = state.settings.appPassword ? '已开启 ›' : '去设置 ›';
+}
+
+// Gear click sound via Web Audio API
+function playGearSound() {
+  try {
+    if (!lockAudioCtx) lockAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = lockAudioCtx;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(180, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.05);
+    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.06);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.06);
+  } catch(e) {}
+}
+
+// Build the timer dial with digits 0-9 around the circle
+function buildDial() {
+  const numsEl = $('#lock-dial-nums');
+  if (!numsEl || lockDialBuilt) return;
+  const radius = 108;
+  const centerX = 130, centerY = 130;
+  for (let d = 0; d <= 9; d++) {
+    const angle = (d * 36 - 90) * Math.PI / 180;
+    const x = centerX + radius * Math.cos(angle) - 16;
+    const y = centerY + radius * Math.sin(angle) - 16;
+    const item = document.createElement('div');
+    item.className = 'lock-dial-num';
+    item.textContent = String(d);
+    item.style.left = x + 'px';
+    item.style.top = y + 'px';
+    item.addEventListener('click', function(e) {
+      e.stopPropagation();
+      chooseLockDigit(d, true);
+    });
+    numsEl.appendChild(item);
+  }
+  lockDialBuilt = true;
+  initSlideUnlock();
+}
+
+function chooseLockDigit(digit, fromClick) {
+  lockCurrentDigit = digit;
+  const selEl = $('#lock-dial-selected');
+  if (selEl) selEl.textContent = String(digit);
+  playGearSound();
+  if (fromClick) {
+    haptic('light');
+  }
+}
+
+function lockConfirmDigit() {
+  if (lockActiveSlot >= 4) return;
+  lockEnteredDigits[lockActiveSlot] = lockCurrentDigit;
+  lockActiveSlot++;
+  haptic('light');
+  playGearSound();
+  updateLockDots();
+  // Reset dial to 0
+  chooseLockDigit(0, false);
+}
+
+function lockBackspace() {
+  if (lockActiveSlot <= 0) return;
+  haptic('light');
+  lockActiveSlot--;
+  updateLockDots();
+}
+
+function getWheelDigits() {
+  return lockEnteredDigits.map(d => String(d)).join('');
+}
+
+function updateLockDots() {
+  const dots = $$('#lock-dots .lock-dot');
+  dots.forEach((dot, i) => {
+    dot.classList.toggle('filled', i < lockActiveSlot);
+  });
+  const label = $('#lock-slide-label');
+  if (label) {
+    const remaining = 4 - lockActiveSlot;
+    label.textContent = remaining > 0 ? '还需 ' + remaining + ' 位' : '滑动解锁';
+  }
+  const backBtn = $('#lock-back-btn');
+  if (backBtn) backBtn.disabled = lockActiveSlot <= 0;
+}
+
+function resetWheels() {
+  lockEnteredDigits = [0, 0, 0, 0];
+  lockActiveSlot = 0;
+  lockCurrentDigit = 0;
+  if (!lockDialBuilt) buildDial();
+  chooseLockDigit(0, false);
+  updateLockDots();
+  resetSlideThumb();
+}
+
+function resetSlideThumb() {
+  const thumb = $('#lock-slide-thumb');
+  const fill = $('#lock-slide-fill');
+  if (thumb) thumb.style.left = '4px';
+  if (fill) fill.style.width = '0%';
+  lockSlideDragging = false;
+}
+
+function initSlideUnlock() {
+  const thumb = $('#lock-slide-thumb');
+  const track = $('#lock-slide-track');
+  if (!thumb || !track) return;
+  let startX = 0;
+  let currentX = 0;
+
+  function onStart(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    lockSlideDragging = true;
+    startX = e.touches ? e.touches[0].clientX : e.clientX;
+    lockSlideStartX = startX;
+    if (lockAudioCtx && lockAudioCtx.state === 'suspended') lockAudioCtx.resume();
+  }
+
+  function onMove(e) {
+    if (!lockSlideDragging) return;
+    e.preventDefault();
+    currentX = e.touches ? e.touches[0].clientX : e.clientX;
+    const trackRect = track.getBoundingClientRect();
+    const maxDist = trackRect.width - 56;
+    let dist = currentX - startX;
+    if (dist < 0) dist = 0;
+    if (dist > maxDist) dist = maxDist;
+    thumb.style.left = (4 + dist) + 'px';
+    const fillEl = $('#lock-slide-fill');
+    if (fillEl) fillEl.style.width = ((dist / maxDist) * 100) + '%';
+    const label = $('#lock-slide-label');
+    if (label) label.style.opacity = Math.max(0, 1 - dist / maxDist * 1.5);
+    if (dist >= maxDist * 0.92) {
+      lockSlideDragging = false;
+      lockSlideSubmit();
+    }
+  }
+
+  function onEnd() {
+    if (!lockSlideDragging) return;
+    lockSlideDragging = false;
+    const trackRect = track.getBoundingClientRect();
+    const maxDist = trackRect.width - 56;
+    const thumbLeft = parseFloat(thumb.style.left) || 4;
+    const dist = thumbLeft - 4;
+    if (dist < maxDist * 0.92) {
+      thumb.style.transition = 'left .3s ease';
+      thumb.style.left = '4px';
+      const fillEl = $('#lock-slide-fill');
+      if (fillEl) {
+        fillEl.style.transition = 'width .3s ease';
+        fillEl.style.width = '0%';
+      }
+      const label = $('#lock-slide-label');
+      if (label) label.style.opacity = '1';
+      setTimeout(function() {
+        thumb.style.transition = '';
+        if (fillEl) fillEl.style.transition = '';
+      }, 300);
+    }
+  }
+
+  thumb.addEventListener('touchstart', onStart, { passive: false });
+  thumb.addEventListener('touchmove', onMove, { passive: false });
+  thumb.addEventListener('touchend', onEnd);
+  thumb.addEventListener('mousedown', onStart);
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onEnd);
+}
+
+function lockSlideSubmit() {
+  if (lockActiveSlot < 4) {
+    resetSlideThumb();
+    const label = $('#lock-slide-label');
+    if (label) {
+      label.textContent = '还需 ' + (4 - lockActiveSlot) + ' 位';
+      label.style.opacity = '1';
+    }
+    haptic('error');
+    return;
+  }
+  confirmLockPassword();
+}
+
+function lockFailure(msg, restoreMsg) {
+  const subtitle = $('#lock-subtitle');
+  const content = $('#lock-content');
+  if (content) {
+    content.classList.add('lock-shake');
+    setTimeout(function() { content.classList.remove('lock-shake'); }, 400);
+  }
+  if (subtitle) {
+    subtitle.textContent = msg;
+    subtitle.classList.add('error');
+    setTimeout(function() {
+      subtitle.textContent = restoreMsg;
+      subtitle.classList.remove('error');
+    }, 1500);
+  }
+  haptic('error');
+  if (navigator.vibrate) navigator.vibrate(200);
+  resetWheels();
+}
+
+// Lock screen mode: 'unlock' | 'set' | 'confirm' | 'verify-old'
+let lockMode = 'unlock';
+
+function getDefaultLockHint() {
+  if (lockMode === 'unlock') return '转动转盘，输入 4 位密码';
+  if (lockMode === 'verify-old') return '请先输入当前转盘密码';
+  if (lockMode === 'confirm') return '请再次输入确认';
+  return '转动设置 4 位数字密码';
+}
+
+function showLockScreen() {
+  if (!state.settings.appPassword) return;
+  lockMode = 'unlock';
+  const overlay = $('#lock-screen');
+  const subtitle = $('#lock-subtitle');
+  const cancelBtn = $('#lock-cancel-btn');
+  const backBtn = $('#lock-back-btn');
+  if (subtitle) { subtitle.textContent = getDefaultLockHint(); subtitle.classList.remove('error'); }
+  if (cancelBtn) cancelBtn.style.display = 'none';
+  if (backBtn) backBtn.style.display = 'flex';
+  resetWheels();
+  overlay.classList.add('on');
+  haptic('medium');
+}
+
+function hideLockScreen() {
+  $('#lock-screen').classList.remove('on');
+}
+
+// ===== Lock Settings Panel =====
+function openLockSettings() {
+  updateLockStatus();
+  refreshLockSettingsSheet();
+  $('#sheet-lock-settings').classList.add('on');
+  haptic('light');
+}
+
+function closeLockSettings() {
+  $('#sheet-lock-settings').classList.remove('on');
+}
+
+function refreshLockSettingsSheet() {
+  const enabled = !!state.settings.appPassword;
+  const stateEl = $('#lock-settings-state');
+  const primaryBtn = $('#lock-settings-primary');
+  const changeBtn = $('#lock-settings-change');
+  const removeBtn = $('#lock-settings-remove');
+  if (stateEl) stateEl.textContent = enabled ? '已开启' : '未开启';
+  if (primaryBtn) primaryBtn.style.display = enabled ? 'none' : 'block';
+  if (changeBtn) changeBtn.style.display = enabled ? 'block' : 'none';
+  if (removeBtn) removeBtn.style.display = enabled ? 'block' : 'none';
+}
+
+function startLockPasswordSetup() {
+  closeLockSettings();
+  lockMode = 'set';
+  const subtitle = $('#lock-subtitle');
+  const cancelBtn = $('#lock-cancel-btn');
+  const backBtn = $('#lock-back-btn');
+  if (subtitle) { subtitle.textContent = getDefaultLockHint(); subtitle.classList.remove('error'); }
+  if (cancelBtn) cancelBtn.style.display = 'block';
+  if (backBtn) backBtn.style.display = 'flex';
+  resetWheels();
+  $('#lock-screen').classList.add('on');
+  haptic('medium');
+}
+
+function startLockPasswordChange() {
+  closeLockSettings();
+  lockMode = 'verify-old';
+  const subtitle = $('#lock-subtitle');
+  const cancelBtn = $('#lock-cancel-btn');
+  const backBtn = $('#lock-back-btn');
+  if (subtitle) { subtitle.textContent = '请先输入当前转盘密码'; subtitle.classList.remove('error'); }
+  if (cancelBtn) cancelBtn.style.display = 'block';
+  if (backBtn) backBtn.style.display = 'flex';
+  resetWheels();
+  $('#lock-screen').classList.add('on');
+  haptic('medium');
+}
+
+function removeLockPassword() {
+  if (!state.settings.appPassword) { closeLockSettings(); return; }
+  const ok = confirm('确定关闭转盘密码锁吗？关闭后打开 COUNTRA 将不再需要密码。');
+  if (!ok) return;
+  state.settings.appPassword = null;
+  save();
+  updateLockStatus();
+  refreshLockSettingsSheet();
+  closeLockSettings();
+  toast('转盘密码锁已关闭');
+  haptic('success');
+}
+
+let pendingPassword = '';
+
+function confirmLockPassword() {
+  haptic('medium');
+  const subtitle = $('#lock-subtitle');
+  const entered = getWheelDigits();
+
+  if (lockMode === 'unlock') {
+    if (hashPassword(entered) === state.settings.appPassword) {
+      hideLockScreen();
+      haptic('success');
+    } else {
+      lockFailure('密码错误，请重试', getDefaultLockHint());
+    }
+  } else if (lockMode === 'verify-old') {
+    if (hashPassword(entered) === state.settings.appPassword) {
+      lockMode = 'set';
+      if (subtitle) { subtitle.textContent = '转动设置新的 4 位密码'; subtitle.classList.remove('error'); }
+      resetWheels();
+    } else {
+      lockFailure('当前密码错误', '请先输入当前转盘密码');
+    }
+  } else if (lockMode === 'set') {
+    pendingPassword = entered;
+    lockMode = 'confirm';
+    if (subtitle) { subtitle.textContent = '请再次输入确认'; subtitle.classList.remove('error'); }
+    resetWheels();
+  } else if (lockMode === 'confirm') {
+    if (entered === pendingPassword) {
+      state.settings.appPassword = hashPassword(entered);
+      save();
+      updateLockStatus();
+      refreshLockSettingsSheet();
+      hideLockScreen();
+      toast('转盘密码锁已开启');
+      haptic('success');
+      pendingPassword = '';
+    } else {
+      lockFailure('两次密码不一致，请重新设置', getDefaultLockHint());
+      pendingPassword = '';
+      lockMode = 'set';
+    }
+  }
+}
+
+function cancelLockAction() {
+  haptic('light');
+  hideLockScreen();
+  pendingPassword = '';
 }
 
 // ===== Theme Switching =====
@@ -5806,323 +6164,6 @@ function openCalorieSettings() {
   render();
   toast(`每日热量目标已设为 ${val} kcal`);
   haptic('success');
-}
-
-// Build the rotary wheel with digits 0-9
-function buildRotaryWheel() {
-  const container = $('#lock-rotary');
-  if (!container) return;
-  container.innerHTML = '';
-  for (let d = 0; d <= 9; d++) {
-    const item = document.createElement('div');
-    item.className = 'lock-rotary-item';
-    item.textContent = String(d);
-    container.appendChild(item);
-  }
-  let snapTimer = null;
-  container.addEventListener('scroll', () => {
-    updateRotaryHighlight(container);
-    clearTimeout(snapTimer);
-    snapTimer = setTimeout(() => snapRotary(container), 120);
-    // Live update the active slot
-    if (lockActiveSlot < 4) {
-      const digit = getRotaryDigit(container);
-      lockEnteredDigits[lockActiveSlot] = digit;
-      updateLockDots();
-    }
-  }, { passive: true });
-
-  // Build tick marks
-  buildRotaryTicks();
-  lockWheelReady = true;
-}
-
-function buildRotaryTicks() {
-  const ticksEl = $('#lock-rotary-ticks');
-  if (!ticksEl) return;
-  ticksEl.innerHTML = '';
-  for (let i = 0; i < 10; i++) {
-    const tick = document.createElement('div');
-    tick.className = 'lock-tick';
-    ticksEl.appendChild(tick);
-  }
-}
-
-function updateRotaryHighlight(wheel) {
-  const items = wheel.querySelectorAll('.lock-rotary-item');
-  const center = wheel.scrollTop + wheel.clientHeight / 2;
-  items.forEach(item => {
-    const itemCenter = item.offsetTop + item.offsetHeight / 2;
-    const dist = Math.abs(center - itemCenter);
-    if (dist < WHEEL_ITEM_H * 0.55) {
-      item.classList.add('active');
-    } else {
-      item.classList.remove('active');
-    }
-  });
-  updateRotaryTicks(wheel);
-}
-
-function updateRotaryTicks(wheel) {
-  const ticks = $$('#lock-rotary-ticks .lock-tick');
-  const center = wheel.scrollTop + wheel.clientHeight / 2;
-  const items = wheel.querySelectorAll('.lock-rotary-item');
-  ticks.forEach((tick, i) => {
-    const item = items[i];
-    if (!item) return;
-    const itemCenter = item.offsetTop + item.offsetHeight / 2;
-    const dist = Math.abs(center - itemCenter);
-    tick.classList.remove('bright', 'dim');
-    if (dist < WHEEL_ITEM_H * 0.55) {
-      tick.classList.add('bright');
-    } else if (dist < WHEEL_ITEM_H * 1.5) {
-      tick.classList.add('dim');
-    }
-  });
-}
-
-function snapRotary(wheel) {
-  const nearest = Math.round(wheel.scrollTop / WHEEL_ITEM_H) * WHEEL_ITEM_H;
-  if (Math.abs(wheel.scrollTop - nearest) > 1) {
-    wheel.scrollTo({ top: nearest, behavior: 'smooth' });
-  }
-}
-
-function getRotaryDigit(wheel) {
-  const idx = Math.round(wheel.scrollTop / WHEEL_ITEM_H);
-  return ((idx % 10) + 10) % 10;
-}
-
-function getWheelDigits() {
-  return lockEnteredDigits.map(d => String(d)).join('');
-}
-
-// Confirm current digit and advance to next slot
-function lockConfirmDigit() {
-  if (lockActiveSlot >= 4) return;
-  haptic('light');
-  lockActiveSlot++;
-  // Reset wheel to 0 for next digit
-  const wheel = $('#lock-rotary');
-  if (wheel && lockActiveSlot < 4) {
-    wheel.scrollTop = 0;
-    updateRotaryHighlight(wheel);
-  }
-  updateLockDots();
-}
-
-// Button action: advance slot or submit password
-function lockConfirmAction() {
-  if (lockActiveSlot < 4) {
-    lockConfirmDigit();
-  } else {
-    confirmLockPassword();
-  }
-}
-
-// Update confirm button text based on progress and mode
-function updateLockButton() {
-  const btn = $('#lock-confirm-btn');
-  if (!btn) return;
-  if (lockActiveSlot >= 4) {
-    btn.textContent = (lockMode === 'unlock') ? '解锁' : (lockMode === 'set') ? '下一步' : '确认';
-  } else {
-    btn.textContent = '下一步';
-  }
-}
-
-// Go back one digit
-function lockBackspace() {
-  if (lockActiveSlot <= 0) return;
-  haptic('light');
-  lockActiveSlot--;
-  updateLockDots();
-}
-
-// Update the password display on the left
-function updateLockDots() {
-  const slots = $$('#lock-pass-display .lock-pass-slot');
-  const wheel = $('#lock-rotary');
-  const currentDigit = wheel ? getRotaryDigit(wheel) : 0;
-  slots.forEach((slot, i) => {
-    slot.classList.remove('active', 'filled');
-    if (i < lockActiveSlot) {
-      slot.classList.add('filled');
-      slot.textContent = String(lockEnteredDigits[i]);
-    } else if (i === lockActiveSlot) {
-      slot.classList.add('active');
-      lockEnteredDigits[i] = currentDigit;
-      slot.textContent = String(currentDigit);
-    } else {
-      slot.textContent = '';
-    }
-  });
-  // Update backspace button state
-  const backBtn = $('#lock-back-btn');
-  if (backBtn) backBtn.disabled = lockActiveSlot <= 0;
-  // Update confirm button text
-  updateLockButton();
-}
-
-function resetWheels() {
-  lockEnteredDigits = [0, 0, 0, 0];
-  lockActiveSlot = 0;
-  if (!lockWheelReady) buildRotaryWheel();
-  const wheel = $('#lock-rotary');
-  if (wheel) {
-    wheel.scrollTop = 0;
-    updateRotaryHighlight(wheel);
-  }
-  updateLockDots();
-}
-
-// Lock screen mode: 'unlock' | 'set' | 'confirm' | 'remove'
-let lockMode = 'unlock';
-
-function showLockScreen() {
-  if (!state.settings.appPassword) return;
-  lockMode = 'unlock';
-  const overlay = $('#lock-screen');
-  const subtitle = $('#lock-subtitle');
-  const confirmBtn = $('#lock-confirm-btn');
-  const cancelBtn = $('#lock-cancel-btn');
-  const backBtn = $('#lock-back-btn');
-  subtitle.textContent = '滚动选择数字，点击下一步';
-  subtitle.classList.remove('error');
-  confirmBtn.style.display = 'block';
-  confirmBtn.textContent = '下一步';
-  cancelBtn.style.display = 'none';
-  if (backBtn) backBtn.style.display = 'flex';
-  resetWheels();
-  overlay.classList.add('on');
-  haptic('medium');
-}
-
-function hideLockScreen() {
-  $('#lock-screen').classList.remove('on');
-}
-
-function openLockSettings() {
-  if (state.settings.appPassword) {
-    // Already set - ask to change or remove
-    const choice = confirm('应用密码已开启\n\n确定 = 修改密码\n取消 = 关闭密码');
-    if (choice) {
-      // Verify old password first
-      lockMode = 'verify-old';
-      const subtitle = $('#lock-subtitle');
-      const confirmBtn = $('#lock-confirm-btn');
-      const cancelBtn = $('#lock-cancel-btn');
-      const backBtn = $('#lock-back-btn');
-      subtitle.textContent = '请先输入当前密码';
-      subtitle.classList.remove('error');
-      confirmBtn.style.display = 'block';
-      confirmBtn.textContent = '下一步';
-      cancelBtn.style.display = 'block';
-      if (backBtn) backBtn.style.display = 'flex';
-      resetWheels();
-      $('#lock-screen').classList.add('on');
-    } else {
-      // Remove password
-      state.settings.appPassword = null;
-      save();
-      updateLockStatus();
-      toast('应用密码已关闭');
-      haptic('success');
-    }
-    return;
-  }
-  // Set new password - first entry
-  lockMode = 'set';
-  const subtitle = $('#lock-subtitle');
-  const confirmBtn = $('#lock-confirm-btn');
-  const cancelBtn = $('#lock-cancel-btn');
-  const backBtn = $('#lock-back-btn');
-  subtitle.textContent = '滚动设置4位数字密码';
-  subtitle.classList.remove('error');
-  confirmBtn.style.display = 'block';
-  confirmBtn.textContent = '下一步';
-  cancelBtn.style.display = 'block';
-  if (backBtn) backBtn.style.display = 'flex';
-  resetWheels();
-  $('#lock-screen').classList.add('on');
-}
-
-let pendingPassword = '';
-
-function confirmLockPassword() {
-  haptic('medium');
-  const subtitle = $('#lock-subtitle');
-  const confirmBtn = $('#lock-confirm-btn');
-  const entered = getWheelDigits();
-
-  if (lockMode === 'unlock') {
-    if (hashPassword(entered) === state.settings.appPassword) {
-      hideLockScreen();
-      haptic('success');
-    } else {
-      subtitle.textContent = '密码错误，请重试';
-      subtitle.classList.add('error');
-      haptic('error');
-      resetWheels();
-      setTimeout(() => {
-        subtitle.textContent = '滚动选择数字，点击下一步';
-        subtitle.classList.remove('error');
-      }, 1500);
-    }
-  } else if (lockMode === 'verify-old') {
-    if (hashPassword(entered) === state.settings.appPassword) {
-      // Old password correct, now set new
-      lockMode = 'set';
-      subtitle.textContent = '滚动设置新的4位密码';
-      subtitle.classList.remove('error');
-      confirmBtn.textContent = '下一步';
-      resetWheels();
-    } else {
-      subtitle.textContent = '当前密码错误';
-      subtitle.classList.add('error');
-      haptic('error');
-      resetWheels();
-      setTimeout(() => {
-        subtitle.textContent = '请先输入当前密码';
-        subtitle.classList.remove('error');
-      }, 1500);
-    }
-  } else if (lockMode === 'set') {
-    pendingPassword = entered;
-    lockMode = 'confirm';
-    subtitle.textContent = '请再次滚动输入确认';
-    subtitle.classList.remove('error');
-    confirmBtn.textContent = '下一步';
-    resetWheels();
-  } else if (lockMode === 'confirm') {
-    if (entered === pendingPassword) {
-      state.settings.appPassword = hashPassword(entered);
-      save();
-      updateLockStatus();
-      hideLockScreen();
-      toast('应用密码已开启');
-      haptic('success');
-      pendingPassword = '';
-    } else {
-      subtitle.textContent = '两次密码不一致，请重新设置';
-      subtitle.classList.add('error');
-      haptic('error');
-      pendingPassword = '';
-      lockMode = 'set';
-      confirmBtn.textContent = '下一步';
-      resetWheels();
-      setTimeout(() => {
-        subtitle.textContent = '滚动设置4位数字密码';
-        subtitle.classList.remove('error');
-      }, 1500);
-    }
-  }
-}
-
-function cancelLockAction() {
-  haptic('light');
-  hideLockScreen();
-  pendingPassword = '';
 }
 
 // ===== Subscription Expiry Notifications =====

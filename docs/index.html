@@ -771,51 +771,45 @@ textarea.form-i{resize:none;min-height:80px;}
 .toast{position:fixed;top:60px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--card2);border:1px solid var(--border2);color:var(--t1);padding:12px 24px;border-radius:999px;font-size:13px;font-weight:500;z-index:300;opacity:0;transition:all .3s;pointer-events:none;box-shadow:0 8px 30px rgba(0,0,0,0.4);}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
 
-/* ===== Lock Screen (Rotary Wheel Password) ===== */
-.lock-overlay { position:fixed; inset:0; background:var(--lock-bg); z-index:999; display:none; flex-direction:column; align-items:center; justify-content:center; padding:40px 24px; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px); }
+/* ===== Lock Screen (Timer Dial Password) ===== */
+.lock-overlay { position:fixed; inset:0; background:#0a0a0c; z-index:999; display:none; flex-direction:column; align-items:center; justify-content:center; padding:40px 24px; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px); }
 .lock-overlay.on { display:flex; animation:lockFadeIn .3s ease; }
 @keyframes lockFadeIn { from{opacity:0;} to{opacity:1;} }
-.lock-content { display:flex; flex-direction:column; align-items:center; width:100%; max-width:340px; }
-.lock-icon { color:var(--gold); margin-bottom:14px; opacity:0.7; }
-.lock-title { font-size:24px; font-weight:700; letter-spacing:2px; margin-bottom:4px; }
-.lock-subtitle { font-size:13px; color:var(--t2); margin-bottom:28px; text-align:center; transition:color .3s; }
+.lock-content { display:flex; flex-direction:column; align-items:center; width:100%; max-width:360px; }
+.lock-title { font-size:26px; font-weight:800; letter-spacing:4px; margin-bottom:4px; color:#d4af37; }
+.lock-subtitle { font-size:13px; color:rgba(255,255,255,0.45); margin-bottom:24px; text-align:center; transition:color .3s; }
 .lock-subtitle.error { color:var(--red); }
+.lock-shake { animation:lockShake .4s ease; }
+@keyframes lockShake { 0%,100%{transform:translateX(0);} 20%{transform:translateX(-8px);} 40%{transform:translateX(8px);} 60%{transform:translateX(-5px);} 80%{transform:translateX(5px);} }
 
-/* Main layout: password left, wheel right */
-.lock-main { display:flex; align-items:center; justify-content:center; gap:20px; margin-bottom:28px; }
+/* Password dots */
+.lock-dots { display:flex; gap:12px; margin-bottom:20px; }
+.lock-dot { width:14px; height:14px; border-radius:50%; border:2px solid rgba(212,175,55,0.3); transition:all .25s cubic-bezier(.34,1.4,.64,1); }
+.lock-dot.filled { background:#d4af37; border-color:#d4af37; box-shadow:0 0 8px rgba(212,175,55,0.4); }
 
-/* Left: password display (vertical stack) */
-.lock-pass-display { display:flex; flex-direction:column; gap:8px; }
-.lock-pass-slot { width:52px; height:48px; border-radius:12px; border:2px solid rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:600; font-family:var(--font-mono); color:transparent; background:rgba(255,255,255,0.03); transition:all .3s cubic-bezier(.34,1.4,.64,1); }
-.lock-pass-slot.filled { border-color:var(--gold); color:var(--gold); background:var(--gold-bg); }
-.lock-pass-slot.active { border-color:var(--gold); background:var(--gold-bg); color:var(--gold); box-shadow:0 0 0 3px rgba(212,175,55,0.15); animation:lockSlotPulse 1.8s ease-in-out infinite; }
-@keyframes lockSlotPulse { 0%,100%{box-shadow:0 0 0 3px rgba(212,175,55,0.12);} 50%{box-shadow:0 0 0 5px rgba(212,175,55,0.22);} }
+/* Timer Dial */
+.lock-dial-wrap { position:relative; width:260px; height:260px; margin-bottom:24px; display:flex; align-items:center; justify-content:center; }
+.lock-dial-outer { position:absolute; inset:0; border-radius:50%; background:conic-gradient(from 0deg, #b8860b, #d4af37, #f5d76e, #d4af37, #b8860b, #8b6914, #d4af37, #f5d76e, #d4af37, #b8860b); box-shadow:0 8px 32px rgba(0,0,0,0.5), inset 0 2px 8px rgba(255,255,255,0.15), inset 0 -2px 8px rgba(0,0,0,0.3); }
+.lock-dial-inner { position:absolute; inset:30px; border-radius:50%; background:radial-gradient(circle at 35% 35%, #2a2a2e, #1a1a1e); box-shadow:inset 0 2px 12px rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; }
+.lock-dial-selected { font-size:56px; font-weight:800; font-family:var(--font-mono); color:#d4af37; text-shadow:0 0 20px rgba(212,175,55,0.3); }
+.lock-dial-nums { position:absolute; inset:0; pointer-events:none; }
+.lock-dial-num { position:absolute; width:32px; height:32px; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; font-family:var(--font-mono); color:#1a1a1e; pointer-events:auto; cursor:pointer; transition:transform .15s, color .15s; user-select:none; -webkit-tap-highlight-color:transparent; }
+.lock-dial-num:active { transform:scale(1.2); color:#000; }
+.lock-dial-center-btn { position:absolute; width:80px; height:80px; border-radius:50%; background:transparent; border:none; cursor:pointer; z-index:5; }
 
-/* Right: rotary wheel */
-.lock-rotary-wrap { position:relative; width:84px; height:200px; display:flex; align-items:center; justify-content:center; }
-.lock-rotary-mask { width:56px; height:200px; overflow:hidden; mask-image:linear-gradient(to bottom, transparent 0%, #000 25%, #000 75%, transparent 100%); -webkit-mask-image:linear-gradient(to bottom, transparent 0%, #000 25%, #000 75%, transparent 100%); }
-.lock-rotary { width:100%; height:100%; overflow-y:scroll; scroll-snap-type:y mandatory; scrollbar-width:none; -ms-overflow-style:none; padding:78px 0; -webkit-tap-highlight-color:transparent; }
-.lock-rotary::-webkit-scrollbar { display:none; }
-.lock-rotary-item { height:44px; display:flex; align-items:center; justify-content:center; scroll-snap-align:center; scroll-snap-stop:always; font-size:20px; font-weight:600; font-family:var(--font-mono); color:var(--t3); transition:color .15s, font-size .15s, opacity .15s; opacity:0.4; }
-.lock-rotary-item.active { color:var(--gold); font-size:26px; opacity:1; }
+/* Slide to unlock */
+.lock-slide-track { position:relative; width:100%; height:56px; border-radius:28px; background:rgba(255,255,255,0.06); border:1px solid rgba(212,175,55,0.2); overflow:hidden; margin-top:8px; }
+.lock-slide-fill { position:absolute; inset:0; width:0%; background:linear-gradient(90deg, rgba(212,175,55,0.15), rgba(212,175,55,0.25)); border-radius:28px; transition:width .1s linear; }
+.lock-slide-label { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:600; color:rgba(255,255,255,0.4); pointer-events:none; transition:opacity .2s; letter-spacing:1px; }
+.lock-slide-thumb { position:absolute; left:4px; top:4px; width:48px; height:48px; border-radius:50%; background:linear-gradient(135deg, #d4af37, #b8860b); display:flex; align-items:center; justify-content:center; cursor:grab; box-shadow:0 2px 12px rgba(212,175,55,0.4); touch-action:none; z-index:3; }
+.lock-slide-thumb:active { cursor:grabbing; transform:scale(0.95); }
 
-/* Gold indicator bar (center highlight) */
-.lock-rotary-indicator { position:absolute; top:50%; left:0; right:0; height:44px; transform:translateY(-50%); border-top:1px solid var(--gold-bd); border-bottom:1px solid var(--gold-bd); border-radius:10px; background:var(--gold-bg); pointer-events:none; z-index:0; }
-
-/* Tick marks on right edge */
-.lock-rotary-ticks { position:absolute; right:0; top:0; bottom:0; width:14px; display:flex; flex-direction:column; justify-content:center; gap:3px; pointer-events:none; z-index:2; }
-.lock-tick { height:2px; background:rgba(255,255,255,0.08); border-radius:1px; transition:background .2s, width .2s; width:6px; align-self:flex-end; }
-.lock-tick.bright { background:var(--gold); width:10px; }
-.lock-tick.dim { background:rgba(255,255,255,0.15); width:8px; }
-
-/* Actions */
-.lock-actions { display:flex; gap:10px; width:100%; align-items:center; flex-wrap:wrap; }
-.lock-back-btn { display:flex; align-items:center; gap:6px; padding:13px 18px; border-radius:14px; background:transparent; color:var(--t2); border:1px solid var(--border2); font-size:14px; font-weight:600; font-family:inherit; transition:transform .15s, opacity .15s; }
+/* Lock actions */
+.lock-actions { display:flex; gap:10px; width:100%; align-items:center; justify-content:center; margin-top:12px; }
+.lock-back-btn { display:flex; align-items:center; gap:6px; padding:10px 16px; border-radius:14px; background:transparent; color:var(--t2); border:1px solid var(--border2); font-size:13px; font-weight:600; font-family:inherit; transition:transform .15s, opacity .15s; }
 .lock-back-btn:active { transform:scale(.94); }
 .lock-back-btn:disabled { opacity:0.3; }
-.lock-confirm-btn { flex:1; padding:15px; border-radius:16px; background:var(--gold); color:#000; border:none; font-size:16px; font-weight:700; font-family:inherit; transition:transform .15s; }
-.lock-confirm-btn:active { transform:scale(.96); }
-.lock-cancel-btn { flex-basis:100%; padding:13px; border-radius:14px; background:transparent; color:var(--t2); border:1px solid var(--border2); font-size:14px; font-weight:600; font-family:inherit; margin-top:4px; transition:transform .15s; }
+.lock-cancel-btn { padding:10px 16px; border-radius:14px; background:transparent; color:var(--t2); border:1px solid var(--border2); font-size:13px; font-weight:600; font-family:inherit; transition:transform .15s; }
 .lock-cancel-btn:active { transform:scale(.96); }
 
 /* ===== Reports ===== */
@@ -1203,7 +1197,7 @@ textarea.form-i{resize:none;min-height:80px;}
     </div>
     <div class="sec" style="margin-top:8px;"><span class="st" style="font-size:13px;color:var(--t3);">安全</span></div>
     <div class="info-g">
-      <div class="info-r" onclick="openLockSettings()"><span class="info-l">🔒 应用密码</span><span class="info-v" style="color:var(--gold);" id="lock-status">未开启 ›</span></div>
+      <div class="info-r" onclick="openLockSettings()"><span class="info-l">🟡 转盘密码锁</span><span class="info-v" style="color:var(--gold);" id="lock-status">去设置 ›</span></div>
     </div>
     <div class="sec" style="margin-top:8px;"><span class="st" style="font-size:13px;color:var(--t3);">外观</span></div>
     <div class="info-g">
@@ -1415,37 +1409,56 @@ textarea.form-i{resize:none;min-height:80px;}
   </div>
 </div>
 
-<!-- Lock Screen (Scroll Wheel Password) -->
+<!-- Lock Screen (Timer Dial Password) -->
 <div class="lock-overlay" id="lock-screen">
-  <div class="lock-content">
-    <div class="lock-icon">
-      <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+  <div class="lock-content" id="lock-content">
+    <div class="lock-title">COUNTRA</div>
+    <div class="lock-subtitle" id="lock-subtitle">转动转盘，输入 4 位密码</div>
+    <div class="lock-dots" id="lock-dots">
+      <div class="lock-dot"></div>
+      <div class="lock-dot"></div>
+      <div class="lock-dot"></div>
+      <div class="lock-dot"></div>
     </div>
-    <div class="lock-title">Countra</div>
-    <div class="lock-subtitle" id="lock-subtitle">滚动选择数字，点击下一步</div>
-    <div class="lock-main">
-      <div class="lock-pass-display" id="lock-pass-display">
-        <div class="lock-pass-slot active" data-pos="0"></div>
-        <div class="lock-pass-slot" data-pos="1"></div>
-        <div class="lock-pass-slot" data-pos="2"></div>
-        <div class="lock-pass-slot" data-pos="3"></div>
+    <div class="lock-dial-wrap" id="lock-dial-wrap">
+      <div class="lock-dial-outer"></div>
+      <div class="lock-dial-inner">
+        <div class="lock-dial-selected" id="lock-dial-selected">0</div>
       </div>
-      <div class="lock-rotary-wrap">
-        <div class="lock-rotary-ticks" id="lock-rotary-ticks"></div>
-        <div class="lock-rotary-mask">
-          <div class="lock-rotary" id="lock-rotary"></div>
-        </div>
-        <div class="lock-rotary-indicator"></div>
+      <div class="lock-dial-nums" id="lock-dial-nums"></div>
+      <button class="lock-dial-center-btn" id="lock-dial-center-btn" onclick="lockConfirmDigit()"></button>
+    </div>
+    <div class="lock-slide-track" id="lock-slide-track">
+      <div class="lock-slide-fill" id="lock-slide-fill"></div>
+      <div class="lock-slide-label" id="lock-slide-label">还需 4 位</div>
+      <div class="lock-slide-thumb" id="lock-slide-thumb">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#1a1a1e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
       </div>
     </div>
     <div class="lock-actions">
       <button class="lock-back-btn" id="lock-back-btn" onclick="lockBackspace()">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg>
         <span>删除</span>
       </button>
-      <button class="lock-confirm-btn" id="lock-confirm-btn" onclick="lockConfirmAction()">下一步</button>
       <button class="lock-cancel-btn" id="lock-cancel-btn" style="display:none;" onclick="cancelLockAction()">取消</button>
     </div>
+  </div>
+</div>
+
+<!-- Sheet: Timer Dial Password Settings -->
+<div class="sheet-overlay" id="sheet-lock-settings">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">转盘密码锁</div>
+    <div style="border-radius:18px;padding:18px;background:var(--card2);border:1px solid var(--border);margin-bottom:16px;">
+      <div style="font-size:13px;color:var(--t3);margin-bottom:6px;">当前状态</div>
+      <div style="font-size:18px;font-weight:700;color:var(--gold);" id="lock-settings-state">未开启</div>
+      <div style="font-size:12px;color:var(--t3);line-height:1.6;margin-top:8px;">开启后，每次打开 COUNTRA 都需要使用金色转盘输入 4 位密码，再滑动解锁。</div>
+    </div>
+    <button class="btn primary" id="lock-settings-primary" onclick="startLockPasswordSetup()">开启转盘密码</button>
+    <button class="btn" id="lock-settings-change" style="display:none;margin-top:10px;" onclick="startLockPasswordChange()">修改转盘密码</button>
+    <button class="btn" id="lock-settings-remove" style="display:none;margin-top:10px;color:var(--red);border-color:rgba(239,68,68,0.35);" onclick="removeLockPassword()">关闭转盘密码</button>
+    <button class="btn" style="margin-top:10px;background:transparent;color:var(--t2);border:1px solid var(--border2);" onclick="closeLockSettings()">取消</button>
   </div>
 </div>
 
