@@ -12,7 +12,8 @@ const KEYS = {
   cloudSession: 'subpilot_cloud_session',
   budgets: 'subpilot_budgets',
   savingsGoals: 'subpilot_savings_goals',
-  recurringTx: 'subpilot_recurring_tx'
+  recurringTx: 'subpilot_recurring_tx',
+  salaryPendingIncome: 'subpilot_salary_pending_income'
 };
 
 // ===== Embedded Brand Icons (SVG path data, viewBox 0 0 24 24) =====
@@ -269,6 +270,7 @@ let state = {
   selectedCat: 'food',
   salaryCalMonth: null,
   salaryWorkLog: {},
+  salaryPendingIncome: [],
   salaryPanelInited: false,
   debtDir: 'owed',
   debtSettled: false,
@@ -422,6 +424,7 @@ function load() {
     state.budgets = JSON.parse(localStorage.getItem(KEYS.budgets) || '{}');
     state.savingsGoals = JSON.parse(localStorage.getItem(KEYS.savingsGoals) || '[]');
     state.recurringTx = JSON.parse(localStorage.getItem(KEYS.recurringTx) || '[]');
+    state.salaryPendingIncome = JSON.parse(localStorage.getItem(KEYS.salaryPendingIncome) || '[]');
     // Merge loaded settings with defaults to ensure all keys exist
     const loaded = JSON.parse(localStorage.getItem(KEYS.settings) || '{}');
     const defaults = { appPassword: null, notifications: false, exRates: { USD: 7.25, EUR: 7.85, GBP: 9.20, JPY: 0.048, HKD: 0.93, TWD: 0.22 }, defaultCurrency: 'CNY', theme: 'dark' };
@@ -439,6 +442,7 @@ function save() {
   localStorage.setItem(KEYS.budgets, JSON.stringify(state.budgets));
   localStorage.setItem(KEYS.savingsGoals, JSON.stringify(state.savingsGoals));
   localStorage.setItem(KEYS.recurringTx, JSON.stringify(state.recurringTx));
+  localStorage.setItem(KEYS.salaryPendingIncome, JSON.stringify(state.salaryPendingIncome));
   updateBadge();
   markLocalChange();
 }
@@ -480,8 +484,12 @@ function getSalaryPayDate(payday) {
 
 function processPendingSalaryIncome() {
   let changed = false;
-  state.transactions.forEach(t => {
-    if (!isPendingSalaryTx(t)) return;
+  if (!Array.isArray(state.salaryPendingIncome)) state.salaryPendingIncome = [];
+
+  // 兼容旧版本：旧数据里可能已经把未到发薪日的工资放进了流水。
+  // 新规则要求未到发薪日前不出现在流水，也不影响卡包，所以先迁移到待到账队列。
+  state.transactions = state.transactions.filter(t => {
+    if (!isPendingSalaryTx(t)) return true;
     const payDate = t.salaryPayDate || t.date;
     if (payDate && payDate <= today()) {
       t.salaryPending = false;
@@ -490,8 +498,40 @@ function processPendingSalaryIncome() {
       const acct = state.accounts.find(a => a.id === t.accountId);
       if (acct) acct.balance += t.amount;
       changed = true;
+      return true;
+    }
+    if (!state.salaryPendingIncome.some(p => p.id === t.id)) {
+      state.salaryPendingIncome.push(t);
+    }
+    changed = true;
+    return false;
+  });
+
+  const remainingPending = [];
+  state.salaryPendingIncome.forEach(p => {
+    const payDate = p.salaryPayDate || p.date;
+    if (payDate && payDate <= today()) {
+      const tx = {
+        ...p,
+        salaryPending: false,
+        salaryCredited: true,
+        date: payDate,
+        creditedAt: new Date().toISOString()
+      };
+      if (!state.transactions.some(t => t.id === tx.id)) {
+        state.transactions.unshift(tx);
+        const acct = state.accounts.find(a => a.id === tx.accountId);
+        if (acct) acct.balance += tx.amount;
+      }
+      changed = true;
+    } else {
+      remainingPending.push(p);
     }
   });
+  if (remainingPending.length !== state.salaryPendingIncome.length) {
+    state.salaryPendingIncome = remainingPending;
+  }
+
   if (changed) save();
 }
 const addMonths = (dateStr, months) => {
@@ -1522,6 +1562,20 @@ function saveTx() {
       tx.salaryWorkStats = stats;
       tx.salaryHourly = hours > 0 && net > 0 ? +(net / hours).toFixed(2) : 0;
       tx.salaryAnnual = net > 0 ? +(net * 12).toFixed(2) : 0;
+    }
+
+    if (tx.salaryPending) {
+      if (!Array.isArray(state.salaryPendingIncome)) state.salaryPendingIncome = [];
+      const idx = state.salaryPendingIncome.findIndex(x => x.id === tx.id);
+      if (idx >= 0) state.salaryPendingIncome[idx] = tx;
+      else state.salaryPendingIncome.unshift(tx);
+      state.editingTxId = null;
+      save();
+      closeSheet('sheet-tx');
+      toast(`已保存，${payDate} 到账后自动记入流水和卡包`);
+      haptic('success');
+      render();
+      return;
     }
   }
   // 保存食物热量信息（仅餐饮支出且有选中食物时）
@@ -3713,15 +3767,15 @@ $$('#tx-fp .pl').forEach(p => {
 
 // ===== Data Management =====
 function clearAll() {
-  state.accounts = []; state.subscriptions = []; state.transactions = []; state.qrcodes = []; state.invoices = []; state.recurringTx = []; state.savingsGoals = [];
+  state.accounts = []; state.subscriptions = []; state.transactions = []; state.qrcodes = []; state.invoices = []; state.recurringTx = []; state.savingsGoals = []; state.salaryPendingIncome = [];
   state.settings = { appPassword: null, notifications: false, exRates: { USD: 7.25, EUR: 7.85, GBP: 9.20, JPY: 0.048, HKD: 0.93, TWD: 0.22 }, defaultCurrency: 'CNY' };
   localStorage.removeItem(KEYS.accounts); localStorage.removeItem(KEYS.subscriptions); localStorage.removeItem(KEYS.transactions);
   localStorage.removeItem(KEYS.onboarded); localStorage.removeItem(KEYS.settings); localStorage.removeItem(KEYS.qrcodes);
-  localStorage.removeItem(KEYS.invoices); localStorage.removeItem(KEYS.recurringTx); localStorage.removeItem(KEYS.savingsGoals);
+  localStorage.removeItem(KEYS.invoices); localStorage.removeItem(KEYS.recurringTx); localStorage.removeItem(KEYS.savingsGoals); localStorage.removeItem(KEYS.salaryPendingIncome);
   render();
 }
 function exportData() {
-  const data = { accounts: state.accounts, subscriptions: state.subscriptions, transactions: state.transactions, qrcodes: state.qrcodes, invoices: state.invoices, recurringTx: state.recurringTx, savingsGoals: state.savingsGoals, settings: state.settings, exportedAt: new Date().toISOString() };
+  const data = { accounts: state.accounts, subscriptions: state.subscriptions, transactions: state.transactions, qrcodes: state.qrcodes, invoices: state.invoices, recurringTx: state.recurringTx, savingsGoals: state.savingsGoals, salaryPendingIncome: state.salaryPendingIncome, settings: state.settings, exportedAt: new Date().toISOString() };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -3771,6 +3825,7 @@ $('#import-file').addEventListener('change', e => {
       if (data.invoices) state.invoices = data.invoices;
       if (data.recurringTx) state.recurringTx = data.recurringTx;
       if (data.savingsGoals) state.savingsGoals = data.savingsGoals;
+      if (data.salaryPendingIncome) state.salaryPendingIncome = data.salaryPendingIncome;
       if (data.settings) state.settings = { ...state.settings, ...data.settings };
       save(); render(); toast('数据已导入');
       haptic('success');
@@ -6440,7 +6495,7 @@ function downloadInvoice() {
 // ===== Cloud Sync (Supabase) =====
 const PUBLIC_SUPABASE_URL = 'https://cicauycbflanpqcrfakd.supabase.co';
 const PUBLIC_SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNpY2F1eWNiZmxhbnBxY3JmYWtkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwOTA4NzcsImV4cCI6MjEwMTY2Njg3N30.kegH6ESniP0ouFtio5EHw0XDOHxJFCgtzx-dELjCx7c';
-const CLOUD_DATA_TYPES = ['accounts', 'subscriptions', 'transactions', 'qrcodes', 'invoices', 'settings'];
+const CLOUD_DATA_TYPES = ['accounts', 'subscriptions', 'transactions', 'qrcodes', 'invoices', 'settings', 'salaryPendingIncome'];
 
 function getSupabaseConfig() {
   try {
