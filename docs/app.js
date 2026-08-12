@@ -1043,12 +1043,11 @@ function renderSalaryCalendar() {
 
   grid.innerHTML = html;
 
-  // 更新上班天数计数
-  const stats = getSalaryWorkStats();
+  // 更新上班天数总计：不随切换月份变化
   const countEl = $('#sal-cal-count');
   if (countEl) {
-    const count = stats.worked;
-    countEl.textContent = '已上班 ' + count + ' 天';
+    const count = getTotalSalaryWorkedDays();
+    countEl.textContent = '总已上班 ' + count + ' 天';
     countEl.classList.toggle('zero', count === 0);
   }
   updateSalaryMultiBar();
@@ -1232,6 +1231,10 @@ function updateSalaryCountdown() {
 
   dateEl.textContent = monthNames[target.getMonth()] + target.getDate() + '日';
   numEl.textContent = diffDays;
+}
+
+function getTotalSalaryWorkedDays() {
+  return Object.values(state.salaryWorkLog || {}).filter(v => v === 'worked').length;
 }
 
 function getSalaryWorkStats() {
@@ -4093,9 +4096,12 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '2.8.0';
+const APP_VERSION = '2.8.1';
 const APP_BUILD = '2026-08-12';
 const CHANGELOG = [
+  { ver: '2.8.1', date: '2026-08-12', items: [
+    '工资日历右上角已上班数改为全局总数，切换月份不再变化'
+  ]},
   { ver: '2.8.0', date: '2026-08-12', items: [
     '将工资收入里的「到手薪资」移动到税前薪资和每月到账日之间'
   ]},
