@@ -569,6 +569,7 @@ input { font-family:inherit; }
 .sal-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
 .sal-cal-day{aspect-ratio:1;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;font-weight:600;border:1px solid transparent;cursor:pointer;transition:transform .1s;position:relative;}
 .sal-cal-day:active{transform:scale(0.9);}
+.sal-cal-day.selected{outline:2px solid #8b5cf6;outline-offset:1px;box-shadow:0 0 0 4px rgba(139,92,246,0.12);}
 .sal-cal-day.worked{background:var(--gold-bg);border-color:var(--gold-bd);color:var(--gold);}
 .sal-cal-day.working{background:rgba(34,197,94,0.12);border-color:rgba(34,197,94,0.24);color:#4ade80;}
 .sal-cal-day.future{background:var(--card2);border-color:var(--border);color:var(--t2);}
@@ -593,6 +594,16 @@ input { font-family:inherit; }
 .sal-legend-dot.f{background:var(--t3);opacity:0.4;}
 .sal-legend-dot.l{background:#60a5fa;}
 .sal-legend-dot.e{background:transparent;border:1px solid var(--border2);}
+.sal-multi-bar{display:none;align-items:center;gap:6px;flex-wrap:wrap;margin-top:10px;padding:10px;border-radius:14px;background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.18);animation:salCardIn .25s ease-out;}
+.sal-multi-bar.on{display:flex;}
+.sal-multi-count{font-size:12px;font-weight:700;color:#8b5cf6;margin-right:auto;white-space:nowrap;}
+.sal-multi-btn{border:none;border-radius:999px;padding:7px 10px;font-size:11px;font-weight:700;font-family:inherit;color:var(--t1);background:var(--card2);border:1px solid var(--border);cursor:pointer;}
+.sal-multi-btn.worked{color:var(--gold);background:var(--gold-bg);border-color:var(--gold-bd);}
+.sal-multi-btn.working{color:#4ade80;background:rgba(34,197,94,0.1);border-color:rgba(34,197,94,0.22);}
+.sal-multi-btn.leave{color:#60a5fa;background:rgba(59,130,246,0.1);border-color:rgba(59,130,246,0.22);}
+.sal-multi-btn.clear{color:var(--t2);}
+.sal-multi-btn.cancel{color:var(--t3);}
+.sal-multi-hint{width:100%;font-size:10px;color:var(--t3);line-height:1.4;}
 /* 扣款 */
 .sal-deduct{margin-bottom:16px;}
 .sal-deduct-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
@@ -1668,6 +1679,15 @@ textarea.form-i{resize:none;min-height:80px;}
           <div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div>
         </div>
         <div class="sal-cal-grid" id="sal-cal-grid"></div>
+        <div class="sal-multi-bar" id="sal-multi-bar">
+          <span class="sal-multi-count" id="sal-multi-count">已选 0 天</span>
+          <button class="sal-multi-btn worked" type="button" onclick="applySalaryMultiStatus('worked')">已上班</button>
+          <button class="sal-multi-btn working" type="button" onclick="applySalaryMultiStatus('working')">正在上班</button>
+          <button class="sal-multi-btn leave" type="button" onclick="applySalaryMultiStatus('leave')">请假</button>
+          <button class="sal-multi-btn clear" type="button" onclick="applySalaryMultiStatus('clear')">清除</button>
+          <button class="sal-multi-btn cancel" type="button" onclick="exitSalaryMultiSelect()">取消</button>
+          <div class="sal-multi-hint">长按日期进入多选，点击日期可选择或取消；周末不可选。</div>
+        </div>
         <div class="sal-cal-legend">
           <div><span class="sal-legend-dot w"></span>已上班</div>
           <div><span class="sal-legend-dot ing"></span>正在上班</div>

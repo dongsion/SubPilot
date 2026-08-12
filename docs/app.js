@@ -271,6 +271,8 @@ let state = {
   salaryCalMonth: null,
   salaryWorkLog: {},
   salaryPendingIncome: [],
+  salaryMultiSelectMode: false,
+  salarySelectedDates: [],
   salaryPanelInited: false,
   debtDir: 'owed',
   debtSettled: false,
@@ -918,12 +920,16 @@ function initSalaryPanel() {
     const nextBtn = $('#sal-cal-next');
     if (prevBtn) prevBtn.addEventListener('click', () => {
       if (!state.salaryCalMonth) return;
+      state.salaryMultiSelectMode = false;
+      state.salarySelectedDates = [];
       state.salaryCalMonth.setMonth(state.salaryCalMonth.getMonth() - 1);
       renderSalaryCalendar();
       calculateNetSalary();
     });
     if (nextBtn) nextBtn.addEventListener('click', () => {
       if (!state.salaryCalMonth) return;
+      state.salaryMultiSelectMode = false;
+      state.salarySelectedDates = [];
       state.salaryCalMonth.setMonth(state.salaryCalMonth.getMonth() + 1);
       renderSalaryCalendar();
       calculateNetSalary();
@@ -948,6 +954,7 @@ function renderSalaryCalendar() {
   const lastDay = new Date(year, month + 1, 0);
   const startWeekday = firstDay.getDay();
   const daysInMonth = lastDay.getDate();
+  const selectedDates = new Set(state.salarySelectedDates || []);
 
   let html = '';
   for (let i = 0; i < startWeekday; i++) html += '<div></div>';
@@ -982,6 +989,7 @@ function renderSalaryCalendar() {
     }
 
     if (isToday) cls += ' today';
+    if (!isWeekend && selectedDates.has(dateKey)) cls += ' selected';
 
     const clickable = !isWeekend ? ' data-clickable="1"' : '';
     const delay = ((d - 1) % 7) * 0.025 + Math.floor((d - 1) / 7) * 0.04;
@@ -999,12 +1007,44 @@ function renderSalaryCalendar() {
     countEl.textContent = '已上班 ' + count + ' 天';
     countEl.classList.toggle('zero', count === 0);
   }
+  updateSalaryMultiBar();
 
   // 绑定点击：弹出状态选择菜单
   grid.querySelectorAll('.sal-cal-day[data-clickable]').forEach(el => {
+    let longPressTimer = null;
+
+    const clearLongPress = () => {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+    };
+
+    el.addEventListener('pointerdown', function(e) {
+      clearLongPress();
+      const key = this.dataset.date;
+      longPressTimer = setTimeout(() => {
+        e.preventDefault();
+        this.dataset.longPressed = '1';
+        enterSalaryMultiSelect(key);
+      }, 450);
+    });
+
+    el.addEventListener('pointerup', clearLongPress);
+    el.addEventListener('pointercancel', clearLongPress);
+    el.addEventListener('pointerleave', clearLongPress);
+
     el.addEventListener('click', function(e) {
       e.stopPropagation();
       const key = this.dataset.date;
+      if (this.dataset.longPressed === '1') {
+        delete this.dataset.longPressed;
+        return;
+      }
+      if (state.salaryMultiSelectMode) {
+        toggleSalaryDateSelection(key);
+        return;
+      }
       const menu = $('#sal-day-menu');
       if (!menu) return;
       // 定位菜单
@@ -1041,6 +1081,64 @@ function renderSalaryCalendar() {
       });
     });
   });
+}
+
+function updateSalaryMultiBar() {
+  const bar = $('#sal-multi-bar');
+  const countEl = $('#sal-multi-count');
+  if (!bar || !countEl) return;
+  const count = (state.salarySelectedDates || []).length;
+  bar.classList.toggle('on', !!state.salaryMultiSelectMode);
+  countEl.textContent = '已选 ' + count + ' 天';
+}
+
+function enterSalaryMultiSelect(dateKey) {
+  const menu = $('#sal-day-menu');
+  if (menu) menu.classList.remove('on');
+  state.salaryMultiSelectMode = true;
+  state.salarySelectedDates = dateKey ? [dateKey] : [];
+  updateSalaryMultiBar();
+  renderSalaryCalendar();
+  haptic('medium');
+  toast('已进入多选模式');
+}
+
+function toggleSalaryDateSelection(dateKey) {
+  if (!state.salaryMultiSelectMode || !dateKey) return;
+  const selected = new Set(state.salarySelectedDates || []);
+  if (selected.has(dateKey)) selected.delete(dateKey);
+  else selected.add(dateKey);
+  state.salarySelectedDates = Array.from(selected).sort();
+  updateSalaryMultiBar();
+  renderSalaryCalendar();
+}
+
+function exitSalaryMultiSelect() {
+  state.salaryMultiSelectMode = false;
+  state.salarySelectedDates = [];
+  updateSalaryMultiBar();
+  renderSalaryCalendar();
+  haptic('light');
+}
+
+function applySalaryMultiStatus(status) {
+  const dates = state.salarySelectedDates || [];
+  if (dates.length === 0) {
+    toast('请先选择日期');
+    return;
+  }
+  dates.forEach(dateKey => {
+    if (status === 'clear') delete state.salaryWorkLog[dateKey];
+    else state.salaryWorkLog[dateKey] = status;
+  });
+  const labels = { worked: '已上班', working: '正在上班', leave: '请假', clear: '清除标记' };
+  toast(status === 'clear' ? ('已清除 ' + dates.length + ' 天标记') : ('已批量设置 ' + dates.length + ' 天为' + labels[status]));
+  state.salaryMultiSelectMode = false;
+  state.salarySelectedDates = [];
+  updateSalaryMultiBar();
+  renderSalaryCalendar();
+  calculateNetSalary();
+  haptic('success');
 }
 
 // 点击空白关闭日历状态菜单
