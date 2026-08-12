@@ -508,6 +508,7 @@ function processPendingSalaryIncome() {
   });
 
   const remainingPending = [];
+  const creditedList = [];
   state.salaryPendingIncome.forEach(p => {
     const payDate = p.salaryPayDate || p.date;
     if (payDate && payDate <= today()) {
@@ -523,6 +524,7 @@ function processPendingSalaryIncome() {
         const acct = state.accounts.find(a => a.id === tx.accountId);
         if (acct) acct.balance += tx.amount;
       }
+      creditedList.push(tx);
       changed = true;
     } else {
       remainingPending.push(p);
@@ -530,6 +532,20 @@ function processPendingSalaryIncome() {
   });
   if (remainingPending.length !== state.salaryPendingIncome.length) {
     state.salaryPendingIncome = remainingPending;
+  }
+
+  // 到账提醒
+  if (creditedList.length > 0) {
+    setTimeout(() => {
+      const msg = creditedList.length === 1
+        ? `工资已到账 ¥${fmt(creditedList[0].amount)}，已记入流水和卡包`
+        : `${creditedList.length} 笔工资已到账，已记入流水和卡包`;
+      toast(msg);
+      haptic('success');
+      if (state.settings.notifications && 'Notification' in window && Notification.permission === 'granted') {
+        new Notification('工资已到账', { body: msg });
+      }
+    }, 500);
   }
 
   if (changed) save();
@@ -888,6 +904,7 @@ function initSalaryPanel() {
   updateSalaryCountdown();
   updateSalaryCompare();
   calculateNetSalary();
+  renderPendingSalaryCard();
 
   if (!state.salaryPanelInited) {
     state.salaryPanelInited = true;
@@ -983,24 +1000,72 @@ function renderSalaryCalendar() {
     countEl.classList.toggle('zero', count === 0);
   }
 
-  // 绑定点击：手动切换待选择/正在上班/已上班/请假
+  // 绑定点击：弹出状态选择菜单
   grid.querySelectorAll('.sal-cal-day[data-clickable]').forEach(el => {
-    el.addEventListener('click', function() {
+    el.addEventListener('click', function(e) {
+      e.stopPropagation();
       const key = this.dataset.date;
-      const log = state.salaryWorkLog[key];
-      if (!log) {
-        state.salaryWorkLog[key] = 'working';
-      } else if (log === 'working') {
-        state.salaryWorkLog[key] = 'worked';
-      } else if (log === 'worked') {
-        state.salaryWorkLog[key] = 'leave';
-      } else {
-        delete state.salaryWorkLog[key];
-      }
-      renderSalaryCalendar();
-      calculateNetSalary();
+      const menu = $('#sal-day-menu');
+      if (!menu) return;
+      // 定位菜单
+      const rect = this.getBoundingClientRect();
+      let top = rect.bottom + 4;
+      let left = rect.left;
+      // 边界检查
+      const menuW = 160, menuH = 200;
+      if (left + menuW > window.innerWidth) left = window.innerWidth - menuW - 8;
+      if (top + menuH > window.innerHeight) top = rect.top - menuH - 4;
+      menu.style.top = top + 'px';
+      menu.style.left = left + 'px';
+      // 标记当前状态
+      const currentLog = state.salaryWorkLog[key];
+      menu.querySelectorAll('.sal-day-menu-item').forEach(item => {
+        item.classList.toggle('active', item.dataset.status === currentLog);
+      });
+      menu.classList.add('on');
+      // 绑定菜单项点击
+      menu.querySelectorAll('.sal-day-menu-item').forEach(item => {
+        item.onclick = function(ev) {
+          ev.stopPropagation();
+          const status = this.dataset.status;
+          if (status === 'clear') {
+            delete state.salaryWorkLog[key];
+          } else {
+            state.salaryWorkLog[key] = status;
+          }
+          menu.classList.remove('on');
+          renderSalaryCalendar();
+          calculateNetSalary();
+          haptic('light');
+        };
+      });
     });
   });
+}
+
+// 点击空白关闭日历状态菜单
+document.addEventListener('click', function(e) {
+  const menu = $('#sal-day-menu');
+  if (menu && menu.classList.contains('on') && !e.target.closest('.sal-day-menu') && !e.target.closest('.sal-cal-day')) {
+    menu.classList.remove('on');
+  }
+});
+
+// 渲染待到账工资提示卡片
+function renderPendingSalaryCard() {
+  const card = $('#sal-pending-card');
+  if (!card) return;
+  const pending = (state.salaryPendingIncome || []).filter(p => p.salaryPayDate && p.salaryPayDate > today());
+  if (pending.length === 0) {
+    card.style.display = 'none';
+    return;
+  }
+  const p = pending[0];
+  const acct = state.accounts.find(a => a.id === p.accountId);
+  card.style.display = 'flex';
+  $('#sal-pending-title').textContent = '待到账工资 · ' + (acct ? acct.name : '未选账户');
+  $('#sal-pending-sub').textContent = '预计 ' + p.salaryPayDate + ' 到账，届时自动记入流水和卡包';
+  $('#sal-pending-amt').textContent = '¥' + fmt(p.amount);
 }
 
 function updateSalaryCountdown() {
@@ -1566,9 +1631,20 @@ function saveTx() {
 
     if (tx.salaryPending) {
       if (!Array.isArray(state.salaryPendingIncome)) state.salaryPendingIncome = [];
-      const idx = state.salaryPendingIncome.findIndex(x => x.id === tx.id);
-      if (idx >= 0) state.salaryPendingIncome[idx] = tx;
-      else state.salaryPendingIncome.unshift(tx);
+      // 同月去重：如果已有同月待到账工资，更新而非新增
+      const payMonth = payDate.slice(0, 7);
+      const existIdx = state.salaryPendingIncome.findIndex(x => {
+        const xMonth = (x.salaryPayDate || x.date || '').slice(0, 7);
+        return xMonth === payMonth;
+      });
+      if (existIdx >= 0) {
+        tx.id = state.salaryPendingIncome[existIdx].id;
+        state.salaryPendingIncome[existIdx] = tx;
+      } else {
+        const idx = state.salaryPendingIncome.findIndex(x => x.id === tx.id);
+        if (idx >= 0) state.salaryPendingIncome[idx] = tx;
+        else state.salaryPendingIncome.unshift(tx);
+      }
       state.editingTxId = null;
       save();
       closeSheet('sheet-tx');
@@ -3741,11 +3817,51 @@ function toggleGroupCollapse(gk) {
   haptic('light');
 }
 
+// 渲染设置页待处理事项
+function renderPendingItems() {
+  const group = $('#pending-items-group');
+  if (!group) return;
+  let hasAny = false;
+
+  // 待到账工资
+  const pendingSalary = (state.salaryPendingIncome || []).filter(p => p.salaryPayDate && p.salaryPayDate > today());
+  const salRow = $('#pending-salary-row');
+  const salInfo = $('#pending-salary-info');
+  if (pendingSalary.length > 0 && salRow && salInfo) {
+    salRow.style.display = 'flex';
+    const p = pendingSalary[0];
+    salInfo.textContent = `${p.salaryPayDate} · ¥${fmt(p.amount)}`;
+    hasAny = true;
+  } else if (salRow) {
+    salRow.style.display = 'none';
+  }
+
+  // 即将续费（3天内）
+  const now = new Date();
+  const soonSubs = (state.subscriptions || []).filter(s => {
+    if (!s.nextDate) return false;
+    const diff = (new Date(s.nextDate) - now) / 86400000;
+    return diff >= 0 && diff <= 3;
+  });
+  const subsRow = $('#pending-subs-row');
+  const subsInfo = $('#pending-subs-info');
+  if (soonSubs.length > 0 && subsRow && subsInfo) {
+    subsRow.style.display = 'flex';
+    subsInfo.textContent = `${soonSubs.length} 个订阅`;
+    hasAny = true;
+  } else if (subsRow) {
+    subsRow.style.display = 'none';
+  }
+
+  group.style.display = hasAny ? 'block' : 'none';
+}
+
 function render() {
   const fns = [renderOverview, renderSubs, renderTx, renderAccounts, renderReports,
     renderQRCodes, renderInvoices, renderBudgets, renderSavingsGoals,
     renderCreditCardBills, renderCalendar, renderRecurringTx,
-    updateLockStatus, updateNotifStatus, updateExrateStatus, updateCloudStatus, updateThemeStatus, updateCalorieStatus];
+    updateLockStatus, updateNotifStatus, updateExrateStatus, updateCloudStatus, updateThemeStatus, updateCalorieStatus,
+    renderPendingItems];
   if (state.currentView === 'subdetail') fns.push(renderSubDetail);
   fns.forEach(fn => { try { fn(); } catch(e) { console.error('Render error in', fn.name, e); } });
 }
@@ -4672,6 +4788,7 @@ function openTxDetail(txId) {
         ${isTransfer ? `<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:var(--t3);">转出</span><span style="font-size:13px;color:var(--t1);display:flex;align-items:center;gap:6px;"><span style="width:6px;height:6px;border-radius:50%;background:${acctColor};"></span>${account?.name || '未选择'}</span></div><div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:var(--t3);">转入</span><span style="font-size:13px;color:var(--t1);display:flex;align-items:center;gap:6px;"><span style="width:6px;height:6px;border-radius:50%;background:${toAcct ? (CARD_THEMES[toAcct.color]?.accent || 'var(--gold)') : 'var(--gold)'};"></span>${toAcct?.name || '未选择'}</span></div>${t.fee ? `<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:var(--t3);">手续费</span><span style="font-size:13px;color:var(--red);">¥${fmt(t.fee)}</span></div>` : ''}` : `<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:var(--t3);">账户</span><span style="font-size:13px;color:var(--t1);display:flex;align-items:center;gap:6px;"><span style="width:6px;height:6px;border-radius:50%;background:${acctColor};"></span>${account?.name || '未选择'}</span></div>`}
         ${t.note ? `<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:var(--t3);">备注</span><span style="font-size:13px;color:var(--t1);">${t.note}</span></div>` : ''}
         ${t.isSubscription ? `<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:var(--t3);">类型</span><span style="font-size:12px;padding:2px 8px;border-radius:6px;background:var(--gold-bg);color:var(--gold);font-weight:600;">订阅自动扣款</span></div>` : ''}
+        ${t.salaryCredited ? `<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:var(--t3);">类型</span><span style="font-size:12px;padding:2px 8px;border-radius:6px;background:rgba(139,92,246,0.1);color:#8b5cf6;font-weight:600;">工资计划自动入账</span></div>` : ''}
         ${(Array.isArray(t.tags) && t.tags.length > 0) ? `<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;"><span style="font-size:13px;color:var(--t3);flex-shrink:0;">标签</span><span style="font-size:12px;display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;">${t.tags.map(tg => `<span style="padding:3px 9px;border-radius:8px;background:var(--card2);color:var(--gold);border:1px solid var(--gold-bd);font-weight:500;">#${escapeHtml(tg)}</span>`).join('')}</span></div>` : ''}
         ${t.foodKcal ? `<div style="margin-top:12px;padding:14px;border-radius:12px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
