@@ -4049,9 +4049,14 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '2.6.0';
-const APP_BUILD = '2026-08-09';
+const APP_VERSION = '2.7.7';
+const APP_BUILD = '2026-08-12';
 const CHANGELOG = [
+  { ver: '2.7.7', date: '2026-08-12', items: [
+    '修复缓存版本不一致导致部分浏览器加载旧资源或打不开的问题',
+    '工资日历支持长按多选并批量设置状态',
+    '工资待到账、自动入账和待处理事项体验优化'
+  ]},
   { ver: '2.6.0', date: '2026-08-09', items: [
     '流水详情编辑功能上线：点击编辑可修改金额、分类、账户、备注等信息',
     '编辑时自动撤销旧交易对账户余额的影响，保存后重新计算',
