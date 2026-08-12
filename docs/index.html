@@ -2363,13 +2363,18 @@ textarea.form-i{resize:none;min-height:80px;}
 </div>
 
 <script>
-// 检测Service Worker更新，自动刷新页面
+// 临时清理旧 Service Worker / Cache，避免 iOS Safari 旧缓存导致页面无法打开
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.addEventListener('controllerchange', function() {
-    window.location.reload();
-  });
+  navigator.serviceWorker.getRegistrations()
+    .then(regs => regs.forEach(reg => reg.unregister()))
+    .catch(()=>{});
+}
+if ('caches' in window) {
+  caches.keys()
+    .then(keys => Promise.all(keys.map(k => caches.delete(k))))
+    .catch(()=>{});
 }
 </script>
-<script src="app.js?v=2.7.7"></script>
+<script src="app.js?v=2.7.8"></script>
 </body>
 </html>

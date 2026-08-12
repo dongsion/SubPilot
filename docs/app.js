@@ -4049,9 +4049,13 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '2.7.7';
+const APP_VERSION = '2.7.8';
 const APP_BUILD = '2026-08-12';
 const CHANGELOG = [
+  { ver: '2.7.8', date: '2026-08-12', items: [
+    '临时关闭 PWA 离线缓存，修复 iPhone Safari 提示网络连接丢失的问题',
+    '启动时主动注销旧 Service Worker 并清理旧缓存'
+  ]},
   { ver: '2.7.7', date: '2026-08-12', items: [
     '修复缓存版本不一致导致部分浏览器加载旧资源或打不开的问题',
     '工资日历支持长按多选并批量设置状态',
@@ -4515,9 +4519,16 @@ function init() {
   // Process recurring transactions
   processRecurringTx();
 
-  // Register SW
+  // 临时关闭 Service Worker：iOS Safari 旧缓存可能导致页面无法打开
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(()=>{});
+    navigator.serviceWorker.getRegistrations()
+      .then(regs => regs.forEach(reg => reg.unregister()))
+      .catch(()=>{});
+  }
+  if ('caches' in window) {
+    caches.keys()
+      .then(keys => Promise.all(keys.map(k => caches.delete(k))))
+      .catch(()=>{});
   }
 
   render();
