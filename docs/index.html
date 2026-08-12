@@ -1663,6 +1663,14 @@ textarea.form-i{resize:none;min-height:80px;}
         <label class="sal-gross-lbl">税前薪资</label>
         <input type="text" class="sal-gross-input" id="sal-gross-input" placeholder="输入税前金额" inputmode="decimal">
       </div>
+      <!-- 到手工资 -->
+      <div class="sal-net">
+        <div class="sal-net-left">
+          <div class="sal-net-lbl">到手薪资</div>
+          <div class="sal-net-detail" id="sal-net-detail">税前 + 全勤奖 - 社保 - 公积金 - 个税</div>
+        </div>
+        <div class="sal-net-val" id="sal-net-val">¥0</div>
+      </div>
       <!-- 工资专用：到账日选择 -->
       <div class="salary-payday" id="salary-payday">
         <div class="salary-payday-label">每月到账日</div>
@@ -1711,14 +1719,6 @@ textarea.form-i{resize:none;min-height:80px;}
             <input type="text" class="sal-deduct-input" id="sal-tax-input" placeholder="0" inputmode="decimal">
           </div>
         </div>
-      </div>
-      <!-- 到手工资 -->
-      <div class="sal-net">
-        <div class="sal-net-left">
-          <div class="sal-net-lbl">到手薪资</div>
-          <div class="sal-net-detail" id="sal-net-detail">税前 + 全勤奖 - 社保 - 公积金 - 个税</div>
-        </div>
-        <div class="sal-net-val" id="sal-net-val">¥0</div>
       </div>
       <!-- 时薪 / 年薪 / 全勤判断 -->
       <div class="sal-insights">
@@ -2361,6 +2361,6 @@ if ('caches' in window) {
     .catch(()=>{});
 }
 </script>
-<script src="app.js?v=2.7.9"></script>
+<script src="app.js?v=2.8.0"></script>
 </body>
 </html>

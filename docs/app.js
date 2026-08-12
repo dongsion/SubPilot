@@ -4093,9 +4093,12 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '2.7.9';
+const APP_VERSION = '2.8.0';
 const APP_BUILD = '2026-08-12';
 const CHANGELOG = [
+  { ver: '2.8.0', date: '2026-08-12', items: [
+    '将工资收入里的「到手薪资」移动到税前薪资和每月到账日之间'
+  ]},
   { ver: '2.7.9', date: '2026-08-12', items: [
     '调整工资收入界面排序',
     '移除工资收入顶部「薪资到账」说明卡片'
