@@ -1835,6 +1835,7 @@ function saveTx() {
 
 // 撤销交易对账户余额的影响
 function revertTxEffect(t) {
+  if (t.isBalanceAdjust) return; // 余额调整记录不回退余额（余额已由用户手动设置）
   if (t.type === 'expense') {
     const acct = state.accounts.find(a => a.id === t.accountId);
     if (acct) acct.balance += t.amount; // 加回
@@ -2410,6 +2411,8 @@ function saveAccount() {
   if (state.editingAcctIdx >= 0) {
     // 编辑模式：更新现有账户
     const a = state.accounts[state.editingAcctIdx];
+    const oldBalance = a.balance || 0;
+    const balanceDiff = +(balance - oldBalance).toFixed(2);
     a.name = name;
     a.balance = balance;
     a.cardNumber = cardNumber;
@@ -2421,9 +2424,30 @@ function saveAccount() {
     a.billingDay = acctType === 'bank' ? (billingDay > 0 ? billingDay : null) : null;
     a.paymentDay = acctType === 'bank' ? (paymentDay > 0 ? paymentDay : null) : null;
     state.editingAcctIdx = -1;
+    // 余额变动时自动生成流水记录
+    if (Math.abs(balanceDiff) > 0.001) {
+      const now = new Date();
+      const adjustTx = {
+        id: genId(),
+        type: balanceDiff < 0 ? 'expense' : 'income',
+        amount: Math.abs(balanceDiff),
+        category: balanceDiff < 0 ? 'other' : 'other_in',
+        categoryName: '其他',
+        categoryIcon: '💡',
+        note: `余额调整 · ${name}`,
+        accountId: a.id,
+        date: today(),
+        tags: ['余额调整'],
+        time: `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`,
+        timestamp: now.toISOString(),
+        isSubscription: false,
+        isBalanceAdjust: true
+      };
+      state.transactions.unshift(adjustTx);
+    }
     save();
     closeSheet('sheet-acct');
-    toast('账户已更新');
+    toast(Math.abs(balanceDiff) > 0.001 ? `账户已更新，已记录${balanceDiff < 0 ? '支出' : '收入'} ¥${fmt(Math.abs(balanceDiff))}` : '账户已更新');
     haptic('success');
     render();
   } else {
