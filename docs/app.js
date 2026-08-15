@@ -6026,80 +6026,120 @@ function parseMultipleSubscriptions(text) {
   const subs = [];
   const lines = text.split(/\n+/).map(l => l.trim()).filter(l => l.length > 0);
 
-  // 订阅服务关键词表
-  const subKeywords = [
-    { pattern: /iCloud|云\+|云空间/i, name: 'iCloud+' },
-    { pattern: /网易云音乐|网易音乐|黑胶/i, name: '网易云音乐' },
-    { pattern: /汽水音乐/i, name: '汽水音乐' },
-    { pattern: /Z视介|Z视界/i, name: 'Z视介' },
-    { pattern: /一刻相册/i, name: '一刻相册' },
-    { pattern: /Netflix|奈飞/i, name: 'Netflix' },
-    { pattern: /Spotify|声田/i, name: 'Spotify' },
-    { pattern: /YouTube\s*Premium|YouTube\s*Music|油管/i, name: 'YouTube Premium' },
-    { pattern: /Apple\s*Music|Apple音乐/i, name: 'Apple Music' },
-    { pattern: /Apple\s*One/i, name: 'Apple One' },
-    { pattern: /Apple\s*TV/i, name: 'Apple TV+' },
-    { pattern: /Disney\+|迪士尼/i, name: 'Disney+' },
-    { pattern: /Bilibili|哔哩|B站|大会员/i, name: '哔哩哔哩大会员' },
-    { pattern: /腾讯视频/i, name: '腾讯视频' },
-    { pattern: /爱奇艺/i, name: '爱奇艺' },
-    { pattern: /优酷/i, name: '优酷' },
-    { pattern: /QQ音乐/i, name: 'QQ音乐' },
-    { pattern: /微信读书/i, name: '微信读书' },
-    { pattern: /WPS|金山/i, name: 'WPS会员' },
-    { pattern: /百度网盘|百度云盘/i, name: '百度网盘' },
-    { pattern: /阿里云盘/i, name: '阿里云盘' },
-    { pattern: /夸克网盘|夸克/i, name: '夸克网盘' },
-    { pattern: /京东\s*Plus|京东Plus/i, name: '京东Plus' },
-    { pattern: /知乎|盐选/i, name: '知乎盐选' },
-    { pattern: /喜马拉雅/i, name: '喜马拉雅' },
-    { pattern: /迅雷/i, name: '迅雷' },
-    { pattern: /Notion/i, name: 'Notion' },
-    { pattern: /ChatGPT|OpenAI|GPT\s*Plus/i, name: 'ChatGPT Plus' },
-    { pattern: /Claude|Anthropic/i, name: 'Claude' },
-    { pattern: /1Password/i, name: '1Password' },
-    { pattern: /Dropbox/i, name: 'Dropbox' },
-    { pattern: /Adobe|Creative\s*Cloud/i, name: 'Adobe CC' },
-    { pattern: /Microsoft\s*365|Office\s*365|微软/i, name: 'Microsoft 365' },
-    { pattern: /印象笔记|Evernote/i, name: '印象笔记' },
-    { pattern: /百度文库/i, name: '百度文库' },
-    { pattern: /淘宝/i, name: '淘宝' },
-    { pattern: /拼多多|多多/i, name: '拼多多' }
-  ];
-
-  // 合并所有行为一个大文本块，按订阅关键词分段
-  let fullText = lines.join('\n');
-
-  // 找出所有订阅关键词出现的位置，按位置分段
-  const matches = [];
-  for (const kw of subKeywords) {
-    const regex = new RegExp(kw.pattern.source, 'gi');
-    let m;
-    while ((m = regex.exec(fullText)) !== null) {
-      matches.push({ index: m.index, name: kw.name });
+  // 策略：用金额(Y/¥ XX.XX)定位每个订阅，向前找名称，向后找日期
+  // 找出所有包含金额的行
+  const priceLines = [];
+  for (let i = 0; i < lines.length; i++) {
+    // 匹配 Y21.00 / ¥21.00 / ￥21.00 / Y9.90 等
+    const priceMatch = lines[i].match(/[¥￥Y]\s*(\d+[.,]\d{1,2})/);
+    if (priceMatch) {
+      const price = parseFloat(priceMatch[1].replace(',', '.'));
+      // 过滤掉太小的数字（可能是时间如 2:47）
+      if (price > 0 && price < 10000) {
+        priceLines.push({ lineIdx: i, price: price, rawLine: lines[i] });
+      }
     }
   }
-  matches.sort((a, b) => a.index - b.index);
 
-  // 如果找到多个订阅关键词，按位置分段提取每个订阅的信息
-  if (matches.length >= 2) {
-    for (let i = 0; i < matches.length; i++) {
-      const start = matches[i].index;
-      const end = i + 1 < matches.length ? matches[i + 1].index : fullText.length;
-      const segment = fullText.substring(start, end);
+  console.log('[SubOCR] Price lines found:', priceLines.length, priceLines);
 
-      const sub = parseSingleSubscription(segment, matches[i].name);
-      if (sub.name && sub.price) {
+  if (priceLines.length >= 2) {
+    // 多订阅模式：以每个金额为锚点，向前找名称，向后找日期
+    for (let p = 0; p < priceLines.length; p++) {
+      const pl = priceLines[p];
+      const name = findSubName(lines, pl.lineIdx);
+      const date = findSubDate(lines, pl.lineIdx);
+
+      if (name) {
         // 去重
-        if (!subs.find(s => s.name === sub.name)) {
-          subs.push(sub);
+        if (!subs.find(s => s.name === name)) {
+          subs.push({
+            name: name,
+            price: pl.price,
+            currency: 'CNY',
+            cycle: 'month',
+            nextDate: date || ''
+          });
         }
       }
     }
   }
 
-  // 如果多订阅解析失败，回退到单订阅模式
+  // 如果金额定位没找到多个订阅，回退到关键词分段
+  if (subs.length <= 1) {
+    const subKeywords = [
+      { pattern: /iCloud|云\+|云空间/i, name: 'iCloud+' },
+      { pattern: /网易云音乐|网易音乐|黑胶/i, name: '网易云音乐' },
+      { pattern: /汽水音乐/i, name: '汽水音乐' },
+      { pattern: /Z视介|Z视界/i, name: 'Z视介' },
+      { pattern: /一刻相册/i, name: '一刻相册' },
+      { pattern: /Netflix|奈飞/i, name: 'Netflix' },
+      { pattern: /Spotify|声田/i, name: 'Spotify' },
+      { pattern: /YouTube\s*Premium|YouTube\s*Music|油管/i, name: 'YouTube Premium' },
+      { pattern: /Apple\s*Music|Apple音乐/i, name: 'Apple Music' },
+      { pattern: /Apple\s*One/i, name: 'Apple One' },
+      { pattern: /Apple\s*TV/i, name: 'Apple TV+' },
+      { pattern: /Disney\+|迪士尼/i, name: 'Disney+' },
+      { pattern: /Bilibili|哔哩|B站|大会员/i, name: '哔哩哔哩大会员' },
+      { pattern: /腾讯视频/i, name: '腾讯视频' },
+      { pattern: /爱奇艺/i, name: '爱奇艺' },
+      { pattern: /优酷/i, name: '优酷' },
+      { pattern: /QQ音乐/i, name: 'QQ音乐' },
+      { pattern: /微信读书/i, name: '微信读书' },
+      { pattern: /WPS|金山/i, name: 'WPS会员' },
+      { pattern: /百度网盘|百度云盘/i, name: '百度网盘' },
+      { pattern: /阿里云盘/i, name: '阿里云盘' },
+      { pattern: /夸克网盘|夸克/i, name: '夸克网盘' },
+      { pattern: /京东\s*Plus|京东Plus/i, name: '京东Plus' },
+      { pattern: /知乎|盐选/i, name: '知乎盐选' },
+      { pattern: /喜马拉雅/i, name: '喜马拉雅' },
+      { pattern: /迅雷/i, name: '迅雷' },
+      { pattern: /Notion/i, name: 'Notion' },
+      { pattern: /ChatGPT|OpenAI|GPT\s*Plus/i, name: 'ChatGPT Plus' },
+      { pattern: /Claude|Anthropic/i, name: 'Claude' },
+      { pattern: /1Password/i, name: '1Password' },
+      { pattern: /Dropbox/i, name: 'Dropbox' },
+      { pattern: /Adobe|Creative\s*Cloud/i, name: 'Adobe CC' },
+      { pattern: /Microsoft\s*365|Office\s*365|微软/i, name: 'Microsoft 365' },
+      { pattern: /印象笔记|Evernote/i, name: '印象笔记' },
+      { pattern: /百度文库/i, name: '百度文库' }
+    ];
+
+    let fullText = lines.join('\n');
+    const matches = [];
+    for (const kw of subKeywords) {
+      const regex = new RegExp(kw.pattern.source, 'gi');
+      let m;
+      while ((m = regex.exec(fullText)) !== null) {
+        matches.push({ index: m.index, name: kw.name });
+      }
+    }
+    matches.sort((a, b) => a.index - b.index);
+
+    if (matches.length >= 2) {
+      const kwSubs = [];
+      for (let i = 0; i < matches.length; i++) {
+        const start = matches[i].index;
+        const end = i + 1 < matches.length ? matches[i + 1].index : fullText.length;
+        const segment = fullText.substring(start, end);
+        const sub = parseSingleSubscription(segment, matches[i].name);
+        if (sub.name && sub.price) {
+          if (!kwSubs.find(s => s.name === sub.name)) {
+            kwSubs.push(sub);
+          }
+        }
+      }
+      // 如果关键词方式找到更多，用它
+      if (kwSubs.length > subs.length) {
+        subs.length = 0;
+        subs.push(...kwSubs);
+      }
+    }
+  }
+
+  // 最终回退：单订阅模式
   if (subs.length === 0) {
+    const fullText = lines.join('\n');
     const single = parseSingleSubscription(fullText, '');
     if (single.name && single.price) {
       subs.push(single);
@@ -6107,6 +6147,111 @@ function parseMultipleSubscriptions(text) {
   }
 
   return subs;
+}
+
+// 从金额行向前找订阅名称
+function findSubName(lines, priceLineIdx) {
+  // 订阅服务关键词表
+  const subKeywords = [
+    { pattern: /iCloud/i, name: 'iCloud+' },
+    { pattern: /网易云音乐|黑胶/i, name: '网易云音乐' },
+    { pattern: /汽水音乐/i, name: '汽水音乐' },
+    { pattern: /Z视介|Z视界/i, name: 'Z视介' },
+    { pattern: /一刻相册/i, name: '一刻相册' },
+    { pattern: /Netflix/i, name: 'Netflix' },
+    { pattern: /Spotify/i, name: 'Spotify' },
+    { pattern: /YouTube/i, name: 'YouTube Premium' },
+    { pattern: /Apple\s*Music/i, name: 'Apple Music' },
+    { pattern: /Apple\s*TV/i, name: 'Apple TV+' },
+    { pattern: /Disney/i, name: 'Disney+' },
+    { pattern: /Bilibili|哔哩|B站/i, name: '哔哩哔哩' },
+    { pattern: /腾讯视频/i, name: '腾讯视频' },
+    { pattern: /爱奇艺/i, name: '爱奇艺' },
+    { pattern: /优酷/i, name: '优酷' },
+    { pattern: /QQ音乐/i, name: 'QQ音乐' },
+    { pattern: /微信读书/i, name: '微信读书' },
+    { pattern: /百度网盘/i, name: '百度网盘' },
+    { pattern: /阿里云盘/i, name: '阿里云盘' },
+    { pattern: /夸克/i, name: '夸克网盘' },
+    { pattern: /京东\s*Plus/i, name: '京东Plus' },
+    { pattern: /知乎/i, name: '知乎盐选' },
+    { pattern: /喜马拉雅/i, name: '喜马拉雅' },
+    { pattern: /WPS/i, name: 'WPS会员' },
+    { pattern: /迅雷/i, name: '迅雷' },
+    { pattern: /Notion/i, name: 'Notion' },
+    { pattern: /ChatGPT|OpenAI/i, name: 'ChatGPT Plus' },
+    { pattern: /Claude/i, name: 'Claude' },
+    { pattern: /Dropbox/i, name: 'Dropbox' },
+    { pattern: /Adobe/i, name: 'Adobe CC' },
+    { pattern: /Microsoft\s*365|Office\s*365/i, name: 'Microsoft 365' }
+  ];
+
+  // 向前扫描最多5行找名称
+  for (let i = priceLineIdx; i >= Math.max(0, priceLineIdx - 5); i--) {
+    const line = lines[i];
+
+    // 先尝试关键词匹配
+    for (const kw of subKeywords) {
+      if (kw.pattern.test(line)) {
+        return kw.name;
+      }
+    }
+  }
+
+  // 关键词没匹配到，尝试从金额行本身或前面的行提取名称
+  // iOS订阅页面格式：服务名在金额行上方，或就在金额行的左边
+  for (let i = priceLineIdx; i >= Math.max(0, priceLineIdx - 3); i--) {
+    const line = lines[i];
+    // 去掉金额、数字、特殊字符，剩下的可能就是名称
+    const cleaned = line
+      .replace(/[¥￥Y]\s*\d+[.,]\d{1,2}/g, '')  // 去掉金额
+      .replace(/\d{1,2}月\d{1,2}日\s*(?:续期|续费|到期|扣款)/g, '')  // 去掉日期
+      .replace(/[\d:：\s\-()（）【】\[\]]/g, '')  // 去掉数字、冒号、括号
+      .replace(/^(有效|排序|订阅|续期|续费|到期|扣款|包月|包年|每月|每年)/g, '')
+      .trim();
+
+    // 如果清理后还有2个以上字符，可能是名称
+    if (cleaned.length >= 2 && cleaned.length <= 30) {
+      // 过滤掉明显不是名称的
+      if (!/^\d+$/.test(cleaned) && !/^(有效|排序|订阅|续期|续费)$/.test(cleaned)) {
+        return cleaned;
+      }
+    }
+  }
+
+  return '';
+}
+
+// 从金额行向后找续期日期
+function findSubDate(lines, priceLineIdx) {
+  const now = new Date();
+  const curYear = now.getFullYear();
+
+  // 向后扫描最多3行找日期
+  for (let i = priceLineIdx + 1; i <= Math.min(lines.length - 1, priceLineIdx + 3); i++) {
+    const line = lines[i];
+    // 如果遇到下一个金额行，停止搜索（不要拿到别的订阅的日期）
+    if (/[¥￥Y]\s*\d+[.,]\d{1,2}/.test(line)) break;
+    // 匹配 "9月8日续期" 格式
+    const cnDateMatch = line.match(/(\d{1,2})月(\d{1,2})日\s*(?:续期|续费|到期|扣款)/);
+    if (cnDateMatch) {
+      const month = parseInt(cnDateMatch[1]);
+      const day = parseInt(cnDateMatch[2]);
+      let year = curYear;
+      if (month < now.getMonth() + 1 || (month === now.getMonth() + 1 && day < now.getDate())) {
+        year = curYear + 1;
+      }
+      return `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    }
+
+    // 匹配 2026-08-08 格式
+    const isoDate = line.match(/(\d{4})[年\-\/.](\d{1,2})[月\-\/.](\d{1,2})/);
+    if (isoDate) {
+      return `${isoDate[1]}-${String(isoDate[2]).padStart(2,'0')}-${String(isoDate[3]).padStart(2,'0')}`;
+    }
+  }
+
+  return '';
 }
 
 // 解析单个订阅信息
