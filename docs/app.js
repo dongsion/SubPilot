@@ -6934,7 +6934,7 @@ function downloadInvoice() {
 // ===== Cloud Sync (Supabase) =====
 const PUBLIC_SUPABASE_URL = 'https://cicauycbflanpqcrfakd.supabase.co';
 const PUBLIC_SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNpY2F1eWNiZmxhbnBxY3JmYWtkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwOTA4NzcsImV4cCI6MjEwMTY2Njg3N30.kegH6ESniP0ouFtio5EHw0XDOHxJFCgtzx-dELjCx7c';
-const CLOUD_DATA_TYPES = ['accounts', 'subscriptions', 'transactions', 'qrcodes', 'invoices', 'settings', 'salaryPendingIncome'];
+const CLOUD_DATA_TYPES = ['accounts', 'subscriptions', 'transactions', 'qrcodes', 'invoices', 'settings', 'salaryPendingIncome', 'budgets', 'savingsGoals', 'recurringTx'];
 
 function getSupabaseConfig() {
   try {
@@ -7305,6 +7305,7 @@ async function syncToCloud() {
     const now = new Date().toISOString();
     let pushCount = 0;
     let pullCount = 0;
+    const syncedTypes = []; // Track which types were actually synced
 
     for (const type of CLOUD_DATA_TYPES) {
       let localData;
@@ -7321,8 +7322,15 @@ async function syncToCloud() {
       const localTs = localTimestamps[type] || '1970-01-01T00:00:00.000Z';
       const cloudTs = cloud?.updated_at || '1970-01-01T00:00:00.000Z';
 
-      if (!cloud || localTs > cloudTs) {
-        // Local is newer - push
+      // Safety check: don't overwrite cloud data with empty local data
+      const localIsEmpty = (type === 'settings')
+        ? Object.keys(localData || {}).length === 0
+        : (!localData || (Array.isArray(localData) && localData.length === 0));
+      const cloudHasData = cloud && cloud.data &&
+        (Array.isArray(cloud.data) ? cloud.data.length > 0 : Object.keys(cloud.data).length > 0);
+
+      if (!cloud || (localTs > cloudTs && !localIsEmpty)) {
+        // Local is newer (and not empty) - push
         const { error: upsertErr } = await state.supabaseClient
           .from('user_data')
           .upsert({
@@ -7332,9 +7340,9 @@ async function syncToCloud() {
             updated_at: now
           }, { onConflict: 'user_id,data_type' });
         if (upsertErr) console.error('Push error for', type, upsertErr);
-        else pushCount++;
-      } else if (cloudTs > localTs) {
-        // Cloud is newer - pull
+        else { pushCount++; syncedTypes.push(type); }
+      } else if (cloudTs > localTs || (cloudHasData && localIsEmpty)) {
+        // Cloud is newer or local is empty but cloud has data - pull
         if (type === 'settings') {
           const pulled = cloud.data || {};
           state.settings = { ...state.settings, ...pulled };
@@ -7342,13 +7350,14 @@ async function syncToCloud() {
           state[type] = cloud.data || [];
         }
         pullCount++;
+        syncedTypes.push(type);
       }
     }
 
     localTimestamps._lastSync = now;
-    for (const type of CLOUD_DATA_TYPES) {
-      localTimestamps[type] = now;
-    }
+    // Only update timestamps for types that were actually synced (pushed or pulled)
+    // This prevents empty local data from being treated as "newer" on next sync
+    syncedTypes.forEach(type => { localTimestamps[type] = now; });
     localStorage.setItem('subpilot_local_ts', JSON.stringify(localTimestamps));
     state.cloudLastSync = now;
     save();
