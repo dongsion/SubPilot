@@ -5740,8 +5740,8 @@ function parseReceiptText(text) {
   }
 
   // 提取金额 - 支持多种格式
-  // 格式1: ¥12.34 / ￥12.34
-  let amtMatch = text.match(/[¥￥]\s*(\d+[.,]\d{1,2})/);
+  // 格式1: ¥12.34 / ￥12.34 / Y12.34（OCR常把¥识别为Y）
+  let amtMatch = text.match(/[¥￥Y]\s*(\d+[.,]\d{1,2})/);
   // 格式2: 金额 12.34 / 金额：12.34
   if (!amtMatch) amtMatch = text.match(/金额[：:\s]*(\d+[.,]\d{1,2})/);
   // 格式3: 12.34元
@@ -6169,8 +6169,8 @@ function parseSingleSubscription(text, defaultName) {
   }
 
   // === 金额 ===
-  // 优先匹配 ¥XX.XX 格式（只取第一个，避免混入其他订阅的金额）
-  let amtMatch = text.match(/[¥￥]\s*(\d+[.,]\d{1,2})/);
+  // 优先匹配 ¥/￥/Y XX.XX 格式（OCR常把¥识别为Y）
+  let amtMatch = text.match(/[¥￥Y]\s*(\d+[.,]\d{1,2})/);
   if (!amtMatch) amtMatch = text.match(/(\d+[.,]\d{2})\s*元/);
   if (!amtMatch) amtMatch = text.match(/金额[：:\s]*(\d+[.,]\d{1,2})/);
   if (!amtMatch) {
