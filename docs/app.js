@@ -7381,6 +7381,132 @@ async function syncToCloud() {
   }
 }
 
+// ===== 手动上传/拉取 =====
+async function forceUploadToCloud() {
+  if (!state.supabaseClient || !state.cloudUser) {
+    if (!state.supabaseClient) initSupabase();
+    await checkCloudSession();
+    if (!state.cloudUser) {
+      toast('请先登录云同步');
+      openCloudAuth();
+      return;
+    }
+  }
+  const uid = state.cloudUser.id;
+  const btn = $('#cloud-upload-status');
+  if (btn) { btn.textContent = '上传中...'; btn.style.color = 'var(--t3)'; }
+  toast('正在上传...');
+
+  try {
+    const now = new Date().toISOString();
+    const localTimestamps = JSON.parse(localStorage.getItem('subpilot_local_ts') || '{}');
+    let uploadCount = 0;
+
+    for (const type of CLOUD_DATA_TYPES) {
+      let localData;
+      if (type === 'settings') {
+        const safe = { ...state.settings };
+        delete safe.appPassword;
+        localData = safe;
+      } else {
+        localData = state[type];
+      }
+
+      // Skip truly empty data (don't upload nothing)
+      const isEmpty = (type === 'settings')
+        ? Object.keys(localData || {}).length === 0
+        : (!localData || (Array.isArray(localData) && localData.length === 0));
+      if (isEmpty) continue;
+
+      const { error } = await state.supabaseClient
+        .from('user_data')
+        .upsert({
+          user_id: uid,
+          data_type: type,
+          data: localData,
+          updated_at: now
+        }, { onConflict: 'user_id,data_type' });
+
+      if (error) {
+        console.error('Upload error for', type, error);
+      } else {
+        uploadCount++;
+        localTimestamps[type] = now;
+      }
+    }
+
+    localStorage.setItem('subpilot_local_ts', JSON.stringify(localTimestamps));
+    state.cloudLastSync = now;
+    updateCloudStatus();
+    if (btn) { btn.textContent = '已上传 ›'; btn.style.color = 'var(--green)'; setTimeout(() => { if (btn) { btn.textContent = '点击上传 ›'; btn.style.color = 'var(--gold)'; } }, 2000); }
+    toast(`已上传 ${uploadCount} 项数据到云端 ✓`);
+    haptic('success');
+  } catch(e) {
+    console.error('Upload error:', e);
+    if (btn) { btn.textContent = '上传失败 ›'; btn.style.color = 'var(--red)'; setTimeout(() => { if (btn) { btn.textContent = '点击上传 ›'; btn.style.color = 'var(--gold)'; } }, 2000); }
+    toast('上传失败：' + (e.message || '请检查网络'));
+    haptic('error');
+  }
+}
+
+async function forcePullFromCloud() {
+  if (!state.supabaseClient || !state.cloudUser) {
+    if (!state.supabaseClient) initSupabase();
+    await checkCloudSession();
+    if (!state.cloudUser) {
+      toast('请先登录云同步');
+      openCloudAuth();
+      return;
+    }
+  }
+  const uid = state.cloudUser.id;
+  const btn = $('#cloud-pull-status');
+  if (btn) { btn.textContent = '拉取中...'; btn.style.color = 'var(--t3)'; }
+  toast('正在拉取...');
+
+  try {
+    const { data: cloudData, error } = await state.supabaseClient
+      .from('user_data')
+      .select('data_type, data, updated_at')
+      .eq('user_id', uid);
+
+    if (error) throw error;
+
+    const localTimestamps = JSON.parse(localStorage.getItem('subpilot_local_ts') || '{}');
+    let pullCount = 0;
+
+    (cloudData || []).forEach(row => {
+      const type = row.data_type;
+      if (!CLOUD_DATA_TYPES.includes(type)) return;
+
+      const cloudHasData = row.data &&
+        (Array.isArray(row.data) ? row.data.length > 0 : Object.keys(row.data).length > 0);
+      if (!cloudHasData) return;
+
+      if (type === 'settings') {
+        state.settings = { ...state.settings, ...row.data };
+      } else {
+        state[type] = row.data;
+      }
+      localTimestamps[type] = row.updated_at;
+      pullCount++;
+    });
+
+    localStorage.setItem('subpilot_local_ts', JSON.stringify(localTimestamps));
+    save();
+    render();
+    updateCloudStatus();
+    if (btn) { btn.textContent = '已拉取 ›'; btn.style.color = 'var(--green)'; setTimeout(() => { if (btn) { btn.textContent = '点击拉取 ›'; btn.style.color = 'var(--gold)'; } }, 2000); }
+    toast(`已从云端拉取 ${pullCount} 项数据 ✓`);
+    haptic('success');
+  } catch(e) {
+    console.error('Pull error:', e);
+    if (btn) { btn.textContent = '拉取失败 ›'; btn.style.color = 'var(--red)'; setTimeout(() => { if (btn) { btn.textContent = '点击拉取 ›'; btn.style.color = 'var(--gold)'; } }, 2000); }
+    toast('拉取失败：' + (e.message || '请检查网络'));
+    haptic('error');
+  }
+}
+
 // Update local timestamps when data changes locally
 function markLocalChange() {
   const ts = JSON.parse(localStorage.getItem('subpilot_local_ts') || '{}');

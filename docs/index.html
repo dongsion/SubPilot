@@ -1193,6 +1193,8 @@ textarea.form-i{resize:none;min-height:80px;}
     <div class="sec" style="margin-top:8px;"><span class="st" style="font-size:13px;color:var(--t3);">云同步</span></div>
     <div class="info-g">
       <div class="info-r" onclick="openCloudAuth()"><span class="info-l">☁️ 云端同步</span><span class="info-v" style="color:var(--gold);" id="cloud-status">未登录 ›</span></div>
+      <div class="info-r" onclick="forceUploadToCloud()"><span class="info-l">⬆️ 上传数据到云端</span><span class="info-v" style="color:var(--gold);" id="cloud-upload-status">点击上传 ›</span></div>
+      <div class="info-r" onclick="forcePullFromCloud()"><span class="info-l">⬇️ 从云端拉取数据</span><span class="info-v" style="color:var(--gold);" id="cloud-pull-status">点击拉取 ›</span></div>
       <div class="info-r" onclick="openCloudConfig()"><span class="info-l" style="font-size:13px;color:var(--t2);">云服务配置</span><span class="info-v" style="color:var(--t3);font-size:12px;" id="cloud-config-status">默认 ›</span></div>
     </div>
     <div class="sec" style="margin-top:8px;"><span class="st" style="font-size:13px;color:var(--t3);">安全</span></div>
