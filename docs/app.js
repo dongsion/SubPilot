@@ -624,7 +624,7 @@ function updateBadge() {
   } catch(e) {}
 }
 
-// Handle URL shortcuts (from manifest shortcuts)
+// Handle URL shortcuts (from manifest shortcuts & iOS Shortcuts widget)
 function handleUrlAction() {
   const params = new URLSearchParams(window.location.search);
   const action = params.get('action');
@@ -640,11 +640,97 @@ function handleUrlAction() {
     setTimeout(() => showView('calendar'), 500);
   } else if (action === 'search') {
     setTimeout(() => openSearch(), 500);
+  } else if (action === 'quick-tx') {
+    // 支持 iOS 快捷指令桌面小组件直接记账
+    // 方式1: ?action=quick-tx&text=午饭30块  (自然语言)
+    // 方式2: ?action=quick-tx&amount=50&cat=food&note=午饭&type=expense
+    setTimeout(() => quickAddTx(params), 300);
   }
   // Clean up URL
   if (action) {
     window.history.replaceState({}, '', './');
   }
+}
+
+// 快速记账：支持自然语言或结构化参数，自动保存无需手动操作
+function quickAddTx(params) {
+  if (state.accounts.length === 0) {
+    toast('请先添加一个账户');
+    openAddTx();
+    return;
+  }
+  const text = params.get('text');
+  if (text) {
+    // 自然语言模式：复用 AI 解析
+    const parsed = parseNaturalLanguage(text);
+    if (!parsed.amount) {
+      toast('未能识别金额，请手动输入');
+      openAddTx({ type: parsed.type, category: parsed.category });
+      return;
+    }
+    const acct = state.accounts.find(a => a.id === parsed.accountId) || state.accounts[0];
+    const now = new Date();
+    const tx = {
+      id: genId(),
+      type: parsed.type,
+      amount: parsed.amount,
+      category: parsed.category,
+      categoryName: parsed.categoryName,
+      categoryIcon: (parsed.type === 'income' ? INCOME_CATS : EXPENSE_CATS).find(c => c.id === parsed.category)?.icon || '💡',
+      note: parsed.note || text,
+      accountId: acct.id,
+      date: parsed.date || today(),
+      tags: [],
+      time: `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`,
+      timestamp: now.toISOString(),
+      isSubscription: false,
+      isQuickAdd: true
+    };
+    state.transactions.unshift(tx);
+    acct.balance += parsed.type === 'expense' ? -parsed.amount : parsed.amount;
+    save();
+    toast(`${parsed.type === 'income' ? '收入' : '支出'} ¥${fmt(parsed.amount)} · ${parsed.categoryName}`);
+    haptic('success');
+    render();
+    return;
+  }
+  // 结构化参数模式
+  const amount = parseFloat(params.get('amount'));
+  if (!amount || amount <= 0) {
+    toast('金额无效');
+    openAddTx();
+    return;
+  }
+  const type = params.get('type') === 'income' ? 'income' : 'expense';
+  const catId = params.get('cat') || (type === 'income' ? 'other_in' : 'other');
+  const cats = type === 'income' ? INCOME_CATS : EXPENSE_CATS;
+  const cat = cats.find(c => c.id === catId) || cats[cats.length - 1];
+  const note = params.get('note') || '快捷记账';
+  const acctId = params.get('account');
+  const acct = state.accounts.find(a => a.id === acctId) || state.accounts[0];
+  const now = new Date();
+  const tx = {
+    id: genId(),
+    type: type,
+    amount: amount,
+    category: cat.id,
+    categoryName: cat.name,
+    categoryIcon: cat.icon,
+    note: note,
+    accountId: acct.id,
+    date: today(),
+    tags: ['快捷记账'],
+    time: `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`,
+    timestamp: now.toISOString(),
+    isSubscription: false,
+    isQuickAdd: true
+  };
+  state.transactions.unshift(tx);
+  acct.balance += type === 'expense' ? -amount : amount;
+  save();
+  toast(`${type === 'income' ? '收入' : '支出'} ¥${fmt(amount)} · ${cat.name}`);
+  haptic('success');
+  render();
 }
 
 // ===== Brand Icon =====
