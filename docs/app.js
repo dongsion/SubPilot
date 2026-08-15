@@ -5836,6 +5836,299 @@ function parseReceiptText(text) {
   return result;
 }
 
+// ===== 订阅图片识别 =====
+async function scanSubscriptionImage() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const resultEl = $('#sub-scan-result');
+    if (resultEl) {
+      resultEl.style.display = 'block';
+      resultEl.innerHTML = '<div style="padding:12px;background:rgba(218,165,122,0.1);border-radius:10px;font-size:13px;color:var(--gold);display:flex;align-items:center;gap:8px;"><span class="spinner" style="display:inline-block;width:16px;height:16px;border:2px solid var(--gold);border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;"></span>正在识别订阅信息...</div>';
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      const origDataUrl = ev.target.result;
+
+      try {
+        // 压缩图片
+        const compressedImg = await compressForOCR(origDataUrl, 1000);
+
+        // 确保OCR引擎就绪
+        if (!_ocrWorkerReady) {
+          if (!_tesseractLoaded) {
+            await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
+            _tesseractLoaded = true;
+          }
+          _ocrWorker = await Tesseract.createWorker('chi_sim', 1, {
+            logger: () => {}
+          });
+          _ocrWorkerReady = true;
+        }
+
+        // 执行OCR
+        const result = await _ocrWorker.recognize(compressedImg);
+        const rawText = result.data.text;
+        console.log('[SubOCR] Result:', rawText);
+
+        // 解析订阅信息
+        const parsed = parseSubscriptionText(rawText);
+
+        // 自动填充表单
+        let filledFields = [];
+
+        if (parsed.name) {
+          $('#sub-name').value = parsed.name;
+          filledFields.push('名称');
+        }
+        if (parsed.price) {
+          $('#sub-price').value = parsed.price;
+          filledFields.push('金额');
+        }
+        if (parsed.currency) {
+          $('#sub-currency').value = parsed.currency;
+          filledFields.push('币种');
+        }
+        if (parsed.cycle) {
+          state.selectedCycle = parsed.cycle;
+          $$('#sub-cycle-pick .pick').forEach(p => p.classList.toggle('on', p.dataset.c === parsed.cycle));
+          filledFields.push('周期');
+        }
+        if (parsed.nextDate) {
+          $('#sub-nextdate').value = parsed.nextDate;
+          filledFields.push('日期');
+        }
+
+        // 显示识别结果
+        if (filledFields.length > 0) {
+          // 匹配内置品牌图标
+          const brandMatch = matchBrandByName(parsed.name);
+          if (brandMatch) {
+            state.fetchedAppIcon = { iconUrl: brandMatch.iconUrl, name: brandMatch.name };
+            const previewEl = $('#sub-icon-preview');
+            if (previewEl) {
+              previewEl.innerHTML = `
+                <div style="display:flex;align-items:center;gap:12px;padding:10px;background:rgba(255,255,255,0.04);border-radius:12px;border:1px solid var(--border);">
+                  <img src="${brandMatch.iconUrl}" style="width:48px;height:48px;border-radius:12px;object-fit:cover;" onerror="this.style.opacity=0.3;" />
+                  <div style="flex:1;">
+                    <div style="font-size:14px;font-weight:600;color:var(--t1);">${brandMatch.name}</div>
+                    <div style="font-size:11px;color:var(--green);margin-top:2px;">✓ 已自动匹配图标</div>
+                  </div>
+                </div>`;
+            }
+          }
+
+          if (resultEl) {
+            resultEl.innerHTML = `
+              <div style="padding:12px;background:rgba(29,201,129,0.08);border-radius:10px;border:1px solid rgba(29,201,129,0.2);">
+                <div style="font-size:13px;font-weight:600;color:var(--green);margin-bottom:6px;">✓ 已识别 ${filledFields.length} 项信息</div>
+                <div style="font-size:12px;color:var(--t2);line-height:1.8;">
+                  ${parsed.name ? '📌 名称: ' + parsed.name + '<br>' : ''}
+                  ${parsed.price ? '💰 金额: ' + parsed.price + ' ' + (parsed.currency || 'CNY') + '<br>' : ''}
+                  ${parsed.cycle ? '🔄 周期: ' + ({week:'每周',month:'每月',quarter:'每季',year:'每年'}[parsed.cycle] || parsed.cycle) + '<br>' : ''}
+                  ${parsed.nextDate ? '📅 下次: ' + parsed.nextDate + '<br>' : ''}
+                </div>
+                <div style="font-size:11px;color:var(--t3);margin-top:8px;">请检查并补充缺失信息后点保存</div>
+              </div>`;
+          }
+          toast(`已识别 ${filledFields.join('、')}`);
+          haptic('success');
+        } else {
+          if (resultEl) {
+            resultEl.innerHTML = `
+              <div style="padding:12px;background:rgba(239,170,23,0.08);border-radius:10px;border:1px solid rgba(239,170,23,0.2);font-size:12px;color:var(--t2);line-height:1.6;">
+                ⚠️ 未能自动识别订阅信息<br>
+                <span style="font-size:11px;color:var(--t3);">识别到的文字（前100字）：<br>${rawText.substring(0, 100)}...</span>
+              </div>`;
+          }
+          toast('未能识别订阅信息，请手动填写');
+          haptic('medium');
+        }
+
+        // 自动更新币种提示
+        if (typeof updateCurrencyHint === 'function') updateCurrencyHint();
+
+      } catch (err) {
+        console.error('[SubOCR] Error:', err);
+        if (resultEl) {
+          resultEl.innerHTML = `<div style="padding:12px;background:rgba(255,59,48,0.08);border-radius:10px;font-size:12px;color:var(--red);">❌ 识别失败：${err.message || '请检查网络后重试'}</div>`;
+        }
+        toast('图片识别失败，请重试');
+        haptic('error');
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+}
+
+// 解析订阅截图OCR文本
+function parseSubscriptionText(text) {
+  const result = {
+    name: '',
+    price: null,
+    currency: 'CNY',
+    cycle: '',
+    nextDate: ''
+  };
+
+  if (!text || text.trim().length === 0) return result;
+
+  // === 提取服务名称 ===
+  // 常见订阅服务关键词
+  const subNames = [
+    { pattern: /Netflix|奈飞/i, name: 'Netflix' },
+    { pattern: /Spotify|声田/i, name: 'Spotify' },
+    { pattern: /iCloud|云\+|云空间/i, name: 'iCloud+' },
+    { pattern: /YouTube\s*Premium|YouTube\s*Music|油管/i, name: 'YouTube Premium' },
+    { pattern: /Apple\s*Music|Apple音乐/i, name: 'Apple Music' },
+    { pattern: /Apple\s*One/i, name: 'Apple One' },
+    { pattern: /Apple\s*TV/i, name: 'Apple TV+' },
+    { pattern: /Disney\+|迪士尼/i, name: 'Disney+' },
+    { pattern: /Bilibili|哔哩|B站|大会员/i, name: '哔哩哔哩大会员' },
+    { pattern: /腾讯视频|微信读书|微信读书/i, name: '微信读书' },
+    { pattern: /QQ\s*Music|QQ音乐/i, name: 'QQ音乐' },
+    { pattern: /网易云音乐|网易音乐|黑胶/i, name: '网易云音乐' },
+    { pattern: /WPS|金山/i, name: 'WPS会员' },
+    { pattern: /百度网盘|百度云盘/i, name: '百度网盘' },
+    { pattern: /京东\s*Plus|京东Plus/i, name: '京东Plus' },
+    { pattern: /淘宝/i, name: '淘宝' },
+    { pattern: /拼多多|多多/i, name: '拼多多' },
+    { pattern: /Notion/i, name: 'Notion' },
+    { pattern: /ChatGPT|OpenAI|GPT\s*Plus/i, name: 'ChatGPT Plus' },
+    { pattern: /Claude|Anthropic/i, name: 'Claude' },
+    { pattern: /1Password/i, name: '1Password' },
+    { pattern: /Dropbox/i, name: 'Dropbox' },
+    { pattern: /Adobe|Creative\s*Cloud/i, name: 'Adobe CC' },
+    { pattern: /Microsoft\s*365|Office\s*365|微软/i, name: 'Microsoft 365' },
+    { pattern: /Evernote|印象笔记/i, name: '印象笔记' },
+    { pattern: /百度文库/i, name: '百度文库' },
+    { pattern: /知乎|盐选/i, name: '知乎盐选' },
+    { pattern: /喜马拉雅/i, name: '喜马拉雅' },
+    { pattern: /WPS/i, name: 'WPS' },
+    { pattern: /迅雷/i, name: '迅雷' },
+    { pattern: /夸克/i, name: '夸克' },
+    { pattern: /阿里云盘/i, name: '阿里云盘' },
+    { pattern: /夸克网盘/i, name: '夸克网盘' }
+  ];
+
+  for (const sub of subNames) {
+    if (sub.pattern.test(text)) {
+      result.name = sub.name;
+      break;
+    }
+  }
+
+  // 如果没匹配到内置名称，尝试从文本中提取
+  if (!result.name) {
+    // 查找 "订阅" "续费" "会员" 附近的词
+    const nameMatch = text.match(/(?:订阅|续费|会员|开通)[：:\s]*([A-Za-z\u4e00-\u9fa5]{2,20})/);
+    if (nameMatch) {
+      result.name = nameMatch[1].trim();
+    } else {
+      // 查找可能的英文服务名
+      const engMatch = text.match(/\b([A-Z][a-z]+(?:\s?[A-Z]?[a-z]+)*)\b/);
+      if (engMatch && engMatch[1].length >= 3) {
+        result.name = engMatch[1];
+      }
+    }
+  }
+
+  // === 提取金额 ===
+  // ¥12.34 / ￥12.34
+  let amtMatch = text.match(/[¥￥]\s*(\d+[.,]\d{1,2})/);
+  // 金额 12.34
+  if (!amtMatch) amtMatch = text.match(/金额[：:\s]*(\d+[.,]\d{1,2})/);
+  // 12.34元
+  if (!amtMatch) amtMatch = text.match(/(\d+[.,]\d{1,2})\s*元/);
+  // 续费 12.34 / 费用 12.34
+  if (!amtMatch) amtMatch = text.match(/(?:续费|费用|价格|扣款)[：:\s]*(\d+[.,]\d{1,2})/);
+  // $12.34 / €12.34
+  if (!amtMatch) amtMatch = text.match(/[$€£]\s*(\d+[.,]\d{1,2})/);
+  // 通用：找所有带小数点的数字
+  if (!amtMatch) {
+    const allAmounts = text.match(/(\d+[.,]\d{2})/g);
+    if (allAmounts && allAmounts.length > 0) {
+      const maxAmt = allAmounts.reduce((max, v) => {
+        const n = parseFloat(v.replace(',', '.'));
+        return n > max ? n : max;
+      }, 0);
+      if (maxAmt > 0) amtMatch = [null, maxAmt.toString()];
+    }
+  }
+  if (amtMatch) {
+    result.price = parseFloat(amtMatch[1].replace(',', '.'));
+  }
+
+  // === 提取币种 ===
+  if (/\$|USD|美元/i.test(text)) result.currency = 'USD';
+  else if (/€|EUR|欧元/i.test(text)) result.currency = 'EUR';
+  else if (/£|GBP|英镑/i.test(text)) result.currency = 'GBP';
+  else if (/¥.*日|JPY|日元/i.test(text)) result.currency = 'JPY';
+  else if (/HK\$|HKD|港币/i.test(text)) result.currency = 'HKD';
+  else if (/NT\$|TWD|台币/i.test(text)) result.currency = 'TWD';
+  else result.currency = 'CNY';
+
+  // === 提取计费周期 ===
+  if (/每月|月费|包月|monthly|\/mo/i.test(text)) {
+    result.cycle = 'month';
+  } else if (/每年|年费|包年|annual|yearly|\/yr/i.test(text)) {
+    result.cycle = 'year';
+  } else if (/每周|周费|包周|weekly/i.test(text)) {
+    result.cycle = 'week';
+  } else if (/每季|季费|包季|quarterly/i.test(text)) {
+    result.cycle = 'quarter';
+  } else {
+    // 默认月费
+    result.cycle = 'month';
+  }
+
+  // === 提取下次续费日期 ===
+  // 格式: 2026-08-08 / 2026/08/08 / 2026年08月08日
+  const dateMatch = text.match(/(?:下次|续费|到期|有效期|下次扣款)[：:\s]*(\d{4})[年\-\/.](\d{1,2})[月\-\/.](\d{1,2})/);
+  if (dateMatch) {
+    result.nextDate = `${dateMatch[1]}-${String(dateMatch[2]).padStart(2,'0')}-${String(dateMatch[3]).padStart(2,'0')}`;
+  } else {
+    // 直接匹配日期
+    const directDate = text.match(/(\d{4})[年\-\/.](\d{1,2})[月\-\/.](\d{1,2})/);
+    if (directDate) {
+      const d = `${directDate[1]}-${String(directDate[2]).padStart(2,'0')}-${String(directDate[3]).padStart(2,'0')}`;
+      // 确保日期是未来的（合理的续费日期）
+      if (d >= today()) {
+        result.nextDate = d;
+      } else {
+        // 如果是过去的日期，可能是上次扣款日期，推算下次
+        result.nextDate = addMonths(d, 1);
+      }
+    }
+  }
+
+  return result;
+}
+
+// 匹配内置品牌图标
+function matchBrandByName(name) {
+  if (!name) return null;
+  const lowerName = name.toLowerCase();
+  for (const [key, brand] of Object.entries(BRANDS)) {
+    if (brand.name === name || key.toLowerCase() === lowerName || brand.name.toLowerCase() === lowerName) {
+      // 尝试获取图标URL
+      const bi = BRAND_ICONS[brand.slug];
+      if (bi && bi.p) {
+        // 生成内联SVG图标URL
+        return { name: brand.name, iconUrl: null, brand: brand };
+      }
+      return { name: brand.name, iconUrl: null, brand: brand };
+    }
+  }
+  return null;
+}
+
 // Lock on visibility change (return from background)
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {

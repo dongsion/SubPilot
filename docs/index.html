@@ -1032,6 +1032,7 @@ textarea.form-i{resize:none;min-height:80px;}
 .cal-event-amt { font-size:13px; font-weight:600; font-family:var(--font-mono); flex-shrink:0; }
 .cal-empty-events { text-align:center; padding:32px 20px; color:var(--t3); font-size:13px; }
 @keyframes calFade { from{opacity:0;transform:translateY(-4px);} to{opacity:1;transform:translateY(0);} }
+@keyframes spin { 0%{transform:rotate(0deg);} 100%{transform:rotate(360deg);} }
 </style>
 <script>
   // Apply theme as early as possible to avoid a flash of the dark theme for light/auto users
@@ -1848,6 +1849,13 @@ textarea.form-i{resize:none;min-height:80px;}
   <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-title" id="sub-sheet-title">添加订阅</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <button class="btn btn-gold" onclick="scanSubscriptionImage()" style="flex:1;font-size:13px;padding:10px 14px;display:flex;align-items:center;justify-content:center;gap:6px;">
+        <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor;"><path d="M20 5h-3.17L15 3H9L7.17 5H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-8 13c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.65 0-3 1.35-3 3s1.35 3 3 3 3-1.35 3-3-1.35-3-3-3z"/></svg>
+        拍照识别订阅
+      </button>
+    </div>
+    <div id="sub-scan-result" style="display:none;"></div>
     <div class="form-g">
       <label class="form-l">服务名称</label>
       <input type="text" class="form-i" id="sub-name" placeholder="如：Netflix、Spotify" list="sub-suggest">
