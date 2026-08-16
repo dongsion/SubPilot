@@ -4238,9 +4238,14 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '2.10.5';
+const APP_VERSION = '2.10.6';
 const APP_BUILD = '2026-08-16';
 const CHANGELOG = [
+  { ver: '2.10.6', date: '2026-08-16', items: [
+    '瞬间改版为分类相册模式，按标签自动归类',
+    '首页显示相册封面网格，点击展开查看内容',
+    '相册封面显示照片数量，支持返回浏览'
+  ]},
   { ver: '2.10.5', date: '2026-08-16', items: [
     '彻底解决图片存储空间不足问题：改用IndexedDB存储',
     '图片压缩更激进(800px/50%质量)，大幅减少占用',
@@ -9309,72 +9314,150 @@ function deleteMomentCurrent() {
   renderMoments();
 }
 
+// 瞬间展开的分类状态
+state.expandedAlbum = null;
+
 function renderMoments() {
   const listEl = $('#moments-list');
   if (!listEl) return;
 
   if (!state.moments || state.moments.length === 0) {
     listEl.innerHTML = `<div class="moment-empty"><span>✦</span>还没有记录任何瞬间<br>点击右上角 + 开始记录</div>`;
+    const sub = $('#moments-sub');
+    if (sub) sub.textContent = '记录美好瞬间';
     return;
   }
 
-  // Sort by date descending (newest first)
+  // Sort by date descending
   const sorted = [...state.moments].sort((a, b) => {
     const da = (a.date || '') + (a.createdAt || '');
     const db = (b.date || '') + (b.createdAt || '');
     return db.localeCompare(da);
   });
 
-  // Group by date
-  const groups = {};
+  // Group by tag (album)
+  const albums = {};
   sorted.forEach(m => {
-    const key = m.date || '未知日期';
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(m);
+    const key = m.tag || '未分类';
+    if (!albums[key]) albums[key] = [];
+    albums[key].push(m);
   });
 
+  const albumKeys = Object.keys(albums);
   let html = '';
-  for (const [dateStr, items] of Object.entries(groups)) {
-    const d = new Date(dateStr + 'T00:00:00');
-    const dateLabel = isNaN(d) ? dateStr : d.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
-    const weekday = isNaN(d) ? '' : ['日','一','二','三','四','五','六'][d.getDay()];
 
-    html += `<div style="margin-bottom:8px;padding:0 4px;">
-      <span style="font-size:13px;font-weight:600;color:var(--gold);">${dateLabel}</span>
-      <span style="font-size:11px;color:var(--t3);margin-left:6px;">星期${weekday}</span>
+  // If an album is expanded, show its contents
+  if (state.expandedAlbum && albums[state.expandedAlbum]) {
+    const items = albums[state.expandedAlbum];
+    html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:0 4px;">
+      <div onclick="toggleAlbum(null)" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--t2);cursor:pointer;flex-shrink:0;">‹</div>
+      <div style="flex:1;">
+        <div style="font-size:16px;font-weight:600;color:var(--gold);">${escapeHtml(state.expandedAlbum)}</div>
+        <div style="font-size:11px;color:var(--t3);margin-top:2px;">${items.length} 条瞬间 · ${items.reduce((s,m) => s + (m.photos || (m.photo ? [m.photo] : [])).length, 0)} 张照片</div>
+      </div>
     </div>`;
 
-    for (const m of items) {
-      const moodHtml = m.mood ? `<span class="moment-mood">${m.mood}</span>` : '';
-      const photos = m.photos || (m.photo ? [m.photo] : []);
-      let photoHtml = '';
-      if (photos.length === 1) {
-        photoHtml = `<img class="moment-img" src="${photos[0]}" onclick="event.stopPropagation();previewMomentImages('${m.id}',0)" />`;
-      } else if (photos.length > 1) {
-        photoHtml = `<div class="moment-img-gallery" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">` +
-          photos.map((p, i) => `<img src="${p}" style="width:calc(50% - 2px);height:120px;object-fit:cover;border-radius:10px;cursor:pointer;" onclick="event.stopPropagation();previewMomentImages('${m.id}',${i})" />`).join('') +
-          `</div>`;
-      }
-      const textHtml = m.text ? `<div class="moment-text">${escapeHtml(m.text)}</div>` : '';
-      const tagHtml = m.tag ? `<div class="moment-tags"><span class="moment-tag">${escapeHtml(m.tag)}</span></div>` : '';
+    // Group by date within album
+    const dateGroups = {};
+    items.forEach(m => {
+      const key = m.date || '未知日期';
+      if (!dateGroups[key]) dateGroups[key] = [];
+      dateGroups[key].push(m);
+    });
 
-      html += `
-        <div class="moment-card" onclick="openMomentEditor('${m.id}')">
-          ${photoHtml}
-          <div class="moment-body">
-            <div class="moment-date">${moodHtml}${dateLabel} · 星期${weekday}</div>
-            ${textHtml}
-            ${tagHtml}
-          </div>
-        </div>`;
+    for (const [dateStr, dateItems] of Object.entries(dateGroups)) {
+      const d = new Date(dateStr + 'T00:00:00');
+      const dateLabel = isNaN(d) ? dateStr : d.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+      const weekday = isNaN(d) ? '' : ['日','一','二','三','四','五','六'][d.getDay()];
+
+      html += `<div style="margin-bottom:8px;padding:0 4px;">
+        <span style="font-size:13px;font-weight:600;color:var(--gold);">${dateLabel}</span>
+        <span style="font-size:11px;color:var(--t3);margin-left:6px;">星期${weekday}</span>
+      </div>`;
+
+      for (const m of dateItems) {
+        const moodHtml = m.mood ? `<span class="moment-mood">${m.mood}</span>` : '';
+        const photos = m.photos || (m.photo ? [m.photo] : []);
+        let photoHtml = '';
+        if (photos.length === 1) {
+          photoHtml = `<img class="moment-img" src="${photos[0]}" onclick="event.stopPropagation();previewMomentImages('${m.id}',0)" />`;
+        } else if (photos.length > 1) {
+          photoHtml = `<div class="moment-img-gallery" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">` +
+            photos.map((p, i) => `<img src="${p}" style="width:calc(50% - 2px);height:120px;object-fit:cover;border-radius:10px;cursor:pointer;" onclick="event.stopPropagation();previewMomentImages('${m.id}',${i})" />`).join('') +
+            `</div>`;
+        }
+        const textHtml = m.text ? `<div class="moment-text">${escapeHtml(m.text)}</div>` : '';
+
+        html += `
+          <div class="moment-card" onclick="openMomentEditor('${m.id}')">
+            ${photoHtml}
+            <div class="moment-body">
+              <div class="moment-date">${moodHtml}${dateLabel} · 星期${weekday}</div>
+              ${textHtml}
+            </div>
+          </div>`;
+      }
     }
+  } else {
+    // Album grid view
+    html += `<div style="display:flex;flex-wrap:wrap;gap:10px;padding:0 2px;">`;
+    for (const tag of albumKeys) {
+      const items = albums[tag];
+      const totalPhotos = items.reduce((s, m) => s + (m.photos || (m.photo ? [m.photo] : [])).length, 0);
+      // Cover: first photo from newest moment that has photos
+      const coverItem = items.find(m => {
+        const ps = m.photos || (m.photo ? [m.photo] : []);
+        return ps.length > 0;
+      });
+      const coverPhotos = coverItem ? (coverItem.photos || (coverItem.photo ? [coverItem.photo] : [])) : [];
+      const cover = coverPhotos[0] || '';
+      const coverHtml = cover
+        ? `<img src="${cover}" style="width:100%;height:100%;object-fit:cover;" />`
+        : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:32px;color:var(--t3);">${tag.charAt(0)}</div>`;
+      
+      // Second photo for collage effect
+      const secondCover = coverPhotos[1] || (items[1] ? (items[1].photos || (items[1].photo ? [items[1].photo] : []))[0] : '');
+      const multiPhotoBadge = totalPhotos > 1 ? `<div style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.6);color:#fff;font-size:10px;padding:2px 8px;border-radius:10px;">${totalPhotos} 张</div>` : '';
+
+      html += `<div style="width:calc(50% - 5px);border-radius:14px;overflow:hidden;cursor:pointer;position:relative;background:rgba(255,255,255,0.04);" onclick="toggleAlbum('${escapeHtml(tag)}')">
+        <div style="width:100%;aspect-ratio:1/1;position:relative;overflow:hidden;">
+          ${coverHtml}
+          ${multiPhotoBadge}
+        </div>
+        <div style="padding:8px 10px;">
+          <div style="font-size:14px;font-weight:600;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(tag)}</div>
+          <div style="font-size:11px;color:var(--t3);margin-top:2px;">${items.length} 条瞬间</div>
+        </div>
+      </div>`;
+    }
+    html += `</div>`;
   }
 
   listEl.innerHTML = html;
 
   // Update subtitle
   const sub = $('#moments-sub');
-  if (sub) sub.textContent = `共 ${state.moments.length} 条瞬间`;
+  if (sub) {
+    if (state.expandedAlbum) {
+      sub.textContent = `${state.expandedAlbum} · ${albums[state.expandedAlbum].length} 条`;
+    } else {
+      const totalPhotos = state.moments.reduce((s, m) => s + (m.photos || (m.photo ? [m.photo] : [])).length, 0);
+      sub.textContent = `${albumKeys.length} 个相册 · ${totalPhotos} 张照片`;
+    }
+  }
+}
+
+function toggleAlbum(tag) {
+  if (state.expandedAlbum === tag) {
+    state.expandedAlbum = null;
+  } else {
+    state.expandedAlbum = tag;
+  }
+  haptic('light');
+  renderMoments();
+  // Scroll to top
+  const listEl = $('#moments-list');
+  if (listEl) listEl.scrollTop = 0;
 }
 
 function previewMomentImages(momentId, startIdx) {
