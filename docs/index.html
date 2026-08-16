@@ -2406,8 +2406,17 @@ textarea.form-i{resize:none;min-height:80px;}
     </div>
     <div class="form-g">
       <label class="form-l">图标</label>
-      <div id="anni-icon-picker" style="display:flex;flex-wrap:wrap;gap:8px;padding:8px 0;max-height:120px;overflow-y:auto;"></div>
-      <input type="text" class="form-i" id="anni-custom-icon" placeholder="或输入自定义Emoji（如 🎂🐱🎈）" style="margin-top:8px;" oninput="onAnniCustomIconInput()">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div id="anni-icon-preview" style="width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;background:rgba(255,255,255,0.08);border:1px solid var(--bd);flex-shrink:0;overflow:hidden;cursor:pointer;position:relative;" onclick="document.getElementById('anni-icon-file').click()">
+          <span id="anni-icon-emoji">🎂</span>
+          <img id="anni-icon-img" style="width:100%;height:100%;object-fit:cover;display:none;border-radius:14px;" />
+        </div>
+        <div style="flex:1;">
+          <input type="file" id="anni-icon-file" accept="image/*" style="display:none;" onchange="onAnniIconUpload(event)">
+          <button class="btn btn-outline" style="width:100%;font-size:13px;padding:8px;" onclick="document.getElementById('anni-icon-file').click()">选择图片</button>
+          <button class="btn btn-outline" style="width:100%;font-size:13px;padding:6px;margin-top:6px;color:var(--t3);" onclick="resetAnniIcon()">恢复默认</button>
+        </div>
+      </div>
     </div>
     <div class="form-g">
       <label class="form-l">分组（可选）</label>

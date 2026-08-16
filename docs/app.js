@@ -4214,9 +4214,12 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '2.9.5';
+const APP_VERSION = '2.9.6';
 const APP_BUILD = '2026-08-16';
 const CHANGELOG = [
+  { ver: '2.9.6', date: '2026-08-16', items: [
+    '纪念日图标支持上传自定义图片，替代Emoji'
+  ]},
   { ver: '2.9.5', date: '2026-08-16', items: [
     '纪念日支持自定义图标：内置40+表情选择，或手动输入任意Emoji'
   ]},
@@ -8511,47 +8514,52 @@ const ANNI_TYPES = {
 
 state.editAnniId = null;
 state.anniGroupFilter = 'all';
-state.anniIcon = '🎂';
+state.anniIcon = null; // base64 图片或 null（用默认emoji）
+state.anniIconEmoji = '🎂';
 
-const ANNI_ICON_LIST = [
-  '🎂','🎉','❤️','⏳','🕯️','🐱','🐶','👶','💍','💐',
-  '🌟','✨','🎈','🎁','🌹','🥳','💝','🏆','🏠','🚗',
-  '✈️','🎓','💼','💰','🌙','☀️','🌈','🍕','☕','🎵',
-  '📚','⚽','🎮','🏖️','🏔️','🚀','🍀','🔥','💧','🌺'
-];
-
-function renderAnniIconPicker() {
-  const pickerEl = $('#anni-icon-picker');
-  if (!pickerEl) return;
-  const selected = state.anniIcon || '🎂';
-  pickerEl.innerHTML = ANNI_ICON_LIST.map(icon => {
-    const isActive = icon === selected;
-    return `<div onclick="selectAnniIcon('${icon}')" style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:20px;border-radius:10px;cursor:pointer;border:2px solid ${isActive ? 'var(--gold)' : 'transparent'};background:${isActive ? 'rgba(212,175,122,0.15)' : 'rgba(255,255,255,0.05)'};transition:all 0.15s;">${icon}</div>`;
-  }).join('');
+function onAnniIconUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (file.size > 2 * 1024 * 1024) { toast('图片不能超过2MB'); return; }
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    state.anniIcon = e.target.result;
+    haptic('light');
+    updateAnniIconPreview();
+  };
+  reader.readAsDataURL(file);
 }
 
-function selectAnniIcon(icon) {
-  state.anniIcon = icon;
-  $('#anni-custom-icon').value = '';
-  haptic('light');
-  renderAnniIconPicker();
-}
-
-function onAnniCustomIconInput() {
-  const val = $('#anni-custom-icon').value.trim();
-  if (val) {
-    state.anniIcon = val.slice(0, 2);
-    renderAnniIconPicker();
+function updateAnniIconPreview() {
+  const imgEl = $('#anni-icon-img');
+  const emojiEl = $('#anni-icon-emoji');
+  if (!imgEl || !emojiEl) return;
+  if (state.anniIcon) {
+    imgEl.src = state.anniIcon;
+    imgEl.style.display = 'block';
+    emojiEl.style.display = 'none';
+  } else {
+    imgEl.style.display = 'none';
+    imgEl.src = '';
+    emojiEl.textContent = state.anniIconEmoji || '🎂';
+    emojiEl.style.display = 'block';
   }
 }
 
+function resetAnniIcon() {
+  state.anniIcon = null;
+  $('#anni-icon-file').value = '';
+  const typeVal = $('#anni-type') ? $('#anni-type').value : 'anniversary';
+  state.anniIconEmoji = ANNI_TYPES[typeVal]?.icon || '🎂';
+  haptic('light');
+  updateAnniIconPreview();
+}
+
 function onAnniTypeChange() {
-  // 只有用户没自定义图标时，切换类型自动更新默认图标
-  const customVal = $('#anni-custom-icon').value.trim();
-  if (!customVal) {
-    const typeVal = $('#anni-type').value;
-    state.anniIcon = ANNI_TYPES[typeVal]?.icon || '🎂';
-    renderAnniIconPicker();
+  const typeVal = $('#anni-type').value;
+  state.anniIconEmoji = ANNI_TYPES[typeVal]?.icon || '🎂';
+  if (!state.anniIcon) {
+    updateAnniIconPreview();
   }
 }
 
@@ -8759,7 +8767,9 @@ function renderAnniversaries() {
   // 渲染卡片（单条渲染函数）
   function renderCard(a) {
     const typeInfo = ANNI_TYPES[a.type] || ANNI_TYPES.anniversary;
-    const iconStr = a.icon || typeInfo.icon;
+    const iconHtml = a.icon && a.icon.startsWith('data:')
+      ? `<img src="${a.icon}" style="width:100%;height:100%;object-fit:cover;border-radius:14px;" />`
+      : typeInfo.icon;
     const dateStr = new Date(a.date + 'T00:00:00').toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
 
     // 右侧倒计时徽章
@@ -8790,8 +8800,8 @@ function renderAnniversaries() {
     return `
       <div class="card" style="margin-bottom:16px;padding:18px 16px;border:1px solid var(--bd);border-radius:18px;background:rgba(255,255,255,0.03);" onclick="openAnniversaryEditor('${a.id}')">
         <div style="display:flex;align-items:center;gap:12px;">
-          <div style="width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;background:rgba(255,255,255,0.08);flex-shrink:0;border:1px solid var(--bd);">
-            ${iconStr}
+          <div style="width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;background:rgba(255,255,255,0.08);flex-shrink:0;border:1px solid var(--bd);overflow:hidden;">
+            ${iconHtml}
           </div>
           <div style="flex:1;min-width:0;">
             <div style="display:flex;align-items:center;flex-wrap:wrap;margin-bottom:4px;">
@@ -8848,9 +8858,10 @@ function openAnniversaryEditor(id) {
   $('#anni-name').value = editing ? editing.name : '';
   $('#anni-date').value = editing ? editing.date : today();
   $('#anni-type').value = editing ? editing.type : 'anniversary';
-  state.anniIcon = editing ? (editing.icon || ANNI_TYPES[editing.type]?.icon || '🎂') : (ANNI_TYPES[$('#anni-type').value]?.icon || '🎂');
-  $('#anni-custom-icon').value = (editing && editing.icon && !ANNI_ICON_LIST.includes(editing.icon)) ? editing.icon : '';
-  renderAnniIconPicker();
+  state.anniIcon = (editing && editing.icon && editing.icon.startsWith('data:')) ? editing.icon : null;
+  state.anniIconEmoji = ANNI_TYPES[$('#anni-type').value]?.icon || '🎂';
+  $('#anni-icon-file').value = '';
+  updateAnniIconPreview();
   $('#anni-group').value = editing ? (editing.group || '') : '';
   $('#anni-note').value = editing ? (editing.note || '') : '';
   $('#anni-repeat').value = editing ? (editing.repeat || 'year') : 'year';
@@ -8884,7 +8895,7 @@ function saveAnniversary() {
     name,
     date,
     type: $('#anni-type').value,
-    icon: state.anniIcon || '🎂',
+    icon: state.anniIcon || null,
     group: $('#anni-group').value.trim(),
     note: $('#anni-note').value.trim(),
     repeat: $('#anni-repeat').value
