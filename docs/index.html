@@ -373,8 +373,8 @@ input { font-family:inherit; }
 .tbi.on svg{stroke:var(--gold);}
 
 /* Quick FAB */
-.quick-fab { position:fixed; bottom:calc(64px + env(safe-area-inset-bottom, 0px)); right:calc(50% - 215px + 20px); width:280px; height:250px; z-index:90; pointer-events:none; display:flex; justify-content:flex-end; align-items:flex-end; }
-.quick-fab-main { position:absolute; right:0; bottom:0; width:56px; height:56px; border-radius:50%; background:var(--gold); color:#000; border:none; font-size:32px; line-height:1; box-shadow:0 8px 28px var(--gold-glow),0 0 0 5px rgba(212,175,122,0.06); display:flex; align-items:center; justify-content:center; font-weight:300; transition:transform .28s cubic-bezier(.34,1.4,.64,1), box-shadow .2s; pointer-events:auto; z-index:6; }
+.quick-fab { position:fixed; bottom:calc(64px + env(safe-area-inset-bottom, 0px)); right:calc(50% - 215px + 20px); width:280px; height:310px; z-index:90; pointer-events:none; display:flex; justify-content:flex-end; align-items:flex-end; }
+.quick-fab-main { position:absolute; right:0; bottom:0; width:56px; height:56px; border-radius:50%; background:var(--gold); color:#000; border:none; font-size:32px; line-height:1; box-shadow:0 8px 28px var(--gold-glow),0 0 0 5px rgba(212,175,122,0.06); display:flex; align-items:center; justify-content:center; font-weight:300; transition:transform .28s cubic-bezier(.34,1.4,.64,1), box-shadow .2s; pointer-events:auto; z-index:7; }
 .quick-fab-main:active{transform:scale(.9);}
 .quick-fab.open .quick-fab-main{transform:rotate(45deg); box-shadow:0 12px 34px var(--gold-glow),0 0 0 6px rgba(212,175,122,0.08);}
 .quick-fab.open .quick-fab-main:active{transform:rotate(45deg) scale(.92);}
@@ -386,12 +386,14 @@ input { font-family:inherit; }
 .quick-fab-item:nth-child(2){background:linear-gradient(135deg,#fde68a 0%,#facc15 52%,#ca8a04 100%);box-shadow:0 12px 30px rgba(202,138,4,0.3),0 6px 18px rgba(0,0,0,0.28),inset 0 1px 0 rgba(255,255,255,0.22);}
 .quick-fab-item:nth-child(3){background:linear-gradient(135deg,#6fd6ff 0%,#5e6bff 52%,#7c3aed 100%);box-shadow:0 12px 30px rgba(94,107,255,0.3),0 6px 18px rgba(0,0,0,0.28),inset 0 1px 0 rgba(255,255,255,0.22);}
 .quick-fab-item:nth-child(4){background:linear-gradient(135deg,#65e4b3 0%,#28b487 50%,#0f766e 100%);box-shadow:0 12px 30px rgba(40,180,135,0.28),0 6px 18px rgba(0,0,0,0.28),inset 0 1px 0 rgba(255,255,255,0.22);}
+.quick-fab-item:nth-child(5){background:linear-gradient(135deg,#f9a8d4 0%,#e64980 50%,#be185d 100%);box-shadow:0 12px 30px rgba(230,73,128,0.3),0 6px 18px rgba(0,0,0,0.28),inset 0 1px 0 rgba(255,255,255,0.22);}
 .quick-fab-item:active{filter:brightness(.92) saturate(1.08);}
 .quick-fab.open .quick-fab-item{opacity:1; pointer-events:auto;}
-.quick-fab.open .quick-fab-item:nth-child(1){transform:translate(0,6px) rotate(2deg); transition-delay:.02s; z-index:5;}
-.quick-fab.open .quick-fab-item:nth-child(2){transform:translate(-6px,-10px) rotate(24deg); transition-delay:.05s; z-index:4;}
-.quick-fab.open .quick-fab-item:nth-child(3){transform:translate(-14px,-28px) rotate(46deg); transition-delay:.08s; z-index:3;}
-.quick-fab.open .quick-fab-item:nth-child(4){transform:translate(-24px,-46px) rotate(68deg); transition-delay:.11s; z-index:2;}
+.quick-fab.open .quick-fab-item:nth-child(1){transform:translate(0,6px) rotate(2deg); transition-delay:.02s; z-index:6;}
+.quick-fab.open .quick-fab-item:nth-child(2){transform:translate(-6px,-10px) rotate(24deg); transition-delay:.05s; z-index:5;}
+.quick-fab.open .quick-fab-item:nth-child(3){transform:translate(-14px,-28px) rotate(46deg); transition-delay:.08s; z-index:4;}
+.quick-fab.open .quick-fab-item:nth-child(4){transform:translate(-22px,-44px) rotate(68deg); transition-delay:.11s; z-index:3;}
+.quick-fab.open .quick-fab-item:nth-child(5){transform:translate(-30px,-60px) rotate(90deg); transition-delay:.14s; z-index:2;}
 @media (max-width:430px){ .quick-fab{right:20px;} }
 
 /* AI Button - now in tab bar center */
@@ -1316,6 +1318,25 @@ textarea.form-i{resize:none;min-height:80px;}
   </div>
 </div>
 
+<!-- View: Anniversaries -->
+<div class="view" id="view-anniversaries">
+  <div class="content">
+    <div class="hd">
+      <button class="ib" onclick="showView(state.lastView || 'tx')">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="ht"><h1>纪念日</h1><p id="anni-sub">重要的日子</p></div>
+      <button class="ib" onclick="openAnniversaryEditor()">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+    </div>
+    <div id="anni-summary-container"></div>
+    <div class="sec"><span class="st">我的纪念日</span></div>
+    <div id="anni-list"></div>
+    <div style="height:20px;"></div>
+  </div>
+</div>
+
 <!-- View: Credit Card Bills -->
 <div class="view" id="view-cc-bills">
   <div class="content">
@@ -1362,6 +1383,7 @@ textarea.form-i{resize:none;min-height:80px;}
   <button class="quick-fab-item" onclick="quickFabAction('salary')"><span>￥</span><span>工资收入</span></button>
   <button class="quick-fab-item" onclick="quickFabAction('qrcodes')"><span>▦</span><span>二维码夹</span></button>
   <button class="quick-fab-item" onclick="quickFabAction('savings')"><span>◎</span><span>储蓄目标</span></button>
+  <button class="quick-fab-item" onclick="quickFabAction('anniversaries')"><span>❤</span><span>纪念日</span></button>
   <button class="quick-fab-main" onclick="toggleQuickFab()" aria-label="快捷操作">+</button>
 </div>
 
@@ -2356,6 +2378,49 @@ textarea.form-i{resize:none;min-height:80px;}
   </div>
 </div>
 
+<!-- Sheet: Anniversary Editor -->
+<div class="sheet-overlay" id="sheet-anniversary">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="anni-sheet-title">添加纪念日</div>
+    <div class="form-g">
+      <label class="form-l">名称</label>
+      <input type="text" class="form-i" id="anni-name" placeholder="如：结婚纪念日、宝宝生日">
+    </div>
+    <div class="form-g">
+      <label class="form-l">日期</label>
+      <input type="date" class="form-i" id="anni-date">
+    </div>
+    <div class="form-g">
+      <label class="form-l">类型</label>
+      <select class="form-i" id="anni-type">
+        <option value="birthday">生日</option>
+        <option value="anniversary">纪念日</option>
+        <option value="countdown">倒计时</option>
+        <option value="memorial">纪念日(农历)</option>
+      </select>
+    </div>
+    <div class="form-g">
+      <label class="form-l">备注（可选）</label>
+      <input type="text" class="form-i" id="anni-note" placeholder="写下想说的话">
+    </div>
+    <div class="form-g">
+      <label class="form-l">每年提醒</label>
+      <select class="form-i" id="anni-repeat">
+        <option value="year">每年提醒</option>
+        <option value="once">仅一次</option>
+      </select>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-outline" onclick="closeSheet('sheet-anniversary')">取消</button>
+      <button class="btn btn-gold" onclick="saveAnniversary()">保存</button>
+    </div>
+    <div id="anni-delete-btn" style="margin-top:12px;display:none;">
+      <button class="btn btn-danger" style="width:100%;" onclick="deleteAnniversaryCurrent()">删除此纪念日</button>
+    </div>
+  </div>
+</div>
+
 <!-- Supabase JS SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <!-- Card Expanded Overlay -->
@@ -2384,6 +2449,6 @@ if ('caches' in window) {
     .catch(()=>{});
 }
 </script>
-<script src="app.js?v=2.9.2"></script>
+<script src="app.js?v=2.10.0"></script>
 </body>
 </html>

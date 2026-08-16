@@ -13,7 +13,8 @@ const KEYS = {
   budgets: 'subpilot_budgets',
   savingsGoals: 'subpilot_savings_goals',
   recurringTx: 'subpilot_recurring_tx',
-  salaryPendingIncome: 'subpilot_salary_pending_income'
+  salaryPendingIncome: 'subpilot_salary_pending_income',
+  anniversaries: 'subpilot_anniversaries'
 };
 
 // ===== Embedded Brand Icons (SVG path data, viewBox 0 0 24 24) =====
@@ -262,6 +263,7 @@ let state = {
   budgets: {},
   savingsGoals: [],
   recurringTx: [],
+  anniversaries: [],
   currentView: 'tx',
   lastView: 'tx',
   activeCardIdx: 0,
@@ -427,6 +429,7 @@ function load() {
     state.savingsGoals = JSON.parse(localStorage.getItem(KEYS.savingsGoals) || '[]');
     state.recurringTx = JSON.parse(localStorage.getItem(KEYS.recurringTx) || '[]');
     state.salaryPendingIncome = JSON.parse(localStorage.getItem(KEYS.salaryPendingIncome) || '[]');
+  state.anniversaries = JSON.parse(localStorage.getItem(KEYS.anniversaries) || '[]');
     // Merge loaded settings with defaults to ensure all keys exist
     const loaded = JSON.parse(localStorage.getItem(KEYS.settings) || '{}');
     const defaults = { appPassword: null, notifications: false, exRates: { USD: 7.25, EUR: 7.85, GBP: 9.20, JPY: 0.048, HKD: 0.93, TWD: 0.22 }, defaultCurrency: 'CNY', theme: 'dark' };
@@ -445,6 +448,7 @@ function save() {
   localStorage.setItem(KEYS.savingsGoals, JSON.stringify(state.savingsGoals));
   localStorage.setItem(KEYS.recurringTx, JSON.stringify(state.recurringTx));
   localStorage.setItem(KEYS.salaryPendingIncome, JSON.stringify(state.salaryPendingIncome));
+  localStorage.setItem(KEYS.anniversaries, JSON.stringify(state.anniversaries));
   updateBadge();
   markLocalChange();
 }
@@ -814,7 +818,7 @@ $$('.sheet-overlay').forEach(o => o.addEventListener('click', e => { if (e.targe
 function updateQuickFabVisibility(viewName = state.currentView) {
   const quickFab = $('#quick-fab');
   if (!quickFab) return;
-  const visibleViews = ['tx', 'subs', 'accounts', 'settings'];
+  const visibleViews = ['tx', 'subs', 'accounts', 'settings', 'anniversaries'];
   quickFab.style.display = visibleViews.includes(viewName) ? 'flex' : 'none';
 }
 
@@ -839,6 +843,8 @@ function quickFabAction(action) {
     showView('qrcodes');
   } else if (action === 'savings') {
     showView('savings');
+  } else if (action === 'anniversaries') {
+    showView('anniversaries');
   }
 }
 
@@ -4115,6 +4121,7 @@ function render() {
   const fns = [renderOverview, renderSubs, renderTx, renderAccounts, renderReports,
     renderQRCodes, renderInvoices, renderBudgets, renderSavingsGoals,
     renderCreditCardBills, renderCalendar, renderRecurringTx,
+    renderAnniversaries,
     updateLockStatus, updateNotifStatus, updateExrateStatus, updateCloudStatus, updateThemeStatus, updateCalorieStatus,
     renderPendingItems];
   if (state.currentView === 'subdetail') fns.push(renderSubDetail);
@@ -4138,15 +4145,15 @@ $$('#tx-fp .pl').forEach(p => {
 
 // ===== Data Management =====
 function clearAll() {
-  state.accounts = []; state.subscriptions = []; state.transactions = []; state.qrcodes = []; state.invoices = []; state.recurringTx = []; state.savingsGoals = []; state.salaryPendingIncome = [];
+  state.accounts = []; state.subscriptions = []; state.transactions = []; state.qrcodes = []; state.invoices = []; state.recurringTx = []; state.savingsGoals = []; state.salaryPendingIncome = []; state.anniversaries = [];
   state.settings = { appPassword: null, notifications: false, exRates: { USD: 7.25, EUR: 7.85, GBP: 9.20, JPY: 0.048, HKD: 0.93, TWD: 0.22 }, defaultCurrency: 'CNY' };
   localStorage.removeItem(KEYS.accounts); localStorage.removeItem(KEYS.subscriptions); localStorage.removeItem(KEYS.transactions);
   localStorage.removeItem(KEYS.onboarded); localStorage.removeItem(KEYS.settings); localStorage.removeItem(KEYS.qrcodes);
-  localStorage.removeItem(KEYS.invoices); localStorage.removeItem(KEYS.recurringTx); localStorage.removeItem(KEYS.savingsGoals); localStorage.removeItem(KEYS.salaryPendingIncome);
+  localStorage.removeItem(KEYS.invoices); localStorage.removeItem(KEYS.recurringTx); localStorage.removeItem(KEYS.savingsGoals); localStorage.removeItem(KEYS.salaryPendingIncome); localStorage.removeItem(KEYS.anniversaries);
   render();
 }
 function exportData() {
-  const data = { accounts: state.accounts, subscriptions: state.subscriptions, transactions: state.transactions, qrcodes: state.qrcodes, invoices: state.invoices, recurringTx: state.recurringTx, savingsGoals: state.savingsGoals, salaryPendingIncome: state.salaryPendingIncome, settings: state.settings, exportedAt: new Date().toISOString() };
+  const data = { accounts: state.accounts, subscriptions: state.subscriptions, transactions: state.transactions, qrcodes: state.qrcodes, invoices: state.invoices, recurringTx: state.recurringTx, savingsGoals: state.savingsGoals, salaryPendingIncome: state.salaryPendingIncome, anniversaries: state.anniversaries, settings: state.settings, exportedAt: new Date().toISOString() };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -4197,6 +4204,7 @@ $('#import-file').addEventListener('change', e => {
       if (data.recurringTx) state.recurringTx = data.recurringTx;
       if (data.savingsGoals) state.savingsGoals = data.savingsGoals;
       if (data.salaryPendingIncome) state.salaryPendingIncome = data.salaryPendingIncome;
+      if (data.anniversaries) state.anniversaries = data.anniversaries;
       if (data.settings) state.settings = { ...state.settings, ...data.settings };
       save(); render(); toast('数据已导入');
       haptic('success');
@@ -7501,7 +7509,7 @@ function downloadInvoice() {
 // ===== Cloud Sync (Supabase) =====
 const PUBLIC_SUPABASE_URL = 'https://cicauycbflanpqcrfakd.supabase.co';
 const PUBLIC_SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNpY2F1eWNiZmxhbnBxY3JmYWtkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwOTA4NzcsImV4cCI6MjEwMTY2Njg3N30.kegH6ESniP0ouFtio5EHw0XDOHxJFCgtzx-dELjCx7c';
-const CLOUD_DATA_TYPES = ['accounts', 'subscriptions', 'transactions', 'qrcodes', 'invoices', 'settings', 'salaryPendingIncome', 'budgets', 'savingsGoals', 'recurringTx'];
+const CLOUD_DATA_TYPES = ['accounts', 'subscriptions', 'transactions', 'qrcodes', 'invoices', 'settings', 'salaryPendingIncome', 'budgets', 'savingsGoals', 'recurringTx', 'anniversaries'];
 
 function getSupabaseConfig() {
   try {
@@ -8473,6 +8481,211 @@ function deleteSavingsGoal(id) {
 
 function deleteSavingsGoalCurrent() {
   if (state.editSavingsId) deleteSavingsGoal(state.editSavingsId);
+}
+
+// ===== Anniversaries =====
+const ANNI_TYPES = {
+  birthday: { name: '生日', icon: '🎂', color: '#e64980' },
+  anniversary: { name: '纪念日', icon: '❤️', color: '#f6c873' },
+  countdown: { name: '倒计时', icon: '⏳', color: '#5e6bff' },
+  memorial: { name: '纪念日', icon: '🕯️', color: '#8b5cf6' }
+};
+
+state.editAnniId = null;
+
+function calcAnniversaryInfo(anni) {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const date = new Date(anni.date + 'T00:00:00');
+  date.setHours(0, 0, 0, 0);
+
+  // 计算已经过去的天数
+  const passedDays = Math.floor((now - date) / 86400000);
+
+  // 计算下一个纪念日的日期
+  let nextDate = new Date(date);
+  if (anni.repeat === 'year') {
+    // 每年重复
+    nextDate.setFullYear(now.getFullYear());
+    if (nextDate < now) {
+      nextDate.setFullYear(now.getFullYear() + 1);
+    }
+  } else {
+    // 仅一次，下次就是原日期（如果已过则为null）
+    if (date < now) {
+      nextDate = null;
+    }
+  }
+
+  const daysLeft = nextDate ? Math.ceil((nextDate - now) / 86400000) : null;
+  const yearsPassed = anni.repeat === 'year' ? Math.floor(passedDays / 365.25) : 0;
+
+  return { passedDays, daysLeft, nextDate, yearsPassed };
+}
+
+function renderAnniversaries() {
+  const listEl = $('#anni-list');
+  const subEl = $('#anni-sub');
+  const summaryEl = $('#anni-summary-container');
+  if (!listEl) return;
+
+  if (state.anniversaries.length === 0) {
+    subEl.textContent = '重要的日子';
+    summaryEl.innerHTML = '';
+    listEl.innerHTML = `
+      <div style="text-align:center;padding:60px 20px;color:var(--t3);">
+        <div style="font-size:48px;margin-bottom:16px;opacity:0.3;">❤️</div>
+        <div style="font-size:15px;margin-bottom:8px;">还没有纪念日</div>
+        <div style="font-size:13px;opacity:0.7;">点击右上角 + 添加</div>
+      </div>`;
+    return;
+  }
+
+  // 按距离下次日期排序
+  const sorted = [...state.anniversaries].map(a => {
+    const info = calcAnniversaryInfo(a);
+    return { ...a, ...info };
+  }).sort((a, b) => {
+    if (a.daysLeft === null) return 1;
+    if (b.daysLeft === null) return -1;
+    return a.daysLeft - b.daysLeft;
+  });
+
+  // 找到最近的纪念日
+  const upcoming = sorted.find(s => s.daysLeft !== null && s.daysLeft >= 0);
+  if (subEl) {
+    if (upcoming) {
+      if (upcoming.daysLeft === 0) {
+        subEl.textContent = `今天是 ${upcoming.name}`;
+      } else {
+        subEl.textContent = `距 ${upcoming.name} 还有 ${upcoming.daysLeft} 天`;
+      }
+    } else {
+      subEl.textContent = `${state.anniversaries.length} 个纪念日`;
+    }
+  }
+
+  // 摘要卡片
+  if (summaryEl) {
+    const todayCount = sorted.filter(s => s.daysLeft === 0).length;
+    const weekCount = sorted.filter(s => s.daysLeft !== null && s.daysLeft <= 7).length;
+    if (todayCount > 0 || weekCount > 0) {
+      summaryEl.innerHTML = `
+        <div style="padding:12px 16px;background:rgba(230,73,128,0.08);border:1px solid rgba(230,73,128,0.2);border-radius:16px;margin-bottom:12px;">
+          ${todayCount > 0 ? `<div style="color:#e64980;font-size:14px;font-weight:600;margin-bottom:4px;">🎉 今天有 ${todayCount} 个纪念日</div>` : ''}
+          ${weekCount > 0 && todayCount !== weekCount ? `<div style="color:var(--t2);font-size:13px;">本周内还有 ${weekCount - todayCount} 个纪念日即将到来</div>` : ''}
+        </div>`;
+    } else {
+      summaryEl.innerHTML = '';
+    }
+  }
+
+  listEl.innerHTML = sorted.map(a => {
+    const typeInfo = ANNI_TYPES[a.type] || ANNI_TYPES.anniversary;
+    const dateStr = new Date(a.date + 'T00:00:00').toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+    let statusHtml = '';
+    let daysHtml = '';
+
+    if (a.daysLeft === 0) {
+      statusHtml = `<span style="color:#e64980;font-weight:700;">就是今天！</span>`;
+      daysHtml = `<span style="color:#e64980;">🎉</span>`;
+    } else if (a.daysLeft !== null && a.daysLeft > 0) {
+      statusHtml = `还有 <span style="color:var(--gold);font-weight:700;font-size:18px;">${a.daysLeft}</span> 天`;
+      daysHtml = `⏳`;
+    } else if (a.daysLeft === null) {
+      statusHtml = `已过去 <span style="color:var(--t3);">${a.passedDays}</span> 天`;
+      daysHtml = `✓`;
+    }
+
+    const yearTag = a.repeat === 'year' && a.yearsPassed > 0 ? `<span style="font-size:11px;color:var(--t3);background:rgba(255,255,255,0.06);padding:2px 8px;border-radius:8px;margin-left:6px;">第 ${a.yearsPassed + 1} 年</span>` : '';
+
+    return `
+      <div class="card" style="margin-bottom:12px;padding:16px;" onclick="openAnniversaryEditor('${a.id}')">
+        <div style="display:flex;align-items:flex-start;gap:12px;">
+          <div style="width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;background:rgba(255,255,255,0.06);flex-shrink:0;">
+            ${typeInfo.icon}
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;flex-wrap:wrap;margin-bottom:4px;">
+              <span style="font-size:16px;font-weight:600;color:var(--t1);">${escapeHtml(a.name)}</span>
+              ${yearTag}
+            </div>
+            <div style="font-size:12px;color:var(--t3);margin-bottom:8px;">${dateStr}${a.repeat === 'year' ? ' · 每年' : ''}</div>
+            ${a.note ? `<div style="font-size:13px;color:var(--t2);margin-bottom:8px;font-style:italic;">"${escapeHtml(a.note)}"</div>` : ''}
+            <div style="display:flex;align-items:center;gap:6px;font-size:14px;color:var(--t2);">
+              ${daysHtml} ${statusHtml}
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function openAnniversaryEditor(id) {
+  const editing = id ? state.anniversaries.find(a => a.id === id) : null;
+  state.editAnniId = id || null;
+
+  $('#anni-sheet-title').textContent = editing ? '编辑纪念日' : '添加纪念日';
+  $('#anni-name').value = editing ? editing.name : '';
+  $('#anni-date').value = editing ? editing.date : today();
+  $('#anni-type').value = editing ? editing.type : 'anniversary';
+  $('#anni-note').value = editing ? (editing.note || '') : '';
+  $('#anni-repeat').value = editing ? (editing.repeat || 'year') : 'year';
+  $('#anni-delete-btn').style.display = editing ? 'block' : 'none';
+
+  openSheet('sheet-anniversary');
+}
+
+function saveAnniversary() {
+  const name = $('#anni-name').value.trim();
+  const date = $('#anni-date').value;
+  if (!name) { toast('请输入名称'); return; }
+  if (!date) { toast('请选择日期'); return; }
+
+  const data = {
+    name,
+    date,
+    type: $('#anni-type').value,
+    note: $('#anni-note').value.trim(),
+    repeat: $('#anni-repeat').value
+  };
+
+  if (state.editAnniId) {
+    const idx = state.anniversaries.findIndex(a => a.id === state.editAnniId);
+    if (idx >= 0) {
+      data.id = state.editAnniId;
+      data.createdAt = state.anniversaries[idx].createdAt;
+      state.anniversaries[idx] = data;
+    }
+  } else {
+    data.id = genId();
+    data.createdAt = new Date().toISOString();
+    state.anniversaries.push(data);
+  }
+
+  save();
+  closeSheet('sheet-anniversary');
+  toast(state.editAnniId ? '已更新' : '已添加');
+  haptic('success');
+  renderAnniversaries();
+}
+
+function deleteAnniversaryCurrent() {
+  if (!state.editAnniId) return;
+  if (!confirm('确定删除此纪念日？')) return;
+  state.anniversaries = state.anniversaries.filter(a => a.id !== state.editAnniId);
+  save();
+  closeSheet('sheet-anniversary');
+  toast('已删除');
+  haptic('success');
+  renderAnniversaries();
+}
+
+function escapeHtml(text) {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
 }
 
 // ===== Credit Card Bills =====
