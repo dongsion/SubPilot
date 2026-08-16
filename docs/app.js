@@ -4214,9 +4214,12 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '2.8.1';
-const APP_BUILD = '2026-08-12';
+const APP_VERSION = '2.9.0';
+const APP_BUILD = '2026-08-16';
 const CHANGELOG = [
+  { ver: '2.9.0', date: '2026-08-16', items: [
+    '纪念日编辑器：输入日期后旁边显示距今天数，点击可切换年月日/月天/总天数三种格式'
+  ]},
   { ver: '2.8.1', date: '2026-08-12', items: [
     '工资日历右上角已上班数改为全局总数，切换月份不再变化'
   ]},
@@ -8524,6 +8527,87 @@ function calcAnniversaryInfo(anni) {
   return { passedDays, daysLeft, nextDate, yearsPassed };
 }
 
+// 日期差值信息显示（编辑器内）
+state.anniDateFormat = 0; // 0: 年月日, 1: 月天, 2: 总天数
+
+function calcDateDiff(targetDate) {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const target = new Date(targetDate + 'T00:00:00');
+  target.setHours(0, 0, 0, 0);
+
+  const isPast = target < now;
+  const totalDays = Math.floor(Math.abs(now - target) / 86400000);
+
+  // 以较早的日期为基准计算
+  const fromDate = isPast ? target : now;
+  const toDate = isPast ? now : target;
+
+  let years = toDate.getFullYear() - fromDate.getFullYear();
+  let months = toDate.getMonth() - fromDate.getMonth();
+  let days = toDate.getDate() - fromDate.getDate();
+
+  if (days < 0) {
+    months--;
+    const prevMonth = new Date(toDate.getFullYear(), toDate.getMonth(), 0);
+    days += prevMonth.getDate();
+  }
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+
+  return { years, months, days, totalDays, isPast };
+}
+
+function updateAnniDateInfo() {
+  const dateInput = $('#anni-date');
+  const infoEl = $('#anni-date-info');
+  if (!dateInput || !infoEl) return;
+
+  const dateVal = dateInput.value;
+  if (!dateVal) {
+    infoEl.style.display = 'none';
+    return;
+  }
+
+  const diff = calcDateDiff(dateVal);
+  const prefix = diff.isPast ? '已过' : '还有';
+
+  let text;
+  switch (state.anniDateFormat) {
+    case 0: { // 年月日
+      const parts = [];
+      if (diff.years > 0) parts.push(`${diff.years}年`);
+      if (diff.months > 0) parts.push(`${diff.months}月`);
+      if (diff.days > 0 || parts.length === 0) parts.push(`${diff.days}天`);
+      text = `${prefix} ${parts.join('')}`;
+      break;
+    }
+    case 1: { // 月天
+      const totalMonths = diff.years * 12 + diff.months;
+      if (totalMonths > 0) {
+        text = `${prefix} ${totalMonths}个月${diff.days}天`;
+      } else {
+        text = `${prefix} ${diff.days}天`;
+      }
+      break;
+    }
+    case 2: // 总天数
+      text = `${prefix} ${diff.totalDays}天`;
+      break;
+  }
+
+  infoEl.textContent = text;
+  infoEl.style.display = 'block';
+}
+
+function toggleAnniDateFormat() {
+  state.anniDateFormat = (state.anniDateFormat + 1) % 3;
+  haptic('light');
+  updateAnniDateInfo();
+}
+
 function renderAnniversaries() {
   const listEl = $('#anni-list');
   const subEl = $('#anni-sub');
@@ -8706,6 +8790,10 @@ function openAnniversaryEditor(id) {
   $('#anni-note').value = editing ? (editing.note || '') : '';
   $('#anni-repeat').value = editing ? (editing.repeat || 'year') : 'year';
   $('#anni-delete-btn').style.display = editing ? 'block' : 'none';
+
+  // 更新日期差值信息
+  state.anniDateFormat = 0;
+  updateAnniDateInfo();
 
   // 填充分组建议列表
   const groupList = $('#anni-group-list');
