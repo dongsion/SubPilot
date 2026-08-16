@@ -265,6 +265,7 @@ let state = {
   savingsGoals: [],
   recurringTx: [],
   anniversaries: [],
+  moments: [],
   currentView: 'tx',
   lastView: 'tx',
   activeCardIdx: 0,
@@ -4220,9 +4221,12 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '2.10.0';
+const APP_VERSION = '2.10.1';
 const APP_BUILD = '2026-08-16';
 const CHANGELOG = [
+  { ver: '2.10.1', date: '2026-08-16', items: [
+    '修复初始状态未定义moments导致按钮可能无响应的问题'
+  ]},
   { ver: '2.10.0', date: '2026-08-16', items: [
     '新增「瞬间」功能：拍照+文字+心情记录生活美好',
     '支持照片上传、心情选择、标签分类',
