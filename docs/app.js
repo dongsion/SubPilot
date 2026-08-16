@@ -4238,9 +4238,12 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '2.10.6';
+const APP_VERSION = '2.10.7';
 const APP_BUILD = '2026-08-16';
 const CHANGELOG = [
+  { ver: '2.10.7', date: '2026-08-16', items: [
+    '移除瞬间照片数量限制，想传多少张都可以'
+  ]},
   { ver: '2.10.6', date: '2026-08-16', items: [
     '瞬间改版为分类相册模式，按标签自动归类',
     '首页显示相册封面网格，点击展开查看内容',
@@ -9160,11 +9163,6 @@ function compressImage(dataUrl, maxSize, quality) {
 function onMomentPhotoUpload(event) {
   const files = Array.from(event.target.files || []);
   if (files.length === 0) return;
-  const MAX_PHOTOS = 9;
-  if (state.momentPhotos.length + files.length > MAX_PHOTOS) {
-    toast(`最多只能选 ${MAX_PHOTOS} 张照片`);
-    return;
-  }
   let processed = 0;
   const total = files.length;
   files.forEach(file => {
