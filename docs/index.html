@@ -2505,7 +2505,7 @@ textarea.form-i{resize:none;min-height:80px;}
           <input type="file" id="moment-photo-file" accept="image/*" multiple style="display:none;" onchange="onMomentPhotoUpload(event)">
           <button class="btn btn-outline" style="width:100%;font-size:13px;padding:8px;" onclick="document.getElementById('moment-photo-file').click()">选择照片（可多选）</button>
           <button class="btn btn-outline" style="width:100%;font-size:13px;padding:6px;margin-top:6px;color:var(--t3);" onclick="removeMomentPhoto()">移除全部照片</button>
-          <p style="font-size:11px;color:var(--t3);margin-top:6px;">已选 <span id="moment-photo-count">0</span> 张，每张限3MB</p>
+          <p style="font-size:11px;color:var(--t3);margin-top:6px;">已选 <span id="moment-photo-count">0</span> 张，最多9张，自动压缩</p>
         </div>
       </div>
       <div id="moment-photo-gallery" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;"></div>
@@ -2565,6 +2565,6 @@ if ('caches' in window) {
     .catch(()=>{});
 }
 </script>
-<script src="app.js?v=2.10.3"></script>
+<script src="app.js?v=2.10.4"></script>
 </body>
 </html>

@@ -441,20 +441,32 @@ function load() {
   } catch(e) { console.error('Load error', e); }
 }
 function save() {
-  localStorage.setItem(KEYS.accounts, JSON.stringify(state.accounts));
-  localStorage.setItem(KEYS.subscriptions, JSON.stringify(state.subscriptions));
-  localStorage.setItem(KEYS.transactions, JSON.stringify(state.transactions));
-  localStorage.setItem(KEYS.settings, JSON.stringify(state.settings));
-  localStorage.setItem(KEYS.qrcodes, JSON.stringify(state.qrcodes));
-  localStorage.setItem(KEYS.invoices, JSON.stringify(state.invoices));
-  localStorage.setItem(KEYS.budgets, JSON.stringify(state.budgets));
-  localStorage.setItem(KEYS.savingsGoals, JSON.stringify(state.savingsGoals));
-  localStorage.setItem(KEYS.recurringTx, JSON.stringify(state.recurringTx));
-  localStorage.setItem(KEYS.salaryPendingIncome, JSON.stringify(state.salaryPendingIncome));
-  localStorage.setItem(KEYS.anniversaries, JSON.stringify(state.anniversaries));
-  localStorage.setItem(KEYS.moments, JSON.stringify(state.moments));
+  try {
+    localStorage.setItem(KEYS.accounts, JSON.stringify(state.accounts));
+    localStorage.setItem(KEYS.subscriptions, JSON.stringify(state.subscriptions));
+    localStorage.setItem(KEYS.transactions, JSON.stringify(state.transactions));
+    localStorage.setItem(KEYS.settings, JSON.stringify(state.settings));
+    localStorage.setItem(KEYS.qrcodes, JSON.stringify(state.qrcodes));
+    localStorage.setItem(KEYS.invoices, JSON.stringify(state.invoices));
+    localStorage.setItem(KEYS.budgets, JSON.stringify(state.budgets));
+    localStorage.setItem(KEYS.savingsGoals, JSON.stringify(state.savingsGoals));
+    localStorage.setItem(KEYS.recurringTx, JSON.stringify(state.recurringTx));
+    localStorage.setItem(KEYS.salaryPendingIncome, JSON.stringify(state.salaryPendingIncome));
+    localStorage.setItem(KEYS.anniversaries, JSON.stringify(state.anniversaries));
+    localStorage.setItem(KEYS.moments, JSON.stringify(state.moments));
+  } catch (e) {
+    console.error('保存失败:', e);
+    if (e.name === 'QuotaExceededError') {
+      toast('存储空间不足，请减少图片数量或大小');
+      haptic('error');
+      return false;
+    }
+    toast('保存失败: ' + e.message);
+    return false;
+  }
   updateBadge();
   markLocalChange();
+  return true;
 }
 
 // ===== Utils =====
@@ -4221,9 +4233,14 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '2.10.3';
+const APP_VERSION = '2.10.4';
 const APP_BUILD = '2026-08-16';
 const CHANGELOG = [
+  { ver: '2.10.4', date: '2026-08-16', items: [
+    '修复多图片保存失败无反应的问题（存储空间不足）',
+    '上传图片自动压缩，大幅减少存储占用',
+    '保存失败时显示提示信息而非静默失败'
+  ]},
   { ver: '2.10.3', date: '2026-08-16', items: [
     '储蓄目标支持「卡包总余额自动计算进度」',
     '开启后进度条自动跟随卡包总余额变化，无需手动更新'
@@ -9029,17 +9046,53 @@ function selectMomentMood(mood) {
   renderMoodPicker();
 }
 
+function compressImage(dataUrl, maxSize, quality) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = function() {
+      let { width, height } = img;
+      if (width > maxSize || height > maxSize) {
+        if (width >= height) {
+          height = Math.round(height * maxSize / width);
+          width = maxSize;
+        } else {
+          width = Math.round(width * maxSize / height);
+          height = maxSize;
+        }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+}
+
 function onMomentPhotoUpload(event) {
   const files = Array.from(event.target.files || []);
   if (files.length === 0) return;
+  const MAX_PHOTOS = 9;
+  if (state.momentPhotos.length + files.length > MAX_PHOTOS) {
+    toast(`最多只能选 ${MAX_PHOTOS} 张照片`);
+    return;
+  }
   let processed = 0;
+  const total = files.length;
   files.forEach(file => {
-    if (file.size > 3 * 1024 * 1024) { toast(`图片 ${file.name} 超过3MB，已跳过`); processed++; return; }
     const reader = new FileReader();
-    reader.onload = function(e) {
-      state.momentPhotos.push(e.target.result);
+    reader.onload = async function(e) {
+      try {
+        const compressed = await compressImage(e.target.result, 1280, 0.7);
+        state.momentPhotos.push(compressed);
+      } catch {
+        state.momentPhotos.push(e.target.result);
+      }
       processed++;
-      if (processed === files.length) {
+      if (processed === total) {
         haptic('light');
         renderMomentPhotoGallery();
       }
@@ -9147,7 +9200,7 @@ function saveMoment() {
     state.moments.unshift(data);
   }
 
-  save();
+  if (!save()) return;
   closeSheet('sheet-moment');
   toast(state.editMomentId ? '已更新' : '已记录');
   haptic('success');
