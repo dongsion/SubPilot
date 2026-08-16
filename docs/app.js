@@ -432,7 +432,8 @@ function load() {
     state.recurringTx = JSON.parse(localStorage.getItem(KEYS.recurringTx) || '[]');
     state.salaryPendingIncome = JSON.parse(localStorage.getItem(KEYS.salaryPendingIncome) || '[]');
   state.anniversaries = JSON.parse(localStorage.getItem(KEYS.anniversaries) || '[]');
-  state.moments = JSON.parse(localStorage.getItem(KEYS.moments) || '[]');
+  // 瞬间数据从 IndexedDB 加载（异步，后续通过 loadMomentsAsync 补充）
+  state.moments = [];
     // Merge loaded settings with defaults to ensure all keys exist
     const loaded = JSON.parse(localStorage.getItem(KEYS.settings) || '{}');
     const defaults = { appPassword: null, notifications: false, exRates: { USD: 7.25, EUR: 7.85, GBP: 9.20, JPY: 0.048, HKD: 0.93, TWD: 0.22 }, defaultCurrency: 'CNY', theme: 'dark' };
@@ -453,7 +454,8 @@ function save() {
     localStorage.setItem(KEYS.recurringTx, JSON.stringify(state.recurringTx));
     localStorage.setItem(KEYS.salaryPendingIncome, JSON.stringify(state.salaryPendingIncome));
     localStorage.setItem(KEYS.anniversaries, JSON.stringify(state.anniversaries));
-    localStorage.setItem(KEYS.moments, JSON.stringify(state.moments));
+    // 瞬间数据存到 IndexedDB（图片数据太大，localStorage 装不下）
+    saveMomentsToDB(state.moments).catch(err => console.error('Moments DB save error:', err));
   } catch (e) {
     console.error('保存失败:', e);
     if (e.name === 'QuotaExceededError') {
@@ -4168,6 +4170,7 @@ function clearAll() {
   localStorage.removeItem(KEYS.accounts); localStorage.removeItem(KEYS.subscriptions); localStorage.removeItem(KEYS.transactions);
   localStorage.removeItem(KEYS.onboarded); localStorage.removeItem(KEYS.settings); localStorage.removeItem(KEYS.qrcodes);
   localStorage.removeItem(KEYS.invoices); localStorage.removeItem(KEYS.recurringTx); localStorage.removeItem(KEYS.savingsGoals); localStorage.removeItem(KEYS.salaryPendingIncome); localStorage.removeItem(KEYS.anniversaries); localStorage.removeItem(KEYS.moments);
+  clearMomentsDB();
   render();
 }
 function exportData() {
@@ -4225,7 +4228,9 @@ $('#import-file').addEventListener('change', e => {
       if (data.anniversaries) state.anniversaries = data.anniversaries;
       if (data.moments) state.moments = data.moments;
       if (data.settings) state.settings = { ...state.settings, ...data.settings };
-      save(); render(); toast('数据已导入');
+      save();
+      if (data.moments) saveMomentsToDB(state.moments).catch(() => {});
+      render(); toast('数据已导入');
       haptic('success');
     } catch(err) { toast('导入失败，文件格式错误'); }
   };
@@ -4233,9 +4238,14 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '2.10.4';
+const APP_VERSION = '2.10.5';
 const APP_BUILD = '2026-08-16';
 const CHANGELOG = [
+  { ver: '2.10.5', date: '2026-08-16', items: [
+    '彻底解决图片存储空间不足问题：改用IndexedDB存储',
+    '图片压缩更激进(800px/50%质量)，大幅减少占用',
+    '自动迁移旧localStorage数据到IndexedDB'
+  ]},
   { ver: '2.10.4', date: '2026-08-16', items: [
     '修复多图片保存失败无反应的问题（存储空间不足）',
     '上传图片自动压缩，大幅减少存储占用',
@@ -4770,6 +4780,25 @@ function init() {
   }
 
   render();
+
+  // 异步从 IndexedDB 加载瞬间数据
+  loadMomentsFromDB().then(momentsData => {
+    // 兼容旧数据：如果 IndexedDB 没有，尝试从 localStorage 迁移
+    if (momentsData.length === 0) {
+      const oldData = localStorage.getItem(KEYS.moments);
+      if (oldData) {
+        try {
+          state.moments = JSON.parse(oldData);
+          saveMomentsToDB(state.moments).catch(() => {});
+          localStorage.removeItem(KEYS.moments);
+        } catch {}
+      }
+    } else {
+      state.moments = momentsData;
+    }
+    renderMoments();
+    renderOverview();
+  }).catch(() => {});
 
   // Show lock screen on app launch if password is set
   showLockScreen();
@@ -9046,6 +9075,57 @@ function selectMomentMood(mood) {
   renderMoodPicker();
 }
 
+// ===== IndexedDB for Moments (图片数据较大，localStorage 不够用) =====
+let _momentsDB = null;
+function getMomentsDB() {
+  return new Promise((resolve, reject) => {
+    if (_momentsDB) return resolve(_momentsDB);
+    const req = indexedDB.open('subpilot_moments', 1);
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('moments')) {
+        db.createObjectStore('moments', { keyPath: 'key' });
+      }
+    };
+    req.onsuccess = (e) => { _momentsDB = e.target.result; resolve(_momentsDB); };
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+async function saveMomentsToDB(data) {
+  const db = await getMomentsDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('moments', 'readwrite');
+    tx.objectStore('moments').put({ key: 'moments_data', data });
+    tx.oncomplete = () => resolve(true);
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function loadMomentsFromDB() {
+  try {
+    const db = await getMomentsDB();
+    return new Promise((resolve) => {
+      const tx = db.transaction('moments', 'readonly');
+      const req = tx.objectStore('moments').get('moments_data');
+      req.onsuccess = () => resolve(req.result ? req.result.data : []);
+      req.onerror = () => resolve([]);
+    });
+  } catch { return []; }
+}
+
+async function clearMomentsDB() {
+  try {
+    const db = await getMomentsDB();
+    return new Promise((resolve) => {
+      const tx = db.transaction('moments', 'readwrite');
+      tx.objectStore('moments').clear();
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => resolve(false);
+    });
+  } catch { return false; }
+}
+
 function compressImage(dataUrl, maxSize, quality) {
   return new Promise((resolve) => {
     const img = new Image();
@@ -9086,7 +9166,7 @@ function onMomentPhotoUpload(event) {
     const reader = new FileReader();
     reader.onload = async function(e) {
       try {
-        const compressed = await compressImage(e.target.result, 1280, 0.7);
+        const compressed = await compressImage(e.target.result, 800, 0.5);
         state.momentPhotos.push(compressed);
       } catch {
         state.momentPhotos.push(e.target.result);
@@ -9173,7 +9253,7 @@ function openMomentEditor(id) {
   openSheet('sheet-moment');
 }
 
-function saveMoment() {
+async function saveMoment() {
   const text = $('#moment-text').value.trim();
   const date = $('#moment-date').value;
   if (!date) { toast('请选择日期'); return; }
@@ -9200,7 +9280,17 @@ function saveMoment() {
     state.moments.unshift(data);
   }
 
+  // 保存非瞬间数据到 localStorage
   if (!save()) return;
+  // 保存瞬间数据到 IndexedDB（容量大，不受5MB限制）
+  try {
+    await saveMomentsToDB(state.moments);
+  } catch (err) {
+    toast('保存失败: ' + (err.message || err));
+    haptic('error');
+    return;
+  }
+  markLocalChange();
   closeSheet('sheet-moment');
   toast(state.editMomentId ? '已更新' : '已记录');
   haptic('success');
@@ -9212,6 +9302,7 @@ function deleteMomentCurrent() {
   if (!confirm('确定删除此瞬间？')) return;
   state.moments = state.moments.filter(m => m.id !== state.editMomentId);
   save();
+  saveMomentsToDB(state.moments).catch(() => {});
   closeSheet('sheet-moment');
   toast('已删除');
   haptic('success');
