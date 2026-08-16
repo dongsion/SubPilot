@@ -1331,6 +1331,7 @@ textarea.form-i{resize:none;min-height:80px;}
       </button>
     </div>
     <div id="anni-summary-container"></div>
+    <div id="anni-group-filter" style="display:none;"></div>
     <div class="sec"><span class="st">我的纪念日</span></div>
     <div id="anni-list"></div>
     <div style="height:20px;"></div>
@@ -2401,6 +2402,11 @@ textarea.form-i{resize:none;min-height:80px;}
       </select>
     </div>
     <div class="form-g">
+      <label class="form-l">分组（可选）</label>
+      <input type="text" class="form-i" id="anni-group" placeholder="如：家人、朋友、工作" list="anni-group-list">
+      <datalist id="anni-group-list"></datalist>
+    </div>
+    <div class="form-g">
       <label class="form-l">备注（可选）</label>
       <input type="text" class="form-i" id="anni-note" placeholder="写下想说的话">
     </div>
@@ -2449,6 +2455,6 @@ if ('caches' in window) {
     .catch(()=>{});
 }
 </script>
-<script src="app.js?v=2.10.0"></script>
+<script src="app.js?v=2.10.1"></script>
 </body>
 </html>

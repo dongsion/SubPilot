@@ -8492,6 +8492,7 @@ const ANNI_TYPES = {
 };
 
 state.editAnniId = null;
+state.anniGroupFilter = 'all';
 
 function calcAnniversaryInfo(anni) {
   const now = new Date();
@@ -8527,11 +8528,13 @@ function renderAnniversaries() {
   const listEl = $('#anni-list');
   const subEl = $('#anni-sub');
   const summaryEl = $('#anni-summary-container');
+  const filterEl = $('#anni-group-filter');
   if (!listEl) return;
 
   if (state.anniversaries.length === 0) {
     subEl.textContent = '重要的日子';
     summaryEl.innerHTML = '';
+    if (filterEl) filterEl.style.display = 'none';
     listEl.innerHTML = `
       <div style="text-align:center;padding:60px 20px;color:var(--t3);">
         <div style="font-size:48px;margin-bottom:16px;opacity:0.3;">❤️</div>
@@ -8539,6 +8542,31 @@ function renderAnniversaries() {
         <div style="font-size:13px;opacity:0.7;">点击右上角 + 添加</div>
       </div>`;
     return;
+  }
+
+  // 提取所有分组
+  const groupSet = new Set();
+  state.anniversaries.forEach(a => {
+    const g = (a.group || '').trim();
+    if (g) groupSet.add(g);
+  });
+  const groups = [...groupSet];
+
+  // 渲染分组筛选栏
+  if (filterEl && groups.length > 0) {
+    filterEl.style.display = 'flex';
+    filterEl.style.cssText = 'display:flex;gap:8px;overflow-x:auto;padding:4px 0 12px;-webkit-overflow-scrolling:touch;';
+    const allPills = ['all', ...groups, '__none__'];
+    filterEl.innerHTML = allPills.map(g => {
+      const isActive = state.anniGroupFilter === g;
+      const label = g === 'all' ? '全部' : g === '__none__' ? '未分组' : g;
+      const cnt = g === 'all' ? state.anniversaries.length
+        : g === '__none__' ? state.anniversaries.filter(a => !(a.group || '').trim()).length
+        : state.anniversaries.filter(a => (a.group || '').trim() === g).length;
+      return `<button class="pl ${isActive ? 'on' : 'off'}" style="flex-shrink:0;font-size:13px;padding:6px 14px;border-radius:20px;border:1px solid var(--bd);${isActive ? 'background:var(--gold);color:#000;border-color:var(--gold);' : 'background:transparent;color:var(--t2);'}" onclick="setAnniGroupFilter('${g}')">${label} <span style="opacity:0.6;font-size:11px;">${cnt}</span></button>`;
+    }).join('');
+  } else if (filterEl) {
+    filterEl.style.display = 'none';
   }
 
   // 按距离下次日期排序
@@ -8550,6 +8578,16 @@ function renderAnniversaries() {
     if (b.daysLeft === null) return -1;
     return a.daysLeft - b.daysLeft;
   });
+
+  // 按分组筛选
+  let filtered = sorted;
+  if (state.anniGroupFilter !== 'all') {
+    if (state.anniGroupFilter === '__none__') {
+      filtered = sorted.filter(a => !(a.group || '').trim());
+    } else {
+      filtered = sorted.filter(a => (a.group || '').trim() === state.anniGroupFilter);
+    }
+  }
 
   // 找到最近的纪念日
   const upcoming = sorted.find(s => s.daysLeft !== null && s.daysLeft >= 0);
@@ -8580,7 +8618,8 @@ function renderAnniversaries() {
     }
   }
 
-  listEl.innerHTML = sorted.map(a => {
+  // 渲染卡片（单条渲染函数）
+  function renderCard(a) {
     const typeInfo = ANNI_TYPES[a.type] || ANNI_TYPES.anniversary;
     const dateStr = new Date(a.date + 'T00:00:00').toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
     let statusHtml = '';
@@ -8598,6 +8637,7 @@ function renderAnniversaries() {
     }
 
     const yearTag = a.repeat === 'year' && a.yearsPassed > 0 ? `<span style="font-size:11px;color:var(--t3);background:rgba(255,255,255,0.06);padding:2px 8px;border-radius:8px;margin-left:6px;">第 ${a.yearsPassed + 1} 年</span>` : '';
+    const groupTag = (a.group || '').trim() ? `<span style="font-size:11px;color:var(--gold);background:rgba(212,175,122,0.1);padding:2px 8px;border-radius:8px;margin-left:6px;">${escapeHtml(a.group.trim())}</span>` : '';
 
     return `
       <div class="card" style="margin-bottom:12px;padding:16px;" onclick="openAnniversaryEditor('${a.id}')">
@@ -8609,6 +8649,7 @@ function renderAnniversaries() {
             <div style="display:flex;align-items:center;flex-wrap:wrap;margin-bottom:4px;">
               <span style="font-size:16px;font-weight:600;color:var(--t1);">${escapeHtml(a.name)}</span>
               ${yearTag}
+              ${groupTag}
             </div>
             <div style="font-size:12px;color:var(--t3);margin-bottom:8px;">${dateStr}${a.repeat === 'year' ? ' · 每年' : ''}</div>
             ${a.note ? `<div style="font-size:13px;color:var(--t2);margin-bottom:8px;font-style:italic;">"${escapeHtml(a.note)}"</div>` : ''}
@@ -8618,7 +8659,39 @@ function renderAnniversaries() {
           </div>
         </div>
       </div>`;
-  }).join('');
+  }
+
+  // 如果有分组且当前是"全部"，按分组分区渲染
+  if (state.anniGroupFilter === 'all' && groups.length > 0) {
+    let html = '';
+    // 有分组的
+    for (const g of groups) {
+      const groupItems = filtered.filter(a => (a.group || '').trim() === g);
+      if (groupItems.length === 0) continue;
+      html += `<div style="margin-bottom:4px;padding:0 4px;"><span class="st" style="font-size:13px;color:var(--t3);">${escapeHtml(g)} · ${groupItems.length}</span></div>`;
+      html += groupItems.map(renderCard).join('');
+    }
+    // 未分组的
+    const noGroup = filtered.filter(a => !(a.group || '').trim());
+    if (noGroup.length > 0) {
+      html += `<div style="margin-bottom:4px;padding:0 4px;"><span class="st" style="font-size:13px;color:var(--t3);">未分组 · ${noGroup.length}</span></div>`;
+      html += noGroup.map(renderCard).join('');
+    }
+    listEl.innerHTML = html;
+  } else {
+    // 无分组或已筛选，直接渲染列表
+    if (filtered.length === 0) {
+      listEl.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--t3);font-size:14px;">此分组下暂无纪念日</div>`;
+    } else {
+      listEl.innerHTML = filtered.map(renderCard).join('');
+    }
+  }
+}
+
+function setAnniGroupFilter(group) {
+  state.anniGroupFilter = group;
+  haptic('light');
+  renderAnniversaries();
 }
 
 function openAnniversaryEditor(id) {
@@ -8629,9 +8702,21 @@ function openAnniversaryEditor(id) {
   $('#anni-name').value = editing ? editing.name : '';
   $('#anni-date').value = editing ? editing.date : today();
   $('#anni-type').value = editing ? editing.type : 'anniversary';
+  $('#anni-group').value = editing ? (editing.group || '') : '';
   $('#anni-note').value = editing ? (editing.note || '') : '';
   $('#anni-repeat').value = editing ? (editing.repeat || 'year') : 'year';
   $('#anni-delete-btn').style.display = editing ? 'block' : 'none';
+
+  // 填充分组建议列表
+  const groupList = $('#anni-group-list');
+  if (groupList) {
+    const groupSet = new Set();
+    state.anniversaries.forEach(a => {
+      const g = (a.group || '').trim();
+      if (g) groupSet.add(g);
+    });
+    groupList.innerHTML = [...groupSet].map(g => `<option value="${escapeHtml(g)}">`).join('');
+  }
 
   openSheet('sheet-anniversary');
 }
@@ -8646,6 +8731,7 @@ function saveAnniversary() {
     name,
     date,
     type: $('#anni-type').value,
+    group: $('#anni-group').value.trim(),
     note: $('#anni-note').value.trim(),
     repeat: $('#anni-repeat').value
   };
