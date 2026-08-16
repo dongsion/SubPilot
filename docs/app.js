@@ -4214,9 +4214,12 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '2.9.1';
+const APP_VERSION = '2.9.2';
 const APP_BUILD = '2026-08-16';
 const CHANGELOG = [
+  { ver: '2.9.2', date: '2026-08-16', items: [
+    '纪念日编辑器：日期信息显示在输入框右侧，点击切换三种格式'
+  ]},
   { ver: '2.9.1', date: '2026-08-16', items: [
     '纪念日编辑器：日期下方同时显示三种格式（年月日/月天/总天数），无需点击切换'
   ]},
@@ -8531,6 +8534,7 @@ function calcAnniversaryInfo(anni) {
 }
 
 // 日期差值信息显示（编辑器内）
+state.anniDateFormat = 0; // 0: 年月日, 1: 月天, 2: 总天数
 
 function calcDateDiff(targetDate) {
   const now = new Date();
@@ -8576,24 +8580,34 @@ function updateAnniDateInfo() {
   const diff = calcDateDiff(dateVal);
   const prefix = diff.isPast ? '已过' : '还有';
 
-  // 年月日格式
-  const parts = [];
-  if (diff.years > 0) parts.push(`${diff.years}年`);
-  if (diff.months > 0) parts.push(`${diff.months}月`);
-  if (diff.days > 0 || parts.length === 0) parts.push(`${diff.days}天`);
-  const ymdText = `${prefix} ${parts.join('')}`;
+  let text;
+  switch (state.anniDateFormat) {
+    case 0: { // 年月日
+      const parts = [];
+      if (diff.years > 0) parts.push(`${diff.years}年`);
+      if (diff.months > 0) parts.push(`${diff.months}月`);
+      if (diff.days > 0 || parts.length === 0) parts.push(`${diff.days}天`);
+      text = `${prefix} ${parts.join('')}`;
+      break;
+    }
+    case 1: { // 月天
+      const totalMonths = diff.years * 12 + diff.months;
+      text = totalMonths > 0 ? `${prefix} ${totalMonths}个月${diff.days}天` : `${prefix} ${diff.days}天`;
+      break;
+    }
+    case 2: // 总天数
+      text = `${prefix} ${diff.totalDays}天`;
+      break;
+  }
 
-  // 月天格式
-  const totalMonths = diff.years * 12 + diff.months;
-  const mdText = totalMonths > 0 ? `${prefix} ${totalMonths}个月${diff.days}天` : `${prefix} ${diff.days}天`;
+  infoEl.textContent = text;
+  infoEl.style.display = 'block';
+}
 
-  // 总天数格式
-  const dText = `${prefix} ${diff.totalDays}天`;
-
-  $('#anni-info-ymd').textContent = ymdText;
-  $('#anni-info-md').textContent = mdText;
-  $('#anni-info-d').textContent = dText;
-  infoEl.style.display = 'flex';
+function toggleAnniDateFormat() {
+  state.anniDateFormat = (state.anniDateFormat + 1) % 3;
+  haptic('light');
+  updateAnniDateInfo();
 }
 
 function renderAnniversaries() {
@@ -8780,6 +8794,7 @@ function openAnniversaryEditor(id) {
   $('#anni-delete-btn').style.display = editing ? 'block' : 'none';
 
   // 更新日期差值信息
+  state.anniDateFormat = 0;
   updateAnniDateInfo();
 
   // 填充分组建议列表
