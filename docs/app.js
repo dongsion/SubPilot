@@ -4214,9 +4214,12 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '2.9.3';
+const APP_VERSION = '2.9.4';
 const APP_BUILD = '2026-08-16';
 const CHANGELOG = [
+  { ver: '2.9.4', date: '2026-08-16', items: [
+    '纪念日卡片：倒计时数字以徽章形式显示在右侧，类似图片效果'
+  ]},
   { ver: '2.9.3', date: '2026-08-16', items: [
     '纪念日卡片增加边框和分隔线，每条记录视觉区分更清晰'
   ]},
@@ -8711,18 +8714,27 @@ function renderAnniversaries() {
   function renderCard(a) {
     const typeInfo = ANNI_TYPES[a.type] || ANNI_TYPES.anniversary;
     const dateStr = new Date(a.date + 'T00:00:00').toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
-    let statusHtml = '';
-    let daysHtml = '';
 
+    // 右侧倒计时徽章
+    let badgeHtml = '';
     if (a.daysLeft === 0) {
-      statusHtml = `<span style="color:#e64980;font-weight:700;">就是今天！</span>`;
-      daysHtml = `<span style="color:#e64980;">🎉</span>`;
+      badgeHtml = `
+        <div style="flex-shrink:0;display:flex;align-items:stretch;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(230,73,128,0.3);">
+          <div style="display:flex;align-items:center;justify-content:center;padding:10px 14px;font-size:20px;font-weight:700;color:#fff;background:linear-gradient(135deg,#ff6b9d,#e64980);min-width:60px;">🎉</div>
+          <div style="display:flex;align-items:center;padding:10px 8px;font-size:13px;font-weight:600;color:#fff;background:#c93d68;">今天</div>
+        </div>`;
     } else if (a.daysLeft !== null && a.daysLeft > 0) {
-      statusHtml = `还有 <span style="color:var(--gold);font-weight:700;font-size:18px;">${a.daysLeft}</span> 天`;
-      daysHtml = `⏳`;
+      badgeHtml = `
+        <div style="flex-shrink:0;display:flex;align-items:stretch;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(212,175,122,0.3);">
+          <div style="display:flex;align-items:center;justify-content:center;padding:10px 16px;font-size:28px;font-weight:700;color:#fff;background:linear-gradient(135deg,#f0c674,#d4a574);min-width:56px;text-shadow:0 1px 2px rgba(0,0,0,0.15);">${a.daysLeft}</div>
+          <div style="display:flex;align-items:center;padding:10px 10px;font-size:14px;font-weight:600;color:#fff;background:#b8935a;">天</div>
+        </div>`;
     } else if (a.daysLeft === null) {
-      statusHtml = `已过去 <span style="color:var(--t3);">${a.passedDays}</span> 天`;
-      daysHtml = `✓`;
+      badgeHtml = `
+        <div style="flex-shrink:0;display:flex;align-items:stretch;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(100,100,100,0.2);">
+          <div style="display:flex;align-items:center;justify-content:center;padding:10px 16px;font-size:24px;font-weight:700;color:var(--t2);background:rgba(255,255,255,0.08);min-width:56px;">${a.passedDays}</div>
+          <div style="display:flex;align-items:center;padding:10px 10px;font-size:14px;font-weight:600;color:var(--t3);background:rgba(255,255,255,0.04);">天前</div>
+        </div>`;
     }
 
     const yearTag = a.repeat === 'year' && a.yearsPassed > 0 ? `<span style="font-size:11px;color:var(--t3);background:rgba(255,255,255,0.06);padding:2px 8px;border-radius:8px;margin-left:6px;">第 ${a.yearsPassed + 1} 年</span>` : '';
@@ -8730,22 +8742,20 @@ function renderAnniversaries() {
 
     return `
       <div class="card" style="margin-bottom:16px;padding:18px 16px;border:1px solid var(--bd);border-radius:18px;background:rgba(255,255,255,0.03);" onclick="openAnniversaryEditor('${a.id}')">
-        <div style="display:flex;align-items:flex-start;gap:12px;">
+        <div style="display:flex;align-items:center;gap:12px;">
           <div style="width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;background:rgba(255,255,255,0.08);flex-shrink:0;border:1px solid var(--bd);">
             ${typeInfo.icon}
           </div>
           <div style="flex:1;min-width:0;">
-            <div style="display:flex;align-items:center;flex-wrap:wrap;margin-bottom:6px;">
+            <div style="display:flex;align-items:center;flex-wrap:wrap;margin-bottom:4px;">
               <span style="font-size:16px;font-weight:600;color:var(--t1);">${escapeHtml(a.name)}</span>
               ${yearTag}
               ${groupTag}
             </div>
-            <div style="font-size:12px;color:var(--t3);margin-bottom:10px;padding-bottom:8px;border-bottom:1px dashed var(--bd);">${dateStr}${a.repeat === 'year' ? ' · 每年' : ''}</div>
-            ${a.note ? `<div style="font-size:13px;color:var(--t2);margin-bottom:8px;font-style:italic;">"${escapeHtml(a.note)}"</div>` : ''}
-            <div style="display:flex;align-items:center;gap:6px;font-size:14px;color:var(--t2);">
-              ${daysHtml} ${statusHtml}
-            </div>
+            <div style="font-size:12px;color:var(--t3);">${dateStr}${a.repeat === 'year' ? ' · 每年' : ''}</div>
+            ${a.note ? `<div style="font-size:12px;color:var(--t2);margin-top:4px;font-style:italic;opacity:0.7;">"${escapeHtml(a.note)}"</div>` : ''}
           </div>
+          ${badgeHtml}
         </div>
       </div>`;
   }
