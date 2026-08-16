@@ -373,7 +373,7 @@ input { font-family:inherit; }
 .tbi.on svg{stroke:var(--gold);}
 
 /* Quick FAB */
-.quick-fab { position:fixed; bottom:calc(64px + env(safe-area-inset-bottom, 0px)); right:calc(50% - 215px + 20px); width:280px; height:310px; z-index:90; pointer-events:none; display:flex; justify-content:flex-end; align-items:flex-end; }
+.quick-fab { position:fixed; bottom:calc(64px + env(safe-area-inset-bottom, 0px)); right:calc(50% - 215px + 20px); width:280px; height:370px; z-index:90; pointer-events:none; display:flex; justify-content:flex-end; align-items:flex-end; }
 .quick-fab-main { position:absolute; right:0; bottom:0; width:56px; height:56px; border-radius:50%; background:var(--gold); color:#000; border:none; font-size:32px; line-height:1; box-shadow:0 8px 28px var(--gold-glow),0 0 0 5px rgba(212,175,122,0.06); display:flex; align-items:center; justify-content:center; font-weight:300; transition:transform .28s cubic-bezier(.34,1.4,.64,1), box-shadow .2s; pointer-events:auto; z-index:7; }
 .quick-fab-main:active{transform:scale(.9);}
 .quick-fab.open .quick-fab-main{transform:rotate(45deg); box-shadow:0 12px 34px var(--gold-glow),0 0 0 6px rgba(212,175,122,0.08);}
@@ -387,14 +387,31 @@ input { font-family:inherit; }
 .quick-fab-item:nth-child(3){background:linear-gradient(135deg,#6fd6ff 0%,#5e6bff 52%,#7c3aed 100%);box-shadow:0 12px 30px rgba(94,107,255,0.3),0 6px 18px rgba(0,0,0,0.28),inset 0 1px 0 rgba(255,255,255,0.22);}
 .quick-fab-item:nth-child(4){background:linear-gradient(135deg,#65e4b3 0%,#28b487 50%,#0f766e 100%);box-shadow:0 12px 30px rgba(40,180,135,0.28),0 6px 18px rgba(0,0,0,0.28),inset 0 1px 0 rgba(255,255,255,0.22);}
 .quick-fab-item:nth-child(5){background:linear-gradient(135deg,#f9a8d4 0%,#e64980 50%,#be185d 100%);box-shadow:0 12px 30px rgba(230,73,128,0.3),0 6px 18px rgba(0,0,0,0.28),inset 0 1px 0 rgba(255,255,255,0.22);}
+.quick-fab-item:nth-child(6){background:linear-gradient(135deg,#c4b5fd 0%,#8b5cf6 50%,#6d28d9 100%);box-shadow:0 12px 30px rgba(139,92,246,0.3),0 6px 18px rgba(0,0,0,0.28),inset 0 1px 0 rgba(255,255,255,0.22);}
 .quick-fab-item:active{filter:brightness(.92) saturate(1.08);}
 .quick-fab.open .quick-fab-item{opacity:1; pointer-events:auto;}
-.quick-fab.open .quick-fab-item:nth-child(1){transform:translate(0,6px) rotate(2deg); transition-delay:.02s; z-index:6;}
-.quick-fab.open .quick-fab-item:nth-child(2){transform:translate(-6px,-10px) rotate(24deg); transition-delay:.05s; z-index:5;}
-.quick-fab.open .quick-fab-item:nth-child(3){transform:translate(-14px,-28px) rotate(46deg); transition-delay:.08s; z-index:4;}
-.quick-fab.open .quick-fab-item:nth-child(4){transform:translate(-22px,-44px) rotate(68deg); transition-delay:.11s; z-index:3;}
-.quick-fab.open .quick-fab-item:nth-child(5){transform:translate(-30px,-60px) rotate(90deg); transition-delay:.14s; z-index:2;}
+.quick-fab.open .quick-fab-item:nth-child(1){transform:translate(0,6px) rotate(2deg); transition-delay:.02s; z-index:7;}
+.quick-fab.open .quick-fab-item:nth-child(2){transform:translate(-6px,-10px) rotate(24deg); transition-delay:.05s; z-index:6;}
+.quick-fab.open .quick-fab-item:nth-child(3){transform:translate(-14px,-28px) rotate(46deg); transition-delay:.08s; z-index:5;}
+.quick-fab.open .quick-fab-item:nth-child(4){transform:translate(-22px,-44px) rotate(68deg); transition-delay:.11s; z-index:4;}
+.quick-fab.open .quick-fab-item:nth-child(5){transform:translate(-30px,-60px) rotate(90deg); transition-delay:.14s; z-index:3;}
+.quick-fab.open .quick-fab-item:nth-child(6){transform:translate(-38px,-76px) rotate(112deg); transition-delay:.17s; z-index:2;}
 @media (max-width:430px){ .quick-fab{right:20px;} }
+
+/* Moments Timeline */
+.moment-card{margin-bottom:16px;border:1px solid var(--bd);border-radius:18px;overflow:hidden;background:rgba(255,255,255,0.03);transition:transform .15s;}
+.moment-card:active{transform:scale(.98);}
+.moment-card .moment-img{width:100%;aspect-ratio:16/10;object-fit:cover;display:block;background:rgba(255,255,255,0.04);}
+.moment-card .moment-body{padding:14px 16px;}
+.moment-card .moment-date{font-size:12px;color:var(--t3);margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.moment-card .moment-text{font-size:14px;color:var(--t1);line-height:1.6;margin-bottom:8px;}
+.moment-card .moment-tags{display:flex;gap:6px;flex-wrap:wrap;}
+.moment-card .moment-tag{font-size:11px;color:var(--gold);background:rgba(212,175,122,0.1);padding:3px 10px;border-radius:10px;}
+.moment-card .moment-mood{font-size:22px;margin-right:4px;}
+.moment-empty{text-align:center;padding:60px 20px;color:var(--t3);font-size:14px;}
+.moment-empty span{display:block;font-size:48px;margin-bottom:12px;opacity:.3;}
+.mood-btn{width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:22px;border-radius:12px;cursor:pointer;border:2px solid transparent;background:rgba(255,255,255,0.05);transition:all .15s;}
+.mood-btn.active{border-color:var(--gold);background:rgba(212,175,122,0.15);}
 
 /* AI Button - now in tab bar center */
 .ai-tab { flex:0 0 auto; }
@@ -1338,6 +1355,23 @@ textarea.form-i{resize:none;min-height:80px;}
   </div>
 </div>
 
+<!-- View: Moments (瞬间) -->
+<div class="view" id="view-moments">
+  <div class="content">
+    <div class="hd">
+      <button class="ib" onclick="showView(state.lastView || 'tx')">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="ht"><h1>瞬间</h1><p id="moments-sub">记录生活中的美好</p></div>
+      <button class="ib" onclick="openMomentEditor()">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+    </div>
+    <div id="moments-list"></div>
+    <div style="height:20px;"></div>
+  </div>
+</div>
+
 <!-- View: Credit Card Bills -->
 <div class="view" id="view-cc-bills">
   <div class="content">
@@ -1385,6 +1419,7 @@ textarea.form-i{resize:none;min-height:80px;}
   <button class="quick-fab-item" onclick="quickFabAction('qrcodes')"><span>▦</span><span>二维码夹</span></button>
   <button class="quick-fab-item" onclick="quickFabAction('savings')"><span>◎</span><span>储蓄目标</span></button>
   <button class="quick-fab-item" onclick="quickFabAction('anniversaries')"><span>❤</span><span>纪念日</span></button>
+  <button class="quick-fab-item" onclick="quickFabAction('moments')"><span>✦</span><span>瞬间</span></button>
   <button class="quick-fab-main" onclick="toggleQuickFab()" aria-label="快捷操作">+</button>
 </div>
 
@@ -2440,6 +2475,51 @@ textarea.form-i{resize:none;min-height:80px;}
     </div>
     <div id="anni-delete-btn" style="margin-top:12px;display:none;">
       <button class="btn btn-danger" style="width:100%;" onclick="deleteAnniversaryCurrent()">删除此纪念日</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sheet: Moment Editor (瞬间) -->
+<div class="sheet-overlay" id="sheet-moment">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="moment-sheet-title">记录瞬间</div>
+    <div class="form-g">
+      <label class="form-l">照片</label>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div id="moment-photo-preview" style="width:80px;height:80px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;background:rgba(255,255,255,0.06);border:1px dashed var(--bd);flex-shrink:0;overflow:hidden;cursor:pointer;" onclick="document.getElementById('moment-photo-file').click()">
+          <span style="color:var(--t3);font-size:24px;">📷</span>
+        </div>
+        <div style="flex:1;">
+          <input type="file" id="moment-photo-file" accept="image/*" style="display:none;" onchange="onMomentPhotoUpload(event)">
+          <button class="btn btn-outline" style="width:100%;font-size:13px;padding:8px;" onclick="document.getElementById('moment-photo-file').click()">选择照片</button>
+          <button class="btn btn-outline" style="width:100%;font-size:13px;padding:6px;margin-top:6px;color:var(--t3);" onclick="removeMomentPhoto()">移除照片</button>
+        </div>
+      </div>
+    </div>
+    <div class="form-g">
+      <label class="form-l">文字（可选）</label>
+      <textarea class="form-i" id="moment-text" placeholder="写下此刻的心情..." rows="3" style="resize:none;font-family:inherit;"></textarea>
+    </div>
+    <div class="form-g">
+      <label class="form-l">日期</label>
+      <input type="date" class="form-i" id="moment-date">
+    </div>
+    <div class="form-g">
+      <label class="form-l">心情</label>
+      <div id="moment-mood-picker" style="display:flex;gap:8px;flex-wrap:wrap;padding:8px 0;"></div>
+    </div>
+    <div class="form-g">
+      <label class="form-l">标签（可选）</label>
+      <input type="text" class="form-i" id="moment-tag" placeholder="如：旅行、美食、日常" list="moment-tag-list">
+      <datalist id="moment-tag-list"></datalist>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-outline" onclick="closeSheet('sheet-moment')">取消</button>
+      <button class="btn btn-gold" onclick="saveMoment()">保存</button>
+    </div>
+    <div id="moment-delete-btn" style="margin-top:12px;display:none;">
+      <button class="btn btn-danger" style="width:100%;" onclick="deleteMomentCurrent()">删除此瞬间</button>
     </div>
   </div>
 </div>

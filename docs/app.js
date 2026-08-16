@@ -14,7 +14,8 @@ const KEYS = {
   savingsGoals: 'subpilot_savings_goals',
   recurringTx: 'subpilot_recurring_tx',
   salaryPendingIncome: 'subpilot_salary_pending_income',
-  anniversaries: 'subpilot_anniversaries'
+  anniversaries: 'subpilot_anniversaries',
+  moments: 'subpilot_moments'
 };
 
 // ===== Embedded Brand Icons (SVG path data, viewBox 0 0 24 24) =====
@@ -430,6 +431,7 @@ function load() {
     state.recurringTx = JSON.parse(localStorage.getItem(KEYS.recurringTx) || '[]');
     state.salaryPendingIncome = JSON.parse(localStorage.getItem(KEYS.salaryPendingIncome) || '[]');
   state.anniversaries = JSON.parse(localStorage.getItem(KEYS.anniversaries) || '[]');
+  state.moments = JSON.parse(localStorage.getItem(KEYS.moments) || '[]');
     // Merge loaded settings with defaults to ensure all keys exist
     const loaded = JSON.parse(localStorage.getItem(KEYS.settings) || '{}');
     const defaults = { appPassword: null, notifications: false, exRates: { USD: 7.25, EUR: 7.85, GBP: 9.20, JPY: 0.048, HKD: 0.93, TWD: 0.22 }, defaultCurrency: 'CNY', theme: 'dark' };
@@ -449,6 +451,7 @@ function save() {
   localStorage.setItem(KEYS.recurringTx, JSON.stringify(state.recurringTx));
   localStorage.setItem(KEYS.salaryPendingIncome, JSON.stringify(state.salaryPendingIncome));
   localStorage.setItem(KEYS.anniversaries, JSON.stringify(state.anniversaries));
+  localStorage.setItem(KEYS.moments, JSON.stringify(state.moments));
   updateBadge();
   markLocalChange();
 }
@@ -818,7 +821,7 @@ $$('.sheet-overlay').forEach(o => o.addEventListener('click', e => { if (e.targe
 function updateQuickFabVisibility(viewName = state.currentView) {
   const quickFab = $('#quick-fab');
   if (!quickFab) return;
-  const visibleViews = ['tx', 'subs', 'accounts', 'settings', 'anniversaries'];
+  const visibleViews = ['tx', 'subs', 'accounts', 'settings', 'anniversaries', 'moments'];
   quickFab.style.display = visibleViews.includes(viewName) ? 'flex' : 'none';
 }
 
@@ -845,6 +848,8 @@ function quickFabAction(action) {
     showView('savings');
   } else if (action === 'anniversaries') {
     showView('anniversaries');
+  } else if (action === 'moments') {
+    showView('moments');
   }
 }
 
@@ -4121,7 +4126,7 @@ function render() {
   const fns = [renderOverview, renderSubs, renderTx, renderAccounts, renderReports,
     renderQRCodes, renderInvoices, renderBudgets, renderSavingsGoals,
     renderCreditCardBills, renderCalendar, renderRecurringTx,
-    renderAnniversaries,
+    renderAnniversaries, renderMoments,
     updateLockStatus, updateNotifStatus, updateExrateStatus, updateCloudStatus, updateThemeStatus, updateCalorieStatus,
     renderPendingItems];
   if (state.currentView === 'subdetail') fns.push(renderSubDetail);
@@ -4145,15 +4150,15 @@ $$('#tx-fp .pl').forEach(p => {
 
 // ===== Data Management =====
 function clearAll() {
-  state.accounts = []; state.subscriptions = []; state.transactions = []; state.qrcodes = []; state.invoices = []; state.recurringTx = []; state.savingsGoals = []; state.salaryPendingIncome = []; state.anniversaries = [];
+  state.accounts = []; state.subscriptions = []; state.transactions = []; state.qrcodes = []; state.invoices = []; state.recurringTx = []; state.savingsGoals = []; state.salaryPendingIncome = []; state.anniversaries = []; state.moments = [];
   state.settings = { appPassword: null, notifications: false, exRates: { USD: 7.25, EUR: 7.85, GBP: 9.20, JPY: 0.048, HKD: 0.93, TWD: 0.22 }, defaultCurrency: 'CNY' };
   localStorage.removeItem(KEYS.accounts); localStorage.removeItem(KEYS.subscriptions); localStorage.removeItem(KEYS.transactions);
   localStorage.removeItem(KEYS.onboarded); localStorage.removeItem(KEYS.settings); localStorage.removeItem(KEYS.qrcodes);
-  localStorage.removeItem(KEYS.invoices); localStorage.removeItem(KEYS.recurringTx); localStorage.removeItem(KEYS.savingsGoals); localStorage.removeItem(KEYS.salaryPendingIncome); localStorage.removeItem(KEYS.anniversaries);
+  localStorage.removeItem(KEYS.invoices); localStorage.removeItem(KEYS.recurringTx); localStorage.removeItem(KEYS.savingsGoals); localStorage.removeItem(KEYS.salaryPendingIncome); localStorage.removeItem(KEYS.anniversaries); localStorage.removeItem(KEYS.moments);
   render();
 }
 function exportData() {
-  const data = { accounts: state.accounts, subscriptions: state.subscriptions, transactions: state.transactions, qrcodes: state.qrcodes, invoices: state.invoices, recurringTx: state.recurringTx, savingsGoals: state.savingsGoals, salaryPendingIncome: state.salaryPendingIncome, anniversaries: state.anniversaries, settings: state.settings, exportedAt: new Date().toISOString() };
+  const data = { accounts: state.accounts, subscriptions: state.subscriptions, transactions: state.transactions, qrcodes: state.qrcodes, invoices: state.invoices, recurringTx: state.recurringTx, savingsGoals: state.savingsGoals, salaryPendingIncome: state.salaryPendingIncome, anniversaries: state.anniversaries, moments: state.moments, settings: state.settings, exportedAt: new Date().toISOString() };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -4205,6 +4210,7 @@ $('#import-file').addEventListener('change', e => {
       if (data.savingsGoals) state.savingsGoals = data.savingsGoals;
       if (data.salaryPendingIncome) state.salaryPendingIncome = data.salaryPendingIncome;
       if (data.anniversaries) state.anniversaries = data.anniversaries;
+      if (data.moments) state.moments = data.moments;
       if (data.settings) state.settings = { ...state.settings, ...data.settings };
       save(); render(); toast('数据已导入');
       haptic('success');
@@ -4214,9 +4220,15 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '2.9.6';
+const APP_VERSION = '2.10.0';
 const APP_BUILD = '2026-08-16';
 const CHANGELOG = [
+  { ver: '2.10.0', date: '2026-08-16', items: [
+    '新增「瞬间」功能：拍照+文字+心情记录生活美好',
+    '支持照片上传、心情选择、标签分类',
+    '按日期分组的时间线展示，点击照片可全屏预览',
+    '支持云同步和导入导出'
+  ]},
   { ver: '2.9.6', date: '2026-08-16', items: [
     '纪念日图标支持上传自定义图片，替代Emoji'
   ]},
@@ -7530,7 +7542,7 @@ function downloadInvoice() {
 // ===== Cloud Sync (Supabase) =====
 const PUBLIC_SUPABASE_URL = 'https://cicauycbflanpqcrfakd.supabase.co';
 const PUBLIC_SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNpY2F1eWNiZmxhbnBxY3JmYWtkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwOTA4NzcsImV4cCI6MjEwMTY2Njg3N30.kegH6ESniP0ouFtio5EHw0XDOHxJFCgtzx-dELjCx7c';
-const CLOUD_DATA_TYPES = ['accounts', 'subscriptions', 'transactions', 'qrcodes', 'invoices', 'settings', 'salaryPendingIncome', 'budgets', 'savingsGoals', 'recurringTx', 'anniversaries'];
+const CLOUD_DATA_TYPES = ['accounts', 'subscriptions', 'transactions', 'qrcodes', 'invoices', 'settings', 'salaryPendingIncome', 'budgets', 'savingsGoals', 'recurringTx', 'anniversaries', 'moments'];
 
 function getSupabaseConfig() {
   try {
@@ -8930,6 +8942,201 @@ function deleteAnniversaryCurrent() {
   toast('已删除');
   haptic('success');
   renderAnniversaries();
+}
+
+// ===== Moments (瞬间) =====
+const MOMENT_MOODS = [
+  { icon: '😊', label: '开心' },
+  { icon: '🥰', label: '幸福' },
+  { icon: '😎', label: '得意' },
+  { icon: '😴', label: '疲惫' },
+  { icon: '🤔', label: '思考' },
+  { icon: '😢', label: '难过' },
+  { icon: '😡', label: '生气' },
+  { icon: '🎉', label: '庆祝' },
+];
+
+state.editMomentId = null;
+state.momentPhoto = null;
+state.momentMood = '';
+
+function renderMoodPicker() {
+  const pickerEl = $('#moment-mood-picker');
+  if (!pickerEl) return;
+  pickerEl.innerHTML = MOMENT_MOODS.map(m => {
+    const isActive = state.momentMood === m.icon;
+    return `<div class="mood-btn ${isActive ? 'active' : ''}" onclick="selectMomentMood('${m.icon}')" title="${m.label}">${m.icon}</div>`;
+  }).join('');
+}
+
+function selectMomentMood(mood) {
+  state.momentMood = state.momentMood === mood ? '' : mood;
+  haptic('light');
+  renderMoodPicker();
+}
+
+function onMomentPhotoUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (file.size > 3 * 1024 * 1024) { toast('图片不能超过3MB'); return; }
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    state.momentPhoto = e.target.result;
+    const preview = $('#moment-photo-preview');
+    preview.innerHTML = `<img src="${state.momentPhoto}" style="width:100%;height:100%;object-fit:cover;border-radius:14px;" />`;
+    haptic('light');
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeMomentPhoto() {
+  state.momentPhoto = null;
+  $('#moment-photo-file').value = '';
+  $('#moment-photo-preview').innerHTML = '<span style="color:var(--t3);font-size:24px;">📷</span>';
+}
+
+function openMomentEditor(id) {
+  const editing = id ? state.moments.find(m => m.id === id) : null;
+  state.editMomentId = id || null;
+
+  $('#moment-sheet-title').textContent = editing ? '编辑瞬间' : '记录瞬间';
+  $('#moment-text').value = editing ? (editing.text || '') : '';
+  $('#moment-date').value = editing ? editing.date : today();
+  $('#moment-tag').value = editing ? (editing.tag || '') : '';
+  state.momentMood = editing ? (editing.mood || '') : '';
+  state.momentPhoto = editing ? (editing.photo || null) : null;
+  $('#moment-photo-file').value = '';
+
+  if (state.momentPhoto) {
+    $('#moment-photo-preview').innerHTML = `<img src="${state.momentPhoto}" style="width:100%;height:100%;object-fit:cover;border-radius:14px;" />`;
+  } else {
+    $('#moment-photo-preview').innerHTML = '<span style="color:var(--t3);font-size:24px;">📷</span>';
+  }
+
+  renderMoodPicker();
+
+  // Update tag datalist
+  const tags = [...new Set(state.moments.map(m => m.tag).filter(Boolean))];
+  $('#moment-tag-list').innerHTML = tags.map(t => `<option value="${escapeHtml(t)}">`).join('');
+
+  $('#moment-delete-btn').style.display = editing ? 'block' : 'none';
+  openSheet('sheet-moment');
+}
+
+function saveMoment() {
+  const text = $('#moment-text').value.trim();
+  const date = $('#moment-date').value;
+  if (!date) { toast('请选择日期'); return; }
+  if (!text && !state.momentPhoto) { toast('请输入文字或选择照片'); return; }
+
+  const data = {
+    text,
+    date,
+    photo: state.momentPhoto,
+    mood: state.momentMood,
+    tag: $('#moment-tag').value.trim(),
+  };
+
+  if (state.editMomentId) {
+    const idx = state.moments.findIndex(m => m.id === state.editMomentId);
+    if (idx >= 0) {
+      data.id = state.editMomentId;
+      data.createdAt = state.moments[idx].createdAt;
+      state.moments[idx] = data;
+    }
+  } else {
+    data.id = 'm' + Date.now() + Math.random().toString(36).slice(2, 6);
+    data.createdAt = new Date().toISOString();
+    state.moments.unshift(data);
+  }
+
+  save();
+  closeSheet('sheet-moment');
+  toast(state.editMomentId ? '已更新' : '已记录');
+  haptic('success');
+  renderMoments();
+}
+
+function deleteMomentCurrent() {
+  if (!state.editMomentId) return;
+  if (!confirm('确定删除此瞬间？')) return;
+  state.moments = state.moments.filter(m => m.id !== state.editMomentId);
+  save();
+  closeSheet('sheet-moment');
+  toast('已删除');
+  haptic('success');
+  renderMoments();
+}
+
+function renderMoments() {
+  const listEl = $('#moments-list');
+  if (!listEl) return;
+
+  if (!state.moments || state.moments.length === 0) {
+    listEl.innerHTML = `<div class="moment-empty"><span>✦</span>还没有记录任何瞬间<br>点击右上角 + 开始记录</div>`;
+    return;
+  }
+
+  // Sort by date descending (newest first)
+  const sorted = [...state.moments].sort((a, b) => {
+    const da = (a.date || '') + (a.createdAt || '');
+    const db = (b.date || '') + (b.createdAt || '');
+    return db.localeCompare(da);
+  });
+
+  // Group by date
+  const groups = {};
+  sorted.forEach(m => {
+    const key = m.date || '未知日期';
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(m);
+  });
+
+  let html = '';
+  for (const [dateStr, items] of Object.entries(groups)) {
+    const d = new Date(dateStr + 'T00:00:00');
+    const dateLabel = isNaN(d) ? dateStr : d.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+    const weekday = isNaN(d) ? '' : ['日','一','二','三','四','五','六'][d.getDay()];
+
+    html += `<div style="margin-bottom:8px;padding:0 4px;">
+      <span style="font-size:13px;font-weight:600;color:var(--gold);">${dateLabel}</span>
+      <span style="font-size:11px;color:var(--t3);margin-left:6px;">星期${weekday}</span>
+    </div>`;
+
+    for (const m of items) {
+      const moodHtml = m.mood ? `<span class="moment-mood">${m.mood}</span>` : '';
+      const photoHtml = m.photo ? `<img class="moment-img" src="${m.photo}" onclick="event.stopPropagation();previewImage('${m.id}')" />` : '';
+      const textHtml = m.text ? `<div class="moment-text">${escapeHtml(m.text)}</div>` : '';
+      const tagHtml = m.tag ? `<div class="moment-tags"><span class="moment-tag">${escapeHtml(m.tag)}</span></div>` : '';
+
+      html += `
+        <div class="moment-card" onclick="openMomentEditor('${m.id}')">
+          ${photoHtml}
+          <div class="moment-body">
+            <div class="moment-date">${moodHtml}${dateLabel} · 星期${weekday}</div>
+            ${textHtml}
+            ${tagHtml}
+          </div>
+        </div>`;
+    }
+  }
+
+  listEl.innerHTML = html;
+
+  // Update subtitle
+  const sub = $('#moments-sub');
+  if (sub) sub.textContent = `共 ${state.moments.length} 条瞬间`;
+}
+
+function previewImage(momentId) {
+  const m = state.moments.find(x => x.id === momentId);
+  if (!m || !m.photo) return;
+  // Simple full-screen preview
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.innerHTML = `<img src="${m.photo}" style="max-width:100%;max-height:100%;border-radius:12px;" /><div style="position:absolute;top:16px;right:16px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;cursor:pointer;">✕</div>`;
+  overlay.addEventListener('click', () => overlay.remove());
+  document.body.appendChild(overlay);
 }
 
 function escapeHtml(text) {
