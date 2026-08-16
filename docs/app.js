@@ -4214,9 +4214,12 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '2.9.2';
+const APP_VERSION = '2.9.3';
 const APP_BUILD = '2026-08-16';
 const CHANGELOG = [
+  { ver: '2.9.3', date: '2026-08-16', items: [
+    '纪念日卡片增加边框和分隔线，每条记录视觉区分更清晰'
+  ]},
   { ver: '2.9.2', date: '2026-08-16', items: [
     '纪念日编辑器：日期信息显示在输入框右侧，点击切换三种格式'
   ]},
@@ -8726,18 +8729,18 @@ function renderAnniversaries() {
     const groupTag = (a.group || '').trim() ? `<span style="font-size:11px;color:var(--gold);background:rgba(212,175,122,0.1);padding:2px 8px;border-radius:8px;margin-left:6px;">${escapeHtml(a.group.trim())}</span>` : '';
 
     return `
-      <div class="card" style="margin-bottom:12px;padding:16px;" onclick="openAnniversaryEditor('${a.id}')">
+      <div class="card" style="margin-bottom:16px;padding:18px 16px;border:1px solid var(--bd);border-radius:18px;background:rgba(255,255,255,0.03);" onclick="openAnniversaryEditor('${a.id}')">
         <div style="display:flex;align-items:flex-start;gap:12px;">
-          <div style="width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;background:rgba(255,255,255,0.06);flex-shrink:0;">
+          <div style="width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;background:rgba(255,255,255,0.08);flex-shrink:0;border:1px solid var(--bd);">
             ${typeInfo.icon}
           </div>
           <div style="flex:1;min-width:0;">
-            <div style="display:flex;align-items:center;flex-wrap:wrap;margin-bottom:4px;">
+            <div style="display:flex;align-items:center;flex-wrap:wrap;margin-bottom:6px;">
               <span style="font-size:16px;font-weight:600;color:var(--t1);">${escapeHtml(a.name)}</span>
               ${yearTag}
               ${groupTag}
             </div>
-            <div style="font-size:12px;color:var(--t3);margin-bottom:8px;">${dateStr}${a.repeat === 'year' ? ' · 每年' : ''}</div>
+            <div style="font-size:12px;color:var(--t3);margin-bottom:10px;padding-bottom:8px;border-bottom:1px dashed var(--bd);">${dateStr}${a.repeat === 'year' ? ' · 每年' : ''}</div>
             ${a.note ? `<div style="font-size:13px;color:var(--t2);margin-bottom:8px;font-style:italic;">"${escapeHtml(a.note)}"</div>` : ''}
             <div style="display:flex;align-items:center;gap:6px;font-size:14px;color:var(--t2);">
               ${daysHtml} ${statusHtml}
