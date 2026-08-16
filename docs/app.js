@@ -4238,9 +4238,13 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '2.10.7';
+const APP_VERSION = '2.10.8';
 const APP_BUILD = '2026-08-16';
 const CHANGELOG = [
+  { ver: '2.10.8', date: '2026-08-16', items: [
+    '瞬间图片改为一行4列网格布局，更紧凑',
+    '全屏预览时左上角可保存图片到本地'
+  ]},
   { ver: '2.10.7', date: '2026-08-16', items: [
     '移除瞬间照片数量限制，想传多少张都可以'
   ]},
@@ -9380,8 +9384,8 @@ function renderMoments() {
         if (photos.length === 1) {
           photoHtml = `<img class="moment-img" src="${photos[0]}" onclick="event.stopPropagation();previewMomentImages('${m.id}',0)" />`;
         } else if (photos.length > 1) {
-          photoHtml = `<div class="moment-img-gallery" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">` +
-            photos.map((p, i) => `<img src="${p}" style="width:calc(50% - 2px);height:120px;object-fit:cover;border-radius:10px;cursor:pointer;" onclick="event.stopPropagation();previewMomentImages('${m.id}',${i})" />`).join('') +
+          photoHtml = `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:8px;">` +
+            photos.map((p, i) => `<img src="${p}" style="width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:8px;cursor:pointer;" onclick="event.stopPropagation();previewMomentImages('${m.id}',${i})" />`).join('') +
             `</div>`;
         }
         const textHtml = m.text ? `<div class="moment-text">${escapeHtml(m.text)}</div>` : '';
@@ -9502,11 +9506,36 @@ function previewMomentImages(momentId, startIdx) {
       indicator.textContent = `${currentIdx + 1} / ${photos.length}`;
       overlay.appendChild(indicator);
     }
+
+    // Save button
+    const saveBtn = document.createElement('div');
+    saveBtn.style.cssText = 'position:absolute;top:16px;left:16px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;cursor:pointer;';
+    saveBtn.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+    saveBtn.title = '保存到本地';
+    saveBtn.onclick = (e) => { e.stopPropagation(); saveMomentPhotoToLocal(photos[currentIdx]); };
+    overlay.appendChild(saveBtn);
   }
 
   renderImg();
   overlay.addEventListener('click', () => overlay.remove());
   document.body.appendChild(overlay);
+}
+
+function saveMomentPhotoToLocal(dataUrl) {
+  try {
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = `moment_${Date.now()}.jpg`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    toast('已保存到本地');
+    haptic('success');
+  } catch (e) {
+    // Fallback: open in new tab for manual save
+    window.open(dataUrl, '_blank');
+    toast('已在新窗口打开，长按图片保存');
+  }
 }
 
 function escapeHtml(text) {
