@@ -2390,9 +2390,11 @@ textarea.form-i{resize:none;min-height:80px;}
     </div>
     <div class="form-g">
       <label class="form-l">日期</label>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <input type="date" class="form-i" id="anni-date" style="flex:1;" oninput="updateAnniDateInfo()">
-        <div id="anni-date-info" style="flex-shrink:0;font-size:12px;color:var(--gold);background:rgba(212,175,122,0.1);padding:6px 10px;border-radius:8px;white-space:nowrap;cursor:pointer;user-select:none;display:none;" onclick="toggleAnniDateFormat()">--</div>
+      <input type="date" class="form-i" id="anni-date" oninput="updateAnniDateInfo()">
+      <div id="anni-date-info" style="display:none;gap:6px;flex-wrap:wrap;margin-top:8px;">
+        <span id="anni-info-ymd" style="font-size:12px;color:var(--gold);background:rgba(212,175,122,0.1);padding:4px 10px;border-radius:8px;white-space:nowrap;"></span>
+        <span id="anni-info-md" style="font-size:12px;color:#5e6bff;background:rgba(94,107,255,0.1);padding:4px 10px;border-radius:8px;white-space:nowrap;"></span>
+        <span id="anni-info-d" style="font-size:12px;color:#e64980;background:rgba(230,73,128,0.1);padding:4px 10px;border-radius:8px;white-space:nowrap;"></span>
       </div>
     </div>
     <div class="form-g">
