@@ -3175,7 +3175,7 @@ function renderOverview() {
   // 储蓄总进度（始终显示）
   const savingsItem = $('#hero-savings-item');
   if (savingsItem) {
-    const totalSaved = state.savingsGoals.reduce((s, g) => s + (g.currentAmount || 0), 0);
+    const totalSaved = state.savingsGoals.reduce((s, g) => s + getSavingsCurrentAmount(g), 0);
     const totalTarget = state.savingsGoals.reduce((s, g) => s + (g.targetAmount || 0), 0);
     const pct = totalTarget > 0 ? Math.min(100, Math.round((totalSaved / totalTarget) * 100)) : 0;
     $('#hero-savings-pct').textContent = pct;
@@ -4221,9 +4221,13 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '2.10.2';
+const APP_VERSION = '2.10.3';
 const APP_BUILD = '2026-08-16';
 const CHANGELOG = [
+  { ver: '2.10.3', date: '2026-08-16', items: [
+    '储蓄目标支持「卡包总余额自动计算进度」',
+    '开启后进度条自动跟随卡包总余额变化，无需手动更新'
+  ]},
   { ver: '2.10.2', date: '2026-08-16', items: [
     '瞬间功能支持多图片上传，最多可选多张照片',
     '瞬间列表展示多图画廊，支持左右切换全屏浏览',
@@ -8358,13 +8362,47 @@ function saveTransfer() {
 }
 
 // ===== Savings Goals =====
+function getTotalAccountBalance() {
+  return state.accounts.filter(a => a.includeInAssets !== false).reduce((s, a) => s + (a.balance || 0), 0);
+}
+
+function getSavingsCurrentAmount(g) {
+  if (g.useTotalBalance) {
+    return getTotalAccountBalance();
+  }
+  return g.currentAmount || 0;
+}
+
+function onSavingsUseTotalBalanceToggle() {
+  const cb = $('#savings-use-total-balance');
+  const track = $('#savings-toggle-track');
+  const thumb = $('#savings-toggle-thumb');
+  const hint = $('#savings-total-balance-hint');
+  const currentGroup = $('#savings-current-group');
+  const checked = cb.checked;
+  if (checked) {
+    track.style.background = 'var(--gold)';
+    thumb.style.transform = 'translateX(18px)';
+    hint.style.display = 'block';
+    currentGroup.style.display = 'none';
+    const total = getTotalAccountBalance();
+    hint.textContent = `已开启：进度将自动按卡包总余额 ¥${fmt(Math.round(total))} / 目标金额计算`;
+  } else {
+    track.style.background = 'rgba(255,255,255,0.1)';
+    thumb.style.transform = 'translateX(0)';
+    hint.style.display = 'none';
+    currentGroup.style.display = '';
+  }
+  haptic('light');
+}
+
 function renderSavingsGoals() {
   const listEl = $('#savings-list');
   if (!listEl) return;
   const summaryEl = $('#savings-summary-container');
   const subEl = $('#savings-sub');
 
-  const totalSaved = state.savingsGoals.reduce((s, g) => s + (g.currentAmount || 0), 0);
+  const totalSaved = state.savingsGoals.reduce((s, g) => s + getSavingsCurrentAmount(g), 0);
   const totalTarget = state.savingsGoals.reduce((s, g) => s + (g.targetAmount || 0), 0);
 
   if (subEl) {
@@ -8396,8 +8434,9 @@ function renderSavingsGoals() {
   }
 
   listEl.innerHTML = state.savingsGoals.map(g => {
-    const pct = g.targetAmount > 0 ? Math.min(100, Math.round((g.currentAmount / g.targetAmount) * 100)) : 0;
-    const isDone = g.targetAmount > 0 && g.currentAmount >= g.targetAmount;
+    const currentAmt = getSavingsCurrentAmount(g);
+    const pct = g.targetAmount > 0 ? Math.min(100, Math.round((currentAmt / g.targetAmount) * 100)) : 0;
+    const isDone = g.targetAmount > 0 && currentAmt >= g.targetAmount;
     const circumference = 2 * Math.PI * 26;
     const dashOffset = circumference * (1 - pct / 100);
 
@@ -8424,6 +8463,7 @@ function renderSavingsGoals() {
 
     const acct = g.accountId ? state.accounts.find(a => a.id === g.accountId) : null;
     const acctText = acct ? ` · ${acct.name}` : '';
+    const autoTag = g.useTotalBalance ? ' <span style="font-size:10px;color:var(--gold);background:rgba(255,193,7,0.1);padding:1px 6px;border-radius:6px;">自动</span>' : '';
 
     return `<div class="savings-item" onclick="openSavingsEditor('${g.id}')">
       <div class="savings-ring">
@@ -8435,8 +8475,8 @@ function renderSavingsGoals() {
         <div class="savings-ring-pct">${pct}%</div>
       </div>
       <div class="savings-info">
-        <div class="savings-name">${g.name}</div>
-        <div class="savings-amt"><span class="cur">¥${fmt(g.currentAmount || 0)}</span> / ¥${fmt(g.targetAmount || 0)}${acctText}</div>
+        <div class="savings-name">${g.name}${autoTag}</div>
+        <div class="savings-amt"><span class="cur">¥${fmt(Math.round(currentAmt))}</span> / ¥${fmt(g.targetAmount || 0)}${acctText}</div>
         <div class="savings-days ${daysClass}">${daysText}</div>
       </div>
       <div class="savings-actions">
@@ -8469,6 +8509,8 @@ function openSavingsEditor(id) {
     $('#savings-current').value = '0';
     $('#savings-account').value = '';
     $('#savings-deadline').value = '';
+    $('#savings-use-total-balance').checked = false;
+    onSavingsUseTotalBalanceToggle();
   } else {
     const g = state.savingsGoals.find(x => x.id === id);
     if (!g) return;
@@ -8477,6 +8519,8 @@ function openSavingsEditor(id) {
     $('#savings-current').value = g.currentAmount || 0;
     $('#savings-account').value = g.accountId || '';
     $('#savings-deadline').value = g.deadline || '';
+    $('#savings-use-total-balance').checked = !!g.useTotalBalance;
+    onSavingsUseTotalBalanceToggle();
   }
 
   openSheet('sheet-savings');
@@ -8489,10 +8533,11 @@ function saveSavingsGoal() {
   const targetAmount = parseFloat($('#savings-target').value);
   if (!targetAmount || targetAmount <= 0) { toast('请输入目标金额'); haptic('error'); return; }
   const currentAmount = parseFloat($('#savings-current').value) || 0;
+  const useTotalBalance = $('#savings-use-total-balance').checked;
   const accountId = $('#savings-account').value || null;
   const deadline = $('#savings-deadline').value || null;
 
-  const data = { name, targetAmount, currentAmount, accountId, deadline };
+  const data = { name, targetAmount, currentAmount, useTotalBalance, accountId, deadline };
 
   if (state.editSavingsId) {
     const g = state.savingsGoals.find(x => x.id === state.editSavingsId);

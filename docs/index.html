@@ -2390,9 +2390,20 @@ textarea.form-i{resize:none;min-height:80px;}
       <label class="form-l">目标金额</label>
       <input type="text" class="form-i" id="savings-target" placeholder="0.00" inputmode="decimal">
     </div>
-    <div class="form-g">
+    <div class="form-g" id="savings-current-group">
       <label class="form-l">已存金额（可选）</label>
       <input type="text" class="form-i" id="savings-current" placeholder="0.00" inputmode="decimal" value="0">
+    </div>
+    <div class="form-g">
+      <label class="form-l" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;">
+        <span>进度根据卡包总余额自动计算</span>
+        <span style="position:relative;display:inline-block;width:44px;height:26px;flex-shrink:0;">
+          <input type="checkbox" id="savings-use-total-balance" style="display:none;" onchange="onSavingsUseTotalBalanceToggle()">
+          <span id="savings-toggle-track" style="position:absolute;inset:0;background:rgba(255,255,255,0.1);border-radius:13px;transition:background 0.2s;"></span>
+          <span id="savings-toggle-thumb" style="position:absolute;top:3px;left:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:transform 0.2s;"></span>
+        </span>
+      </label>
+      <p id="savings-total-balance-hint" style="font-size:11px;color:var(--t3);margin-top:6px;display:none;">已开启：进度将自动按卡包总余额 / 目标金额计算</p>
     </div>
     <div class="form-g">
       <label class="form-l">关联账户（可选）</label>
@@ -2554,6 +2565,6 @@ if ('caches' in window) {
     .catch(()=>{});
 }
 </script>
-<script src="app.js?v=2.10.2"></script>
+<script src="app.js?v=2.10.3"></script>
 </body>
 </html>
