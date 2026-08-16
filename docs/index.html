@@ -2485,17 +2485,19 @@ textarea.form-i{resize:none;min-height:80px;}
     <div class="sheet-handle"></div>
     <div class="sheet-title" id="moment-sheet-title">记录瞬间</div>
     <div class="form-g">
-      <label class="form-l">照片</label>
-      <div style="display:flex;align-items:center;gap:12px;">
+      <label class="form-l">照片（可多选）</label>
+      <div style="display:flex;align-items:flex-start;gap:12px;">
         <div id="moment-photo-preview" style="width:80px;height:80px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;background:rgba(255,255,255,0.06);border:1px dashed var(--bd);flex-shrink:0;overflow:hidden;cursor:pointer;" onclick="document.getElementById('moment-photo-file').click()">
           <span style="color:var(--t3);font-size:24px;">📷</span>
         </div>
         <div style="flex:1;">
-          <input type="file" id="moment-photo-file" accept="image/*" style="display:none;" onchange="onMomentPhotoUpload(event)">
-          <button class="btn btn-outline" style="width:100%;font-size:13px;padding:8px;" onclick="document.getElementById('moment-photo-file').click()">选择照片</button>
-          <button class="btn btn-outline" style="width:100%;font-size:13px;padding:6px;margin-top:6px;color:var(--t3);" onclick="removeMomentPhoto()">移除照片</button>
+          <input type="file" id="moment-photo-file" accept="image/*" multiple style="display:none;" onchange="onMomentPhotoUpload(event)">
+          <button class="btn btn-outline" style="width:100%;font-size:13px;padding:8px;" onclick="document.getElementById('moment-photo-file').click()">选择照片（可多选）</button>
+          <button class="btn btn-outline" style="width:100%;font-size:13px;padding:6px;margin-top:6px;color:var(--t3);" onclick="removeMomentPhoto()">移除全部照片</button>
+          <p style="font-size:11px;color:var(--t3);margin-top:6px;">已选 <span id="moment-photo-count">0</span> 张，每张限3MB</p>
         </div>
       </div>
+      <div id="moment-photo-gallery" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;"></div>
     </div>
     <div class="form-g">
       <label class="form-l">文字（可选）</label>
@@ -2552,6 +2554,6 @@ if ('caches' in window) {
     .catch(()=>{});
 }
 </script>
-<script src="app.js?v=2.10.1"></script>
+<script src="app.js?v=2.10.2"></script>
 </body>
 </html>

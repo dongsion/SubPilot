@@ -4221,9 +4221,14 @@ $('#import-file').addEventListener('change', e => {
 });
 
 // ===== Version Management =====
-const APP_VERSION = '2.10.1';
+const APP_VERSION = '2.10.2';
 const APP_BUILD = '2026-08-16';
 const CHANGELOG = [
+  { ver: '2.10.2', date: '2026-08-16', items: [
+    '瞬间功能支持多图片上传，最多可选多张照片',
+    '瞬间列表展示多图画廊，支持左右切换全屏浏览',
+    '修复保存瞬间时图片校验逻辑错误的问题'
+  ]},
   { ver: '2.10.1', date: '2026-08-16', items: [
     '修复初始状态未定义moments导致按钮可能无响应的问题'
   ]},
@@ -8961,7 +8966,7 @@ const MOMENT_MOODS = [
 ];
 
 state.editMomentId = null;
-state.momentPhoto = null;
+state.momentPhotos = []; // array of base64 images
 state.momentMood = '';
 
 function renderMoodPicker() {
@@ -8980,23 +8985,71 @@ function selectMomentMood(mood) {
 }
 
 function onMomentPhotoUpload(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  if (file.size > 3 * 1024 * 1024) { toast('图片不能超过3MB'); return; }
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    state.momentPhoto = e.target.result;
-    const preview = $('#moment-photo-preview');
-    preview.innerHTML = `<img src="${state.momentPhoto}" style="width:100%;height:100%;object-fit:cover;border-radius:14px;" />`;
-    haptic('light');
-  };
-  reader.readAsDataURL(file);
+  const files = Array.from(event.target.files || []);
+  if (files.length === 0) return;
+  let processed = 0;
+  files.forEach(file => {
+    if (file.size > 3 * 1024 * 1024) { toast(`图片 ${file.name} 超过3MB，已跳过`); processed++; return; }
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      state.momentPhotos.push(e.target.result);
+      processed++;
+      if (processed === files.length) {
+        haptic('light');
+        renderMomentPhotoGallery();
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderMomentPhotoGallery() {
+  const galleryEl = $('#moment-photo-gallery');
+  const previewEl = $('#moment-photo-preview');
+  const countEl = $('#moment-photo-count');
+  if (!galleryEl) return;
+
+  if (state.momentPhotos.length === 0) {
+    galleryEl.innerHTML = '';
+    previewEl.innerHTML = '<span style="color:var(--t3);font-size:24px;">📷</span>';
+    if (countEl) countEl.textContent = '0';
+    return;
+  }
+
+  // Update preview with first image
+  previewEl.innerHTML = `<img src="${state.momentPhotos[0]}" style="width:100%;height:100%;object-fit:cover;border-radius:14px;" />`;
+  if (countEl) countEl.textContent = String(state.momentPhotos.length);
+
+  // Render gallery thumbnails
+  galleryEl.innerHTML = state.momentPhotos.map((photo, idx) => {
+    return `<div style="position:relative;width:72px;height:72px;border-radius:10px;overflow:hidden;flex-shrink:0;">
+      <img src="${photo}" style="width:100%;height:100%;object-fit:cover;cursor:pointer;" onclick="previewMomentPhoto(${idx})" />
+      <div onclick="removeMomentPhotoAt(${idx})" style="position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;cursor:pointer;line-height:1;">✕</div>
+      ${idx === 0 ? '<div style="position:absolute;bottom:2px;left:2px;font-size:9px;color:#fff;background:rgba(0,0,0,0.5);padding:1px 5px;border-radius:4px;">封面</div>' : ''}
+    </div>`;
+  }).join('');
+}
+
+function removeMomentPhotoAt(idx) {
+  state.momentPhotos.splice(idx, 1);
+  haptic('light');
+  renderMomentPhotoGallery();
 }
 
 function removeMomentPhoto() {
-  state.momentPhoto = null;
+  state.momentPhotos = [];
   $('#moment-photo-file').value = '';
-  $('#moment-photo-preview').innerHTML = '<span style="color:var(--t3);font-size:24px;">📷</span>';
+  renderMomentPhotoGallery();
+}
+
+function previewMomentPhoto(idx) {
+  const photo = state.momentPhotos[idx];
+  if (!photo) return;
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.innerHTML = `<img src="${photo}" style="max-width:100%;max-height:100%;border-radius:12px;" /><div style="position:absolute;top:16px;right:16px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;cursor:pointer;">✕</div>`;
+  overlay.addEventListener('click', () => overlay.remove());
+  document.body.appendChild(overlay);
 }
 
 function openMomentEditor(id) {
@@ -9008,14 +9061,9 @@ function openMomentEditor(id) {
   $('#moment-date').value = editing ? editing.date : today();
   $('#moment-tag').value = editing ? (editing.tag || '') : '';
   state.momentMood = editing ? (editing.mood || '') : '';
-  state.momentPhoto = editing ? (editing.photo || null) : null;
+  state.momentPhotos = editing && editing.photos ? [...editing.photos] : (editing && editing.photo ? [editing.photo] : []);
   $('#moment-photo-file').value = '';
-
-  if (state.momentPhoto) {
-    $('#moment-photo-preview').innerHTML = `<img src="${state.momentPhoto}" style="width:100%;height:100%;object-fit:cover;border-radius:14px;" />`;
-  } else {
-    $('#moment-photo-preview').innerHTML = '<span style="color:var(--t3);font-size:24px;">📷</span>';
-  }
+  renderMomentPhotoGallery();
 
   renderMoodPicker();
 
@@ -9031,12 +9079,12 @@ function saveMoment() {
   const text = $('#moment-text').value.trim();
   const date = $('#moment-date').value;
   if (!date) { toast('请选择日期'); return; }
-  if (!text && !state.momentPhoto) { toast('请输入文字或选择照片'); return; }
+  if (!text && state.momentPhotos.length === 0) { toast('请输入文字或选择照片'); return; }
 
   const data = {
     text,
     date,
-    photo: state.momentPhoto,
+    photos: state.momentPhotos,
     mood: state.momentMood,
     tag: $('#moment-tag').value.trim(),
   };
@@ -9109,7 +9157,15 @@ function renderMoments() {
 
     for (const m of items) {
       const moodHtml = m.mood ? `<span class="moment-mood">${m.mood}</span>` : '';
-      const photoHtml = m.photo ? `<img class="moment-img" src="${m.photo}" onclick="event.stopPropagation();previewImage('${m.id}')" />` : '';
+      const photos = m.photos || (m.photo ? [m.photo] : []);
+      let photoHtml = '';
+      if (photos.length === 1) {
+        photoHtml = `<img class="moment-img" src="${photos[0]}" onclick="event.stopPropagation();previewMomentImages('${m.id}',0)" />`;
+      } else if (photos.length > 1) {
+        photoHtml = `<div class="moment-img-gallery" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">` +
+          photos.map((p, i) => `<img src="${p}" style="width:calc(50% - 2px);height:120px;object-fit:cover;border-radius:10px;cursor:pointer;" onclick="event.stopPropagation();previewMomentImages('${m.id}',${i})" />`).join('') +
+          `</div>`;
+      }
       const textHtml = m.text ? `<div class="moment-text">${escapeHtml(m.text)}</div>` : '';
       const tagHtml = m.tag ? `<div class="moment-tags"><span class="moment-tag">${escapeHtml(m.tag)}</span></div>` : '';
 
@@ -9132,13 +9188,53 @@ function renderMoments() {
   if (sub) sub.textContent = `共 ${state.moments.length} 条瞬间`;
 }
 
-function previewImage(momentId) {
+function previewMomentImages(momentId, startIdx) {
   const m = state.moments.find(x => x.id === momentId);
-  if (!m || !m.photo) return;
-  // Simple full-screen preview
+  if (!m) return;
+  const photos = m.photos || (m.photo ? [m.photo] : []);
+  if (photos.length === 0) return;
+
+  let currentIdx = startIdx || 0;
   const overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
-  overlay.innerHTML = `<img src="${m.photo}" style="max-width:100%;max-height:100%;border-radius:12px;" /><div style="position:absolute;top:16px;right:16px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;cursor:pointer;">✕</div>`;
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;';
+
+  function renderImg() {
+    overlay.innerHTML = '';
+    const img = document.createElement('img');
+    img.src = photos[currentIdx];
+    img.style.cssText = 'max-width:100%;max-height:80vh;border-radius:12px;object-fit:contain;';
+    overlay.appendChild(img);
+
+    // Close button
+    const closeBtn = document.createElement('div');
+    closeBtn.style.cssText = 'position:absolute;top:16px;right:16px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;cursor:pointer;';
+    closeBtn.textContent = '✕';
+    closeBtn.onclick = (e) => { e.stopPropagation(); overlay.remove(); };
+    overlay.appendChild(closeBtn);
+
+    // Navigation buttons
+    if (photos.length > 1) {
+      const prevBtn = document.createElement('div');
+      prevBtn.style.cssText = 'position:absolute;left:16px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;cursor:pointer;';
+      prevBtn.textContent = '‹';
+      prevBtn.onclick = (e) => { e.stopPropagation(); currentIdx = (currentIdx - 1 + photos.length) % photos.length; renderImg(); };
+      overlay.appendChild(prevBtn);
+
+      const nextBtn = document.createElement('div');
+      nextBtn.style.cssText = 'position:absolute;right:16px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;cursor:pointer;';
+      nextBtn.textContent = '›';
+      nextBtn.onclick = (e) => { e.stopPropagation(); currentIdx = (currentIdx + 1) % photos.length; renderImg(); };
+      overlay.appendChild(nextBtn);
+
+      // Page indicator
+      const indicator = document.createElement('div');
+      indicator.style.cssText = 'position:absolute;bottom:30px;color:#fff;font-size:14px;background:rgba(0,0,0,0.4);padding:4px 14px;border-radius:12px;';
+      indicator.textContent = `${currentIdx + 1} / ${photos.length}`;
+      overlay.appendChild(indicator);
+    }
+  }
+
+  renderImg();
   overlay.addEventListener('click', () => overlay.remove());
   document.body.appendChild(overlay);
 }
