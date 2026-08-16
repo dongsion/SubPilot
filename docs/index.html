@@ -2397,12 +2397,17 @@ textarea.form-i{resize:none;min-height:80px;}
     </div>
     <div class="form-g">
       <label class="form-l">类型</label>
-      <select class="form-i" id="anni-type">
+      <select class="form-i" id="anni-type" onchange="onAnniTypeChange()">
         <option value="birthday">生日</option>
         <option value="anniversary">纪念日</option>
         <option value="countdown">倒计时</option>
         <option value="memorial">纪念日(农历)</option>
       </select>
+    </div>
+    <div class="form-g">
+      <label class="form-l">图标</label>
+      <div id="anni-icon-picker" style="display:flex;flex-wrap:wrap;gap:8px;padding:8px 0;max-height:120px;overflow-y:auto;"></div>
+      <input type="text" class="form-i" id="anni-custom-icon" placeholder="或输入自定义Emoji（如 🎂🐱🎈）" style="margin-top:8px;" oninput="onAnniCustomIconInput()">
     </div>
     <div class="form-g">
       <label class="form-l">分组（可选）</label>
